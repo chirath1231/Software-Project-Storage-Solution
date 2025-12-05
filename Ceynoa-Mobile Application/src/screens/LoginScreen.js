@@ -1,43 +1,113 @@
-// screens/LoginScreen.js
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
-export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = () => {
-    // Here, you will connect to backend API to validate login
-    console.log('Email:', email, 'Password:', password);
+  const navigation = useNavigation();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setErrorMsg("Please enter email & password");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://172.20.10.6:8000/api/accounts/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("username", data.username);
+
+        navigation.navigate("Home");
+      } else {
+        setErrorMsg(data.detail || data.non_field_errors || "Login failed");
+      }
+    } catch (error) {
+      setErrorMsg("Cannot connect to server");
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+
+      {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+
       <TextInput
+        style={styles.input}
         placeholder="Email"
-        value={email}
+        placeholderTextColor="#999"
         onChangeText={setEmail}
-        style={styles.input}
       />
+
       <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
         style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#999"
+        secureTextEntry
+        onChangeText={setPassword}
       />
-      <Button title="Login" onPress={handleLogin} />
-      <Button
-        title="Go to Register"
-        onPress={() => navigation.navigate('Register')}
-      />
+
+      <TouchableOpacity style={styles.btn} onPress={handleLogin}>
+        <Text style={styles.btnText}>Login</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+        <Text style={styles.link}>Don't have an account? Register</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-  input: { borderWidth: 1, marginBottom: 15, padding: 10, borderRadius: 5 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 25,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 25,
+    textAlign: "center",
+  },
+  error: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  btn: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  btnText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  link: {
+    textAlign: "center",
+    color: "#007bff",
+    marginTop: 10,
+  },
 });
