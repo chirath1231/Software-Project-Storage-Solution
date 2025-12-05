@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "../auth.css";
+import { FcGoogle } from "react-icons/fc";
+import Maskgroup from "../assets/Maskgroup.png"; 
+import Logo_on_Light from "../assets/Logo_on_Light.png";
+
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -31,32 +35,63 @@ function Login() {
 
   return (
     <div className="auth-container">
-      <div className="auth-box">
-        <h2 className="title">Login</h2>
+      <div className="logo-area">
+        <div className="logo">
+          <img src={Logo_on_Light} alt="logo" />
+        </div>
+      </div>
+      
+      <div className="auth">
+        <div className="auth-content">
+          
+            <h2 className="title">Sign in</h2>
+            <p className="para">Please login to continue to your account.</p>
 
-        <form className="form" onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email / Phone"
-            className="input"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            <form className="form" onSubmit={handleLogin}>
+              <input
+                type="email"
+                placeholder="Email"
+                className="input"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              
+              <input
+                type="password"
+                placeholder="Password"
+                className="input"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              
+              <input 
+                type="checkbox" 
+                id="rememberMe" 
+                className="checkbox"
+              />
+              <label className="checkbox-label">Keep me logged in</label>
+            </form>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="input"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <button className="gradient-btn">Sign in</button>
 
-          <button className="btn">Login</button>
-        </form>
 
-        <p className="footer-text">
-          Don’t have an account? <Link to="/register">Register</Link>
-        </p>
+            <div className="divider">
+              <span>or</span>
+            </div>
+
+            <button className="google-btn">
+              Sign in with Google
+              <FcGoogle size={20} />
+            </button>
+
+            <p className="footer-text">
+              Don’t have an account? <Link to="/register">Create account</Link>
+            </p>
+          </div>
+          <div className="auth-image">
+            <img src={Maskgroup} alt="maskgroup" />
+          </div>
       </div>
     </div>
+    
   );
 }
 
