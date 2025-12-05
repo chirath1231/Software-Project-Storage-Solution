@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
 
+body {
+  font-family: 'Outfit', sans-serif;
+}
+
 /* ---------------- HERO SECTION ---------------- */
 
 .hero-section {
@@ -52,7 +56,7 @@
 .landing-content button {
   margin-top: 25px;
   padding: 12px 28px;
-  background-color: #ff7a00;
+  background: linear-gradient(to right, orange, #ff7a00);
   border: none;
   border-radius: 6px;
   color: white;
@@ -177,3 +181,182 @@
   margin: 0;
   color: #555;
 }
+
+
+/* PRICING */
+
+/* Container */
+.pricing-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 40px;
+  flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+}
+
+/* Cards */
+.pricing-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  width: 280px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+  transition: 0.3s;
+}
+
+.pricing-card.plus-active {
+  border: 2px solid orange;
+  transform: scale(1.04);
+}
+
+/* Header Tags */
+.tag {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ed8337;
+}
+
+.standard { background: #f5dfcf; }
+.plus { background: #f5dfcf; }
+.pro { background: #f5dfcf; }
+
+/* Price */
+.pricing-card h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+.pricing-card h2 span {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+/* Button */
+.buy-btn {
+  width: 100%;
+  background: linear-gradient(to right, orange, #ff7a00);
+  border: none;
+  color: white;
+  padding: 12px 0;
+  border-radius: 25px;
+  font-size: 16px;
+  margin: 15px 0;
+  cursor: pointer;
+}
+
+/* Feature list */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+ul li::before {
+  content: "✔";
+  color: orange;
+  margin-right: 8px;
+}
+
+/* Hover */
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+.currency{
+  color: rgb(201, 196, 196);
+  font-weight: normal;
+  font-size: 30px;
+}
+
+/*ABOUT US*/
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  overflow-x: hidden;
+}
+
+.about-section {
+  width: 100%;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 50px;
+}
+
+.about-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+}
+
+.about-image img {
+  width: 400px;
+  height: auto;
+  border-radius: 25px;
+  margin-left: -125px;
+  margin-top: 10px;
+}
+
+.about-text {
+  max-width: 1600px;   /* keeps it wide */
+  width: 100%;         /* make it fully use available space */
+  text-align: left;
+  margin: 0 auto;      /* center the block if needed */
+  font-size: 16px;     /* adjust for readability */
+  line-height: 1.6;    /* decent spacing between lines */
+}
+.about-text h3 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.about-text p {
+  font-size: 25px;
+  line-height: 1.6;
+  margin: 0 0 12px 0;      /* only bottom margin */
+  color: #333;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 70px;
+  margin-top: 50px;
+}
+
+.stat-box h3 {
+  font-size: 64px;
+  color: #ff7a26;
+  font-weight: 700;
+  margin-bottom: 5px; /* reduce the gap */
+}
+
+.stat-box p {
+  margin-top: 0; /* keep no top margin */
+  font-size: 17px;
+  font-weight: 500;
+  color: #121111;
+}
+
+
