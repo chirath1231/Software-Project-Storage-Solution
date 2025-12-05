@@ -1,37 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
 
-/* HERO SECTION */
+/* ---------------- HERO SECTION ---------------- */
+
 .hero-section {
   display: flex;
-  width: 100%;          /* full screen width */
+  width: 100%;
   min-height: 100vh;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 1in;       /* 1 inch white space on left and right */
-  gap: 40px;            /* space between text and image */
+  padding: 0 1in;
+  gap: 40px;
   box-sizing: border-box;
 }
 
-/* Left side: content */
 .hero-left {
-  flex: 1 1 600px;      /* text takes enough space */
+  flex: 1 1 600px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
 }
 
-/* Right side: fixed-size image */
 .hero-right {
   width: 644px;
   height: 666px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  flex-shrink: 0;        /* image keeps its size */
-  margin-left: -60px;    /* move it slightly closer to text */
+  flex-shrink: 0;
+  margin-left: -60px;
 }
 
-/* Content styling */
 .landing-content h1 {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
@@ -42,8 +40,9 @@
 }
 
 .landing-content h1 .highlight {
-  color: #FF6C03; /* orange color */
+  color: #FF6C03;
 }
+
 .landing-content p {
   font-size: clamp(16px, 2vw, 18px);
   margin-top: 18px;
@@ -66,10 +65,11 @@
   background-color: #e56d00;
 }
 
-/* Responsive: stack on small screens */
+/* RESPONSIVE HERO SECTION */
+
 @media screen and (max-width: 1024px) {
   .hero-section {
-    width: 95%;  /* smaller width for tablet */
+    width: 95%;
     padding: 0 20px;
   }
   .hero-left {
@@ -83,18 +83,97 @@
     align-items: center;
     padding: 0 20px;
   }
+
   .hero-left,
   .hero-right {
     flex: unset;
     width: 100%;
   }
+
   .hero-right {
-    height: 300px; /* adjust image height for mobile */
+    height: 300px;
     width: 100%;
   }
 }
 
+/* ---------------- FEATURES SECTION ---------------- */
 
+.features-section {
+  background-color: #fff;
+  padding: 80px 20px;
+  display: flex;
+  flex-direction: column;   /* caption above cards */
+  align-items: center;      /* center everything */
+  text-align: center;
+}
 
-/* FEATURE SECTION */
+/* CAPTION */
 
+.features-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 42px;
+  font-weight: 550;
+  margin-bottom: 50px;
+  color: black;
+  text-align: center;
+}
+
+.features-title span {
+  font-family: "Outfit", sans-serif;
+  font-size: 24px;
+  color: black;
+  font-weight: 300;
+  line-height: 1;          /* tight line height */
+  margin: 0 0 10px 0;      /* smaller bottom margin */
+}
+
+/* GRID LAYOUT — 2 COLUMNS x 3 ROWS */
+
+.features-container {
+  display: grid;
+  grid-template-columns: repeat(2, 453px);
+  gap: 40px 50px;
+  justify-content: center;
+  gap: 50px 60px;
+}
+
+/* FEATURE CARD */
+
+.feature-card {
+  width: 350px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px #ed751f;
+  padding: 20px;
+  transition: 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px #ee9759;
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  margin-right: 20px;
+}
+
+.feature-text h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 6px 0;
+  color: #000;
+}
+
+.feature-text p {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  margin: 0;
+  color: #555;
+}
