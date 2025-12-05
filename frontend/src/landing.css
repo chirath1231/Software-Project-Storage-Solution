@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
+
+/* HERO SECTION */
+.hero-section {
+  display: flex;
+  width: 100%;          /* full screen width */
+  min-height: 100vh;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 1in;       /* 1 inch white space on left and right */
+  gap: 40px;            /* space between text and image */
+  box-sizing: border-box;
+}
+
+/* Left side: content */
+.hero-left {
+  flex: 1 1 600px;      /* text takes enough space */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Right side: fixed-size image */
+.hero-right {
+  width: 644px;
+  height: 666px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;        /* image keeps its size */
+  margin-left: -60px;    /* move it slightly closer to text */
+}
+
+/* Content styling */
+.landing-content h1 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 83px;
+  line-height: 1.2;
+  color: black;
+  white-space: pre-line;
+}
+
+.landing-content h1 .highlight {
+  color: #FF6C03; /* orange color */
+}
+.landing-content p {
+  font-size: clamp(16px, 2vw, 18px);
+  margin-top: 18px;
+  opacity: 0.9;
+}
+
+.landing-content button {
+  margin-top: 25px;
+  padding: 12px 28px;
+  background-color: #ff7a00;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: clamp(14px, 1.5vw, 18px);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.landing-content button:hover {
+  background-color: #e56d00;
+}
+
+/* Responsive: stack on small screens */
+@media screen and (max-width: 1024px) {
+  .hero-section {
+    width: 95%;  /* smaller width for tablet */
+    padding: 0 20px;
+  }
+  .hero-left {
+    padding-right: 10px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .hero-section {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .hero-left,
+  .hero-right {
+    flex: unset;
+    width: 100%;
+  }
+  .hero-right {
+    height: 300px; /* adjust image height for mobile */
+    width: 100%;
+  }
+}
+
+
+
+/* FEATURE SECTION */
+
