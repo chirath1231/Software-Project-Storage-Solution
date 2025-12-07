@@ -6,9 +6,28 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // Here, you will connect to backend API to validate login
-    console.log('Email:', email, 'Password:', password);
+ const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const res = await fetch("http://localhost:8000/api/accounts/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Login Successful!");
+     localStorage.setItem("userEmail", data.email);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("username", data.username);
+
+      window.location.href = "/subscription";
+    } else {
+      alert(data?.detail || data?.non_field_errors || "Login failed");
+    }
   };
 
   return (
