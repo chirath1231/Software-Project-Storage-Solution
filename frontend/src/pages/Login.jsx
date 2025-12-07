@@ -19,11 +19,12 @@ function Login() {
 
     if (res.ok) {
       alert("Login Successful!");
+     localStorage.setItem("userEmail", data.email);
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
 
-      window.location.href = "/";
+      window.location.href = "/subscription";
     } else {
       alert(data?.detail || data?.non_field_errors || "Login failed");
     }
