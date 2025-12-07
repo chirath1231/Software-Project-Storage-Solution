@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "./pages/register.jsx";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing.jsx";
+import SubscriptionPage from "./pages/SubscriptionPage.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+
 
 function App() {
   return (
@@ -8,6 +12,9 @@ function App() {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/subscription" element={<SubscriptionPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
       </Routes>
     </BrowserRouter>
   );

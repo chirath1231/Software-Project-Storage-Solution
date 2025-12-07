@@ -1,0 +1,22 @@
+
+.gradient-btn {
+  background: linear-gradient(
+    90deg,
+    var(--primary-gradient-start),
+    var(--primary-gradient-end)
+  );
+  color: white;
+  border: none;
+  border-radius: var(--button-radius);
+  padding: var(--button-padding);
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  text-decoration: none;
+  padding: 12px 0;
+}
+
+.gradient-btn:hover {
+  background: rgb(255, 136, 0);
+}
