@@ -1,0 +1,15 @@
+:root {
+  --primary-color: #ffffff; 
+  --secondary-color: #323D41;  
+  --links-color: #367AFF; 
+  --text-color-1: #000000;
+  --text-color-2: #969696;
+  --text-color-3: #6C6C6C;
+  --primary-gradient-start: #ff6b01;
+  --primary-gradient-end: #ffc324;
+
+  --button-radius: 12px;
+  --button-padding: 12px 100px;
+  --button-font-size: 18px;
+}
+
