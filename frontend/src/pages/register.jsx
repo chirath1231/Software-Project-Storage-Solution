@@ -1,14 +1,12 @@
 // src/pages/Register.jsx
-// import { useState } from "react";
-// import { Link, useNavigate } from "react-router-dom";
-// import "../auth.css";
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../auth.css";
-import { FcGoogle } from "react-icons/fc";
-import Maskgroup from "../assets/Maskgroup.png"; 
-import Logo_on_Light from "../assets/Logo_on_Light.png";
+import myImage from "../assets/tech.png";
+import googleLogo from "../assets/plus.png"; // your Google logo
+import logo from "../assets/logo.png"; // replace with your logo path
+
+
 
 function Register() {
   const navigate = useNavigate();
@@ -35,7 +33,6 @@ function Register() {
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("http://localhost:8000/api/auth/register/", {
         method: "POST",
@@ -69,7 +66,7 @@ function Register() {
       setLoading(false);
 
       // redirect to dashboard or home
-      navigate("/dashboard"); // change as needed
+      navigate("/login"); // change as needed
     } catch (err) {
       setErrors({ non_field_errors: ["Network error"] });
       setLoading(false);
@@ -77,54 +74,62 @@ function Register() {
   }
 
   return (
+ 
+    
     <div className="auth-container">
-      <div className="auth">
-        <div className="logo">
-          <img src={Logo_on_Light} alt="logo" />
-        </div>
-        <div className="auth-content">
-          <h2 className="title">Register</h2>
-          <p className="para">Sign up to enjoy the feature of Revolutie</p>
+       <img src={logo} alt="Company Logo" className="company-logo" />
+      <div className="left-side">
+      <div className="auth-box">
+        <h2 className="title">Sign up</h2>
+       <h4 className="caption">Sign up to enjoy the feature of Revolutie</h4>
 
-          <form className="form" onSubmit={onSubmit}>
-            <input name="username" value={form.username} onChange={onChange} type="text" placeholder="Username" className="input" />
-            {/* <input name="dob" value={form.dob} onChange={onChange} type="date" placeholder="Date of Birth" className="input" /> */}
-            <input name="email" value={form.email} onChange={onChange} type="email" placeholder="Email / Phone" className="input" />
-            <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Password" className="input" />
-            <input name="password2" value={form.password2} onChange={onChange} type="password" placeholder="Confirm Password" className="input" />
+        <form className="form" onSubmit={onSubmit}>
+          <input name="username" value={form.username} onChange={onChange} type="text" placeholder="Username" className="input" />
+          <input name="email" value={form.email} onChange={onChange} type="email" placeholder="Email / Phone" className="input" />
+          <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Password" className="input" />
+          <input name="password2" value={form.password2} onChange={onChange} type="password" placeholder="Confirm Password" className="input" />
 
-            {errors && (
-              <div style={{ color: "salmon", marginBottom: 10 }}>
-                {Object.entries(errors).map(([k, v]) => (
-                  <div key={k}><strong>{k}:</strong> {Array.isArray(v) ? v.join(", ") : v}</div>
-                ))}
-              </div>
-            )}
-          </form>
+          {errors && (
+            <div style={{ color: "salmon", marginBottom: 10 }}>
+              {Object.entries(errors).map(([k, v]) => (
+                <div key={k}><strong>{k}:</strong> {Array.isArray(v) ? v.join(", ") : v}</div>
+              ))}
+            </div>
+          )}
 
-          <button className="gradient-btn" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
+          <button className="btn" disabled={loading}>
+            {loading ? "Registering..." : "Sign up"}
           </button>
+        </form>
+        
+        
+
+        <p className="or">___________________________or_____________________________</p>
+
+        <div className="social">
+        <button className="social-btn">
           
+          Continue with Google <img src={googleLogo} alt="Google" className="social-logo" />
+        </button>
+      </div>
 
-          <div className="divider">
-            <span>or</span>
-          </div>
 
-          <button className="google-btn">
-            Sign in with Google
-            <FcGoogle size={20} />
-          </button>
+        <p className="footer-text">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
 
-          <p className="footer-text">
-            Already have an account? <Link to="/login">Sign in</Link>
-          </p>
+        <div className="footer-links">
+          <a href="#">Terms</a>
+          <a href="#">Support</a>
+          <a href="#">Customer Care</a>
         </div>
-        <div className="auth-image">
-          <img src={Maskgroup} alt="maskgroup" />
         </div>
+         <div className="right-side">
+         <img src={myImage} alt="Side visual" />
+         </div>
       </div>
     </div>
+  
   );
 }
 

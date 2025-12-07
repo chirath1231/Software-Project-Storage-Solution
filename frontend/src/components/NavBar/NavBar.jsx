@@ -1,7 +1,7 @@
 import React, { useState} from "react";
 import { Link } from "react-router-dom";
 import "./NavBar.css"; 
-import Logo_on_Dark from "../../assets/Logo_on_Dark.png";
+import logo_dark from "../../assets/Logo_on_Dark.png";
 import GradientButton from "../GradientButton/GradientButton";
 import { FaBars, FaTimes } from "react-icons/fa";
 
@@ -13,11 +13,12 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="nav-left">
         <div className="logo">
-          <img src={Logo_on_Dark} alt="logo" />
+          <img src={logo_dark} alt="logo" />
         </div>
       </div>
+
       <div className="hamburger" onClick={toggleMenu}>
-          {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+        {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
       </div>
         
       <div className={`nav-center ${menuOpen ? "active" : ""}`}>
@@ -37,8 +38,9 @@ export default function Navbar() {
       <div className="nav-right">
         <GradientButton title="Register" to="/register" />
         <GradientButton title="Login" to="/login" />
+        {/* <Link to="/login" className="auth-btn">Login</Link>
+        <Link to="/register" className="auth-btn register-btn">Register</Link> */}
       </div>
-      
     </nav>
   );
   

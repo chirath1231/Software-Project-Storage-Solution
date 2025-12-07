@@ -1,10 +1,10 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "../auth.css";
-import { FcGoogle } from "react-icons/fc";
-import Maskgroup from "../assets/Maskgroup.png"; 
+import Maskgroup from "../assets/Maskgroup.png";
 import Logo_on_Light from "../assets/Logo_on_Light.png";
-
+import { FcGoogle } from "react-icons/fc";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -35,63 +35,62 @@ function Login() {
 
   return (
     <div className="auth-container">
-      <div className="logo-area">
-        <div className="logo">
-          <img src={Logo_on_Light} alt="logo" />
-        </div>
-      </div>
-      
-      <div className="auth">
-        <div className="auth-content">
-          
-            <h2 className="title">Sign in</h2>
-            <p className="para">Please login to continue to your account.</p>
+      <img src={Logo_on_Light} alt="Company Logo" className="company-logo" />
 
-            <form className="form" onSubmit={handleLogin}>
-              <input
-                type="email"
-                placeholder="Email"
-                className="input"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              
-              <input
-                type="password"
-                placeholder="Password"
-                className="input"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              
-              <input 
-                type="checkbox" 
-                id="rememberMe" 
-                className="checkbox"
-              />
-              <label className="checkbox-label">Keep me logged in</label>
-            </form>
+      <div className="left-side">
+        <div className="auth-box">
+          <h2 className="title">Sign in</h2>
+          <h4 className="caption">Please login to continue to your account.</h4>
 
-            <button className="gradient-btn">Sign in</button>
+          <form className="form" onSubmit={handleLogin}>
+            <input
+              type="email"
+              placeholder="Email"
+              className="input"
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
+            <input
+              type="password"
+              placeholder="Password"
+              className="input"
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-            <div className="divider">
-              <span>or</span>
+            <div className="remember-area">
+              <input type="checkbox" id="rememberMe" className="checkbox" />
+              <label htmlFor="rememberMe" className="checkbox-label">
+                Keep me logged in
+              </label>
             </div>
 
-            <button className="google-btn">
-              Sign in with Google
-              <FcGoogle size={20} />
-            </button>
+            <button className="btn">Sign in</button>
+          </form>
 
-            <p className="footer-text">
-              Don’t have an account? <Link to="/register">Create account</Link>
-            </p>
+          <p className="or">
+            ___________________________or_____________________________
+          </p>
+
+          <button className="social-btn">
+            Sign in with Google <FcGoogle size={20} className="social-logo" />
+          </button>
+
+          <p className="footer-text">
+            Don’t have an account? <Link to="/register">Create account</Link>
+          </p>
+
+          <div className="footer-links">
+            <a href="#">Terms</a>
+            <a href="#">Support</a>
+            <a href="#">Customer Care</a>
           </div>
-          <div className="auth-image">
-            <img src={Maskgroup} alt="maskgroup" />
-          </div>
+        </div>
+
+      <div className="right-side">
+        <img src={Maskgroup} alt="Side Visual" />
+              </div>
       </div>
     </div>
-    
   );
 }
 

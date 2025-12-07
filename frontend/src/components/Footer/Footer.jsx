@@ -1,7 +1,7 @@
 import React from "react";
 import "./Footer.css";
 import { FaFacebook, FaTwitter, FaInstagram, FaYoutube, FaAngleRight } from "react-icons/fa";
-import Cloud_Service_Logo from "../../assets/Cloud_Service_Logo.png";
+import serversalad from "../../assets/server_salad.png";
 
 export default function Footer() {
   return (
@@ -10,7 +10,7 @@ export default function Footer() {
 
         <div className="footer-col">
           <div className="footer-logo">
-            <img src={Cloud_Service_Logo} alt="ServerSalad Logo" />
+            <img src={serversalad} alt="ServerSalad Logo" />
           </div>
           <p>
             <strong>ServerSalad</strong> is a smart, secure, and scalable cloud storage platform designed for creators, 

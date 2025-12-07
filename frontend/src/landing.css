@@ -1,0 +1,362 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
+
+body {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ---------------- HERO SECTION ---------------- */
+
+.hero-section {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 1in;
+  gap: 40px;
+  box-sizing: border-box;
+}
+
+.hero-left {
+  flex: 1 1 600px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.hero-right {
+  width: 644px;
+  height: 666px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+  margin-left: -60px;
+}
+
+.landing-content h1 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 83px;
+  line-height: 1.2;
+  color: black;
+  white-space: pre-line;
+}
+
+.landing-content h1 .highlight {
+  color: #FF6C03;
+}
+
+.landing-content p {
+  font-size: clamp(16px, 2vw, 18px);
+  margin-top: 18px;
+  opacity: 0.9;
+}
+
+.landing-content button {
+  margin-top: 25px;
+  padding: 12px 28px;
+  background: linear-gradient(to right, orange, #ff7a00);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: clamp(14px, 1.5vw, 18px);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.landing-content button:hover {
+  background-color: #e56d00;
+}
+
+/* RESPONSIVE HERO SECTION */
+
+@media screen and (max-width: 1024px) {
+  .hero-section {
+    width: 95%;
+    padding: 0 20px;
+  }
+  .hero-left {
+    padding-right: 10px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .hero-section {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+  }
+
+  .hero-left,
+  .hero-right {
+    flex: unset;
+    width: 100%;
+  }
+
+  .hero-right {
+    height: 300px;
+    width: 100%;
+  }
+}
+
+/* ---------------- FEATURES SECTION ---------------- */
+
+.features-section {
+  background-color: #fff;
+  padding: 80px 20px;
+  display: flex;
+  flex-direction: column;   /* caption above cards */
+  align-items: center;      /* center everything */
+  text-align: center;
+}
+
+/* CAPTION */
+
+.features-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 42px;
+  font-weight: 550;
+  margin-bottom: 50px;
+  color: black;
+  text-align: center;
+}
+
+.features-title span {
+  font-family: "Outfit", sans-serif;
+  font-size: 24px;
+  color: black;
+  font-weight: 300;
+  line-height: 1;          /* tight line height */
+  margin: 0 0 10px 0;      /* smaller bottom margin */
+}
+
+/* GRID LAYOUT — 2 COLUMNS x 3 ROWS */
+
+.features-container {
+  display: grid;
+  grid-template-columns: repeat(2, 453px);
+  gap: 40px 50px;
+  justify-content: center;
+  gap: 50px 60px;
+}
+
+/* FEATURE CARD */
+
+.feature-card {
+  width: 350px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px #ed751f;
+  padding: 20px;
+  transition: 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px #ee9759;
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  margin-right: 20px;
+}
+
+.feature-text h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 6px 0;
+  color: #000;
+}
+
+.feature-text p {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  margin: 0;
+  color: #555;
+}
+
+
+/* PRICING */
+
+/* Container */
+.pricing-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 40px;
+  flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+}
+
+/* Cards */
+.pricing-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  width: 280px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+  transition: 0.3s;
+}
+
+.pricing-card.plus-active {
+  border: 2px solid orange;
+  transform: scale(1.04);
+}
+
+/* Header Tags */
+.tag {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ed8337;
+}
+
+.standard { background: #f5dfcf; }
+.plus { background: #f5dfcf; }
+.pro { background: #f5dfcf; }
+
+/* Price */
+.pricing-card h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+.pricing-card h2 span {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+/* Button */
+.buy-btn {
+  width: 100%;
+  background: linear-gradient(to right, orange, #ff7a00);
+  border: none;
+  color: white;
+  padding: 12px 0;
+  border-radius: 25px;
+  font-size: 16px;
+  margin: 15px 0;
+  cursor: pointer;
+}
+
+/* Feature list */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+ul li::before {
+  content: "✔";
+  color: orange;
+  margin-right: 8px;
+}
+
+/* Hover */
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+.currency{
+  color: rgb(201, 196, 196);
+  font-weight: normal;
+  font-size: 30px;
+}
+
+/*ABOUT US*/
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  overflow-x: hidden;
+}
+
+.about-section {
+  width: 100%;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 50px;
+}
+
+.about-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+}
+
+.about-image img {
+  width: 400px;
+  height: auto;
+  border-radius: 25px;
+  margin-left: -125px;
+  margin-top: 10px;
+}
+
+.about-text {
+  max-width: 1600px;   /* keeps it wide */
+  width: 100%;         /* make it fully use available space */
+  text-align: left;
+  margin: 0 auto;      /* center the block if needed */
+  font-size: 16px;     /* adjust for readability */
+  line-height: 1.6;    /* decent spacing between lines */
+}
+.about-text h3 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.about-text p {
+  font-size: 25px;
+  line-height: 1.6;
+  margin: 0 0 12px 0;      /* only bottom margin */
+  color: #333;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 70px;
+  margin-top: 50px;
+}
+
+.stat-box h3 {
+  font-size: 64px;
+  color: #ff7a26;
+  font-weight: 700;
+  margin-bottom: 5px; /* reduce the gap */
+}
+
+.stat-box p {
+  margin-top: 0; /* keep no top margin */
+  font-size: 17px;
+  font-weight: 500;
+  color: #121111;
+}
+
+
