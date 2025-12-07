@@ -34,7 +34,6 @@ function Register() {
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("http://localhost:8000/api/auth/register/", {
         method: "POST",
@@ -69,7 +68,7 @@ function Register() {
       setLoading(false);
 
       // redirect to dashboard or home
-      navigate("/dashboard"); // change as needed
+      navigate("/login"); // change as needed
     } catch (err) {
       setErrors({ non_field_errors: ["Network error"] });
       setLoading(false);
