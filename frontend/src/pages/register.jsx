@@ -12,7 +12,6 @@ function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
-    dob: "", 
     email: "",
     password: "",
     password2: "",
@@ -43,7 +42,6 @@ function Register() {
         },
         body: JSON.stringify({
           username: form.username,
-          dob: form.dob,  
           email: form.email,
           password: form.password,
           password2: form.password2,
@@ -87,7 +85,6 @@ function Register() {
 
         <form className="form" onSubmit={onSubmit}>
           <input name="username" value={form.username} onChange={onChange} type="text" placeholder="Username" className="input" />
-          <input name="dob" value={form.dob} onChange={onChange} type="date" className="input"/>
           <input name="email" value={form.email} onChange={onChange} type="email" placeholder="Email / Phone" className="input" />
           <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Password" className="input" />
           <input name="password2" value={form.password2} onChange={onChange} type="password" placeholder="Confirm Password" className="input" />
