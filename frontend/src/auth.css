@@ -1,0 +1,208 @@
+.auth-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;         /* make full page width */
+  padding: 0px;          /* remove unwanted padding */
+  background: rgb(252, 250, 250);
+  
+}
+
+
+.auth-box {
+  width: 100%;      /* control size */
+  max-width: 400px; /* stop it from expanding */
+  background: white;
+  padding: 20px;
+  margin-left: 120px;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align:left;
+  color: black;
+}
+
+.caption{
+  font-size: 15px;
+  font-weight: normal;
+  margin-bottom: 20px;
+  text-align: left;
+  color: black;
+}
+
+.form .input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #666;
+  background: rgb(252, 250, 250);
+  color: rgb(6, 6, 6);
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  background: orange;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn:hover {
+  background: rgb(255, 136, 0);
+}
+
+.or {
+  margin: 15px 0;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.social {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-btn {
+  background: white;
+  color: black;
+  padding: 10px 14px;
+  border-radius: 50%;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+}
+
+
+
+.register-left {
+  max-width: 500px;
+  color: white;
+  
+}
+
+.page-caption {
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  margin-top: 20px;
+  line-height: 1.5;
+  color: black;
+}
+
+
+.left-side, .right-side {
+  flex: 1;             /* each takes 50% */
+  height: 100vh;       /* full height of viewport */
+}
+
+.left-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.right-side {
+  display: flex;
+  justify-content: right;
+  margin-right: -10%;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  
+}
+
+.right-side-login {
+  display: flex;
+  justify-content: right;
+  margin-right: 10%;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  
+}
+.right-side img {
+  width: 85%;         
+  height: 100%; 
+  margin-right: 0%;      
+  /*max-height: 100vh;  
+  object-fit: contain;  
+  display: block;
+  box-sizing: border-box;*/
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* center text and logo */
+  gap: 10px;                 /* space between logo and text */
+  width: 100%;               /* make it full width */
+  padding: 12px 0;           /* adjust height */
+  background: white;
+  color: black;
+  border-radius: 8px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+
+.social-btn:hover {
+  background: #f1f1f1;
+}
+
+.social-logo {
+  width: 20px;        /* adjust size */
+  height: 20px;
+}
+
+.company-logo {
+  position: absolute;    /* fixed position on the page */
+  top: 20px;             /* distance from top */
+  left: 20px;            /* distance from left */
+  width: 120px;          /* adjust size as needed */
+  height: auto;
+  z-index: 10;           /* make sure it stays above other elements */
+}
+
+
+
+
+
+
