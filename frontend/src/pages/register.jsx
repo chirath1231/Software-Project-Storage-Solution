@@ -2,11 +2,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../auth.css";
+import myImage from "../assets/tech.png";
+import googleLogo from "../assets/plus.png"; // your Google logo
+import logo from "../assets/logo.png"; // replace with your logo path
+
+
 
 function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
+    dob: "", 
     email: "",
     password: "",
     password2: "",
@@ -37,6 +43,7 @@ function Register() {
         },
         body: JSON.stringify({
           username: form.username,
+          dob: form.dob,  
           email: form.email,
           password: form.password,
           password2: form.password2,
@@ -69,12 +76,18 @@ function Register() {
   }
 
   return (
+ 
+    
     <div className="auth-container">
+       <img src={logo} alt="Company Logo" className="company-logo" />
+      <div className="left-side">
       <div className="auth-box">
-        <h2 className="title">Register</h2>
+        <h2 className="title">Sign up</h2>
+       <h4 className="caption">Sign up to enjoy the feature of Revolutie</h4>
 
         <form className="form" onSubmit={onSubmit}>
           <input name="username" value={form.username} onChange={onChange} type="text" placeholder="Username" className="input" />
+          <input name="dob" value={form.dob} onChange={onChange} type="date" className="input"/>
           <input name="email" value={form.email} onChange={onChange} type="email" placeholder="Email / Phone" className="input" />
           <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Password" className="input" />
           <input name="password2" value={form.password2} onChange={onChange} type="password" placeholder="Confirm Password" className="input" />
@@ -88,20 +101,24 @@ function Register() {
           )}
 
           <button className="btn" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Registering..." : "Sign up"}
           </button>
         </form>
+        
+        
 
-        <p className="or">OR</p>
+        <p className="or">___________________________or_____________________________</p>
 
         <div className="social">
-          <button className="social-btn">G</button>
-          <button className="social-btn">F</button>
-          <button className="social-btn">GH</button>
-        </div>
+        <button className="social-btn">
+          
+          Continue with Google <img src={googleLogo} alt="Google" className="social-logo" />
+        </button>
+      </div>
+
 
         <p className="footer-text">
-          Already Registered? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
 
         <div className="footer-links">
@@ -109,8 +126,13 @@ function Register() {
           <a href="#">Support</a>
           <a href="#">Customer Care</a>
         </div>
+        </div>
+         <div className="right-side">
+         <img src={myImage} alt="Side visual" />
+         </div>
       </div>
     </div>
+  
   );
 }
 
