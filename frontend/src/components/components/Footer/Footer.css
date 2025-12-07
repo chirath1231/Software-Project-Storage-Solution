@@ -1,0 +1,144 @@
+.footer {
+  background:var(--secondary-color);
+  padding: 40px 0;
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  justify-items: center;
+  padding: 0 5%;
+}
+
+.footer-col {
+  padding: 0 0px;
+    line-height: 1.3;
+
+}
+
+.footer-logo img {
+  width: 80px;
+  height: 80px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.footer-col p {
+  color: var(--primary-color);
+  line-height: 1.6;
+}
+
+.social-icons {
+  margin-top: 15px;
+  display: flex;
+  gap: 15px;
+}
+
+.social-icons a {
+  font-size: 18px;
+  color: var(--primary-color);
+  width: 40px;
+  height: 40px;
+  background: var(--primary-gradient-start);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s ease;
+}
+
+.social-icons a:hover {
+  transform: scale(1.1);
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col ul li {
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.footer-col ul li a {
+  text-decoration: none;
+  color: var(--primary-color);
+  transition: 0.3s;
+}
+
+.footer-col ul li a:hover {
+  color: var(--text-color-2);
+}
+
+.footer-col ul li svg {
+  margin-right: 8px;
+  color: var(--primary-gradient-start);
+}
+
+.footer-col form input {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: var(--text-color-3);
+}
+
+.footer-col form input::placeholder {
+  color: var(--primary-color);
+}
+
+.contacts-ul {
+  width: 100%;
+  max-width: 300px;
+}
+
+.footer-col .gradient-btn {
+  font-size: 13px;
+  padding: 5px;
+  width: 100px;
+  border-radius: 5px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.footer-bottom {
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 50px;
+    text-align: center;
+  }
+}
+
+
+@media (max-width: 600px) {
+  .social-icons {
+    justify-content: center;
+  }
+
+  .social-icons a {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+}
+
