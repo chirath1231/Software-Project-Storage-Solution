@@ -23,7 +23,7 @@ function Landing() {
   return (
     <div>
 
-      <Navbar />
+       <Navbar />
       {/* Top Landing Section */}
       <section className="hero-section">
         <div className="hero-left">
