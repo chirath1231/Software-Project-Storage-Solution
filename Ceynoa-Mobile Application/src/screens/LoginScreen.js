@@ -40,6 +40,8 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -56,9 +58,16 @@ export default function LoginScreen({ navigation }) {
       const data = await res.json();
 
       if (res.ok) {
+        // Save email and token
+        await AsyncStorage.setItem("userEmail", email);
+        if (data.token) {
+          await AsyncStorage.setItem("authToken", data.token);
+        }
+
         Alert.alert("Success", "Login Successful!");
-        // Save token if needed
-        // navigation.navigate("Home");
+
+        // Navigate to subscription page
+        navigation.navigate("SubscriptionScreen"); // Ensure this screen is defined in your navigation stack
       } else {
         Alert.alert("Error", data.detail || "Login failed");
       }
@@ -97,7 +106,9 @@ export default function LoginScreen({ navigation }) {
 
       <View style={styles.authBox}>
         <Text style={styles.title}>Sign in</Text>
-        <Text style={styles.caption}>Please login to continue to your account.</Text>
+        <Text style={styles.caption}>
+          Please login to continue to your account.
+        </Text>
 
         <TextInput
           placeholder="Email"
@@ -116,37 +127,16 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setPassword}
         />
 
-        <View style={styles.rememberArea}>
-          <TouchableOpacity>
-            <Text>☑ Keep me logged in</Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity style={styles.btn} onPress={handleLogin}>
           <Text style={styles.btnText}>Sign in</Text>
         </TouchableOpacity>
 
-        <Text style={styles.or}>─── or ───</Text>
-
-        <TouchableOpacity style={styles.socialBtn}>
-          <Text>Sign in with Google</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Register")}
+          style={{ marginTop: 10 }}
+        >
+          <Text style={styles.link}>Create account</Text>
         </TouchableOpacity>
-
-        <Text style={styles.footerText}>
-          Don’t have an account?{" "}
-          <Text
-            style={styles.link}
-            onPress={() => navigation.navigate("Register")}
-          >
-            Create account
-          </Text>
-        </Text>
-
-        <View style={styles.footerLinks}>
-          <Text style={styles.link}>Terms</Text>
-          <Text style={styles.link}>Support</Text>
-          <Text style={styles.link}>Customer Care</Text>
-        </View>
       </View>
     </ScrollView>
 >>>>>>> dc808b9 (Refactor Login and Registration screens: enhance layout, improve user experience, and streamline error handling)
@@ -186,15 +176,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
-  rememberArea: { marginBottom: 15 },
   btn: {
     backgroundColor: "#007bff",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
-    marginBottom: 10,
   },
   btnText: { color: "#fff", fontWeight: "bold" },
+<<<<<<< HEAD
   or: { textAlign: "center", marginVertical: 10, color: "#999" },
   socialBtn: {
     backgroundColor: "#eee",
@@ -212,4 +201,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 >>>>>>> dc808b9 (Refactor Login and Registration screens: enhance layout, improve user experience, and streamline error handling)
+=======
+  link: { color: "#007bff", fontWeight: "bold", textAlign: "center" },
+>>>>>>> 939e397 (Add Subscription and PayHere screens; update navigation and login flow)
 });
