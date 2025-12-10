@@ -25,7 +25,7 @@ function Landing() {
 
        <Navbar />
       {/* Top Landing Section */}
-      <section className="hero-section">
+      <section id="home" className="hero-section">
         <div className="hero-left">
           <div className="landing-content">
             <h1>
@@ -49,7 +49,7 @@ function Landing() {
       {/* Features Section */}
 
 
-      <section className="features-section">
+      <section id="features" className="features-section">
          <h2 className="features-title">
           Everything you need,<br /> <span>simplified & secured</span>
          </h2>
@@ -106,6 +106,7 @@ function Landing() {
         </div>
       </section>
 
+      <section id="pricing">
       <h2 className="features-title">
           Pricing<br /> <span>Choose a Plan That Fits Your Space and<br />Your Workflow</span>
          </h2>
@@ -198,9 +199,10 @@ function Landing() {
         </ul>
       </div>
     </div>
+    </section>
 
     {/* ABOUT US*/}
-    <section className="about-section">
+    <section id="aboutus" className="about-section">
       <h2 className="about-title">About Us</h2>
 
       <div className="about-container">
