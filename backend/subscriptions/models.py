@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.contrib.postgres.fields import ArrayField
 
 
 # ✅ Named function (Django can serialize this)
@@ -11,6 +12,11 @@ class Subscription(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    features = ArrayField(
+        models.CharField(max_length=255, blank=True),
+        default=list,
+        blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
