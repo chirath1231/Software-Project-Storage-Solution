@@ -27,7 +27,7 @@ function Login() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
 
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     } else {
       alert(data?.detail || data?.non_field_errors || "Login failed");
     }
