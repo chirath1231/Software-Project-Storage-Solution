@@ -1,12 +1,20 @@
 import React, { useState } from "react";
+<<<<<<< HEAD
+=======
+import { Link } from "react-router-dom";
+>>>>>>> 3fef019 (Refactor Navbar to use AuthContext for authentication state management)
 import "./NavBar.css"; 
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import GradientButton from "../GradientButton/GradientButton";
 import { FaBars, FaTimes } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext"; // ✅ Import AuthContext
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleMenu = () => setMenuOpen(!menuOpen);
+
+  // ✅ Get auth info from context
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <nav className="navbar">
@@ -43,15 +51,40 @@ export default function Navbar() {
 
         {/* Mobile login/register */}
         <div className="mobile-auth-buttons">
-          <GradientButton title="Register" to="/register" />
-          <GradientButton title="Login" to="/login" />
+          {isAuthenticated ? (
+            <>
+              <span className="welcome-text">Hi, {user}</span>
+              <GradientButton title="Dashboard" to="/dashboard" />
+              <GradientButton title="Logout" onClick={logout} />
+            </>
+          ) : (
+            <>
+              <GradientButton title="Register" to="/register" />
+              <GradientButton title="Login" to="/login" />
+            </>
+          )}
         </div>
       </div>
 
       {/* Desktop login/register */}
       <div className="nav-right">
+<<<<<<< HEAD
         <GradientButton title="Register" to="/register" />
         <GradientButton title="Login" to="/login" />
+=======
+        {isAuthenticated ? (
+          <>
+            <span className="welcome-text">Hi, {user}</span>
+            <GradientButton title="Dashboard" to="/dashboard" />
+            <GradientButton title="Logout" onClick={logout} />
+          </>
+        ) : (
+          <>
+            <GradientButton title="Register" to="/register" />
+            <GradientButton title="Login" to="/login" />
+          </>
+        )}
+>>>>>>> 3fef019 (Refactor Navbar to use AuthContext for authentication state management)
       </div>
     </nav>
   );
