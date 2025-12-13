@@ -6,6 +6,7 @@ import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Navbar from "./components/NavBar/NavBar.jsx"; // ✅ add this
+import { AuthProvider } from "./context/AuthContext";
 
 function AppRoutes() {
   const location = useLocation();
@@ -32,9 +33,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes /> {/* your routes and navbar logic */}
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
