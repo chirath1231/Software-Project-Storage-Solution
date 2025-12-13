@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
+import "../landing.css";
+import bg from "../assets/background.png";
+import serversalad from "../assets/server_salad.png";
+import buynow from "../assets/buy_now.png";
 
+import Navbar from "../components/NavBar/NavBar.jsx";
+import Footer from "../components/Footer/Footer.jsx";
+import GradientButton from "../components/GradientButton/GradientButton.jsx";
+import "../styles/fonts.css";
+import "../styles/variables.css";
 export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +26,7 @@ export default function SubscriptionPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ✅ PAY NOW FUNCTION (FORM SUBMIT METHOD)
+  // PAY NOW FUNCTION
   const handleSubscribe = async (sub) => {
     if (!userEmail) {
       alert("Please login first");
@@ -48,7 +57,7 @@ export default function SubscriptionPage() {
 
       const paymentData = data.paymentData;
 
-      // ✅ CREATE AUTO SUBMIT FORM
+      // CREATE AUTO SUBMIT FORM
       const form = document.createElement("form");
       form.method = "POST";
       form.action = "https://sandbox.payhere.lk/pay/checkout";
@@ -71,36 +80,64 @@ export default function SubscriptionPage() {
 
   if (loading) return <h2 style={{ padding: 20 }}>Loading...</h2>;
 
-  return (
-    <div style={{ padding: "30px" }}>
-      <h1 style={{ marginBottom: "20px" }}>Available Subscriptions</h1>
+ return (
+  <div>
+    <h2 className="features-title">
+      Pricing<br />
+      <span>Choose a Plan That Fits Your Space and<br />Your Workflow</span>
+    </h2>
 
-      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))" }}>
-        {subscriptions.map((sub) => (
-          <div key={sub.id} style={{ border: "1px solid #ccc", padding: 20, borderRadius: 10 }}>
-            <h2>{sub.name}</h2>
+    {/* Pricing Container */}
+    <div className="pricing-container">
+      {subscriptions.map((sub, index) => {
+        // Detect tag color based on name
+        const tagClass =
+          sub.name.toLowerCase().includes("standard")
+            ? "standard"
+            : sub.name.toLowerCase().includes("plus")
+            ? "plus"
+            : "pro";
+
+        // Highlight center card (optional)
+        const activeClass = index === 1 ? "plus-active" : "";
+
+        return (
+          <div key={sub.id} className={`pricing-card ${activeClass}`}>
+            {/* PLAN TAG */}
+            <span className={`tag ${tagClass}`}>{sub.name}</span>
+
+            {/* Price */}
+            <h2>
+              <span className="currency">Rs.</span>{" "}
+              <span>{Number(sub.price).toFixed(2)}</span>
+            </h2>
+
+            {/* Description */}
             <p>{sub.description}</p>
-            <p style={{ fontWeight: "bold", fontSize: 18 }}>
-              Rs. {sub.price}
-            </p>
 
-            <button
-              onClick={() => handleSubscribe(sub)}
-              style={{
-                marginTop: 12,
-                padding: "10px 15px",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                cursor: "pointer",
-              }}
-            >
+            {/* Buy Button */}
+            <button className="buy-btn" onClick={() => handleSubscribe(sub)}>
+              <img
+                src={buynow}
+                alt="buy"
+                style={{ width: "18px", height: "18px", marginRight: "8px" }}
+              />
               Subscribe Now
             </button>
+
+            {/* Dynamic Features */}
+            {sub.features && (
+              <ul>
+                {sub.features.map((feature, i) => (
+                  <li key={i}>{feature}</li>
+                ))}
+              </ul>
+            )}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
-  );
+  </div>
+);
+
 }
