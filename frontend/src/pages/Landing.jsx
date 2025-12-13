@@ -4,7 +4,7 @@ import "../landing.css";
 import bg from "../assets/background.png";
 import serversalad from "../assets/server_salad.png";
 
-import Navbar from "../components/NavBar/NavBar.jsx";
+//import Navbar from "../components/NavBar/NavBar.jsx";
 import Footer from "../components/Footer/Footer.jsx";
 import GradientButton from "../components/GradientButton/GradientButton.jsx";
 import "../styles/fonts.css";
@@ -23,7 +23,7 @@ function Landing() {
   return (
     <div>
 
-       <Navbar />
+       {/*<Navbar />*/}
       {/* Top Landing Section */}
       <section className="hero-section">
         <div className="hero-left">
