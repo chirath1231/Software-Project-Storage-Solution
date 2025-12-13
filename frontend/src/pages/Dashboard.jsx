@@ -7,7 +7,7 @@ function Dashboard() {
   return (
   
     <div>
-      <Navbar />
+      {/*<Navbar />*/}
       <Sidebar />
       <Footer />
     </div>
