@@ -33,7 +33,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://192.168.8.105:8000/api/auth/register/", {
+      const res = await fetch("http://172.20.10.6:8000/api/auth/register/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
