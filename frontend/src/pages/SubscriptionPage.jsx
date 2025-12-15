@@ -1,32 +1,22 @@
 import React, { useEffect, useState } from "react";
 import "../landing.css";
-import bg from "../assets/background.png";
-import serversalad from "../assets/server_salad.png";
 import buynow from "../assets/buy_now.png";
 
-import Navbar from "../components/NavBar/NavBar.jsx";
-import Footer from "../components/Footer/Footer.jsx";
-import GradientButton from "../components/GradientButton/GradientButton.jsx";
-import "../styles/fonts.css";
-import "../styles/variables.css";
 export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState(null);
 
-  // Load subscriptions + user email
+  // ✅ FIXED KEY
+  const userEmail = localStorage.getItem("username");
+
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email);
-
     fetch("http://127.0.0.1:8000/api/subscriptions/")
       .then((res) => res.json())
       .then((data) => setSubscriptions(data))
-      .catch((err) => console.error(err))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  // PAY NOW FUNCTION
   const handleSubscribe = async (sub) => {
     if (!userEmail) {
       alert("Please login first");
@@ -49,95 +39,47 @@ export default function SubscriptionPage() {
       );
 
       const data = await res.json();
+      if (!data.success) return alert("Payment failed");
 
-      if (!data.success) {
-        alert("Payment creation failed");
-        return;
-      }
-
-      const paymentData = data.paymentData;
-
-      // CREATE AUTO SUBMIT FORM
       const form = document.createElement("form");
       form.method = "POST";
       form.action = "https://sandbox.payhere.lk/pay/checkout";
 
-      Object.entries(paymentData).forEach(([key, value]) => {
+      Object.entries(data.paymentData).forEach(([k, v]) => {
         const input = document.createElement("input");
         input.type = "hidden";
-        input.name = key;
-        input.value = value;
+        input.name = k;
+        input.value = v;
         form.appendChild(input);
       });
 
       document.body.appendChild(form);
       form.submit();
     } catch (err) {
-      console.error("Payment error:", err);
       alert("Payment error");
     }
   };
 
-  if (loading) return <h2 style={{ padding: 20 }}>Loading...</h2>;
+  if (loading) return <h2>Loading...</h2>;
 
- return (
-  <div>
-    <h2 className="features-title">
-      Pricing<br />
-      <span>Choose a Plan That Fits Your Space and<br />Your Workflow</span>
-    </h2>
+  return (
+    <div>
+      <h2 className="features-title">Pricing</h2>
 
-    {/* Pricing Container */}
-    <div className="pricing-container">
-      {subscriptions.map((sub, index) => {
-        // Detect tag color based on name
-        const tagClass =
-          sub.name.toLowerCase().includes("standard")
-            ? "standard"
-            : sub.name.toLowerCase().includes("plus")
-            ? "plus"
-            : "pro";
+      <div className="pricing-container">
+        {subscriptions.map((sub) => (
+          <div key={sub.id} className="pricing-card">
+            <span className="tag">{sub.name}</span>
 
-        // Highlight center card (optional)
-        const activeClass = index === 1 ? "plus-active" : "";
-
-        return (
-          <div key={sub.id} className={`pricing-card ${activeClass}`}>
-            {/* PLAN TAG */}
-            <span className={`tag ${tagClass}`}>{sub.name}</span>
-
-            {/* Price */}
-            <h2>
-              <span className="currency">Rs.</span>{" "}
-              <span>{Number(sub.price).toFixed(2)}</span>
-            </h2>
-
-            {/* Description */}
+            <h2>Rs. {Number(sub.price).toFixed(2)}</h2>
             <p>{sub.description}</p>
 
-            {/* Buy Button */}
             <button className="buy-btn" onClick={() => handleSubscribe(sub)}>
-              <img
-                src={buynow}
-                alt="buy"
-                style={{ width: "18px", height: "18px", marginRight: "8px" }}
-              />
-              Subscribe Now
+              <img src={buynow} alt="buy" /> Subscribe Now
             </button>
-
-            {/* Dynamic Features */}
-            {sub.features && (
-              <ul>
-                {sub.features.map((feature, i) => (
-                  <li key={i}>{feature}</li>
-                ))}
-              </ul>
-            )}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
