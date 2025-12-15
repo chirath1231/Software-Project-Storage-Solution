@@ -1,44 +1,51 @@
 // screens/LoginScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
- const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
+    try {
+      const res = await fetch("http://172.20.10.6:8000/api/accounts/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const res = await fetch("http://localhost:8000/api/accounts/login/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (res.ok) {
+        Alert.alert("Login Successful!");
 
-    if (res.ok) {
-      alert("Login Successful!");
-     localStorage.setItem("userEmail", data.email);
+        // Save user data
+        await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("email", data.email);
+        await AsyncStorage.setItem("username", data.username);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username);
-
-      window.location.href = "/subscription";
-    } else {
-      alert(data?.detail || data?.non_field_errors || "Login failed");
+        // Move to subscription screen
+        navigation.navigate("Subscription");
+      } else {
+        Alert.alert("Login Failed", data.detail || "Invalid credentials");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to connect to server.");
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+
       <TextInput
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
       />
+
       <TextInput
         placeholder="Password"
         value={password}
@@ -46,7 +53,9 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
         style={styles.input}
       />
+
       <Button title="Login" onPress={handleLogin} />
+
       <Button
         title="Go to Register"
         onPress={() => navigation.navigate('Register')}

@@ -4,7 +4,7 @@ from .models import Subscription, Payment
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ["id", "name", "description", "price"]
+        fields = "__all__" 
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:

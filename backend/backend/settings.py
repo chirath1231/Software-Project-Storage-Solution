@@ -19,7 +19,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-niq()9d-nh7fjeg^_3*5r98u!1!suywhiz7-&x=8%r9imlnja("
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # allow all during development
+ALLOWED_HOSTS = ["*", "192.168.8.101"]
+  # allow all during development
 
 # -----------------------------------------------------
 # INSTALLED APPS
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-
+    'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
 ]
@@ -74,7 +75,9 @@ MIDDLEWARE = [
 # -----------------------------------------------------
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React app
+    "http://localhost:3000",
+    "http://192.168.8.105:8081",
+    "http://127.0.0.1:8081"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
