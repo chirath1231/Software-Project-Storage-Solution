@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 // screens/LoginScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
@@ -42,6 +43,21 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+=======
+// src/screens/LoginScreen.js
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -73,11 +89,15 @@ export default function LoginScreen({ navigation }) {
       }
     } catch (error) {
       Alert.alert("Error", "Cannot connect to server");
+<<<<<<< HEAD
 >>>>>>> dc808b9 (Refactor Login and Registration screens: enhance layout, improve user experience, and streamline error handling)
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
     }
   };
 
   return (
+<<<<<<< HEAD
 <<<<<<< HEAD
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
@@ -101,6 +121,8 @@ export default function LoginScreen({ navigation }) {
       />
     </View>
 =======
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.logo}>LOGO</Text>
 
@@ -139,7 +161,10 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </ScrollView>
+<<<<<<< HEAD
 >>>>>>> dc808b9 (Refactor Login and Registration screens: enhance layout, improve user experience, and streamline error handling)
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
   );
 }
 
@@ -179,6 +204,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: "#007bff",
     padding: 15,
+<<<<<<< HEAD
     borderRadius: 8,
     alignItems: "center",
   },
@@ -204,4 +230,11 @@ const styles = StyleSheet.create({
 =======
   link: { color: "#007bff", fontWeight: "bold", textAlign: "center" },
 >>>>>>> 939e397 (Add Subscription and PayHere screens; update navigation and login flow)
+=======
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  btnText: { color: "#fff", fontWeight: "bold" },
+  link: { color: "#007bff", fontWeight: "bold", textAlign: "center" },
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
 });

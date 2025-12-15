@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
 import { Link } from "react-router-dom";
 >>>>>>> 3fef019 (Refactor Navbar to use AuthContext for authentication state management)
 import "./NavBar.css"; 
@@ -69,9 +72,12 @@ export default function Navbar() {
       {/* Desktop login/register */}
       <div className="nav-right">
 <<<<<<< HEAD
+<<<<<<< HEAD
         <GradientButton title="Register" to="/register" />
         <GradientButton title="Login" to="/login" />
 =======
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
         {isAuthenticated ? (
           <>
             <span className="welcome-text">Hi, {user}</span>
@@ -84,7 +90,10 @@ export default function Navbar() {
             <GradientButton title="Login" to="/login" />
           </>
         )}
+<<<<<<< HEAD
 >>>>>>> 3fef019 (Refactor Navbar to use AuthContext for authentication state management)
+=======
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
       </div>
     </nav>
   );

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 // screens/RegisterScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
@@ -60,6 +61,21 @@ import {
 } from "react-native";
 
 export default function RegisterScreen({ navigation }) {
+=======
+// src/screens/RegisterScreen.js
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+
+export default function RegisterScreen({ navigation }) {
+>>>>>>> 1fc8a0facc25dc50c203dd8abb02c38cfea64d82
   const [form, setForm] = useState({
     username: "",
     email: "",
