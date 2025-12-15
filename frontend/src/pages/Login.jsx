@@ -1,35 +1,42 @@
-// src/pages/Login.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../auth.css";
 import Maskgroup from "../assets/Maskgroup.png";
 import Logo_on_Light from "../assets/Logo_on_Light.png";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "../auth/AuthContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:8000/api/accounts/login/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("http://localhost:8000/api/accounts/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
+      if (!res.ok) {
+        alert(data?.detail || data?.non_field_errors || "Login failed");
+        return;
+      }
+
+      // ✅ Save via AuthContext
+      login(data.token, data.username);
+
       alert("Login Successful!");
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username);
-
-      window.location.href = "/";
-    } else {
-      alert(data?.detail || data?.non_field_errors || "Login failed");
+      navigate("/"); // or "/"
+    } catch (error) {
+      alert("Server error. Please try again.");
+      console.error(error);
     }
   };
 
@@ -40,21 +47,27 @@ function Login() {
       <div className="left-side">
         <div className="auth-box">
           <h2 className="title">Sign in</h2>
-          <h4 className="caption">Please login to continue to your account.</h4>
+          <h4 className="caption">
+            Please login to continue to your account.
+          </h4>
 
           <form className="form" onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email"
               className="input"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
 
             <input
               type="password"
               placeholder="Password"
               className="input"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
 
             <div className="remember-area">
@@ -64,7 +77,9 @@ function Login() {
               </label>
             </div>
 
-            <button className="btn">Sign in</button>
+            <button className="btn" type="submit">
+              Sign in
+            </button>
           </form>
 
           <p className="or">
@@ -72,7 +87,7 @@ function Login() {
           </p>
 
           <button className="social-btn">
-            Sign in with Google <FcGoogle size={20} className="social-logo" />
+            Continnue with Google <FcGoogle size={20} className="social-logo" />
           </button>
 
           <p className="footer-text">
@@ -86,9 +101,9 @@ function Login() {
           </div>
         </div>
 
-      <div className="right-side">
-        <img src={Maskgroup} alt="Side Visual" />
-              </div>
+        <div className="right-side">
+          <img src={Maskgroup} alt="Side Visual" />
+        </div>
       </div>
     </div>
   );
