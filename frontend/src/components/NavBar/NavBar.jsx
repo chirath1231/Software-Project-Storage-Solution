@@ -212,12 +212,12 @@ const handleLogout = () => {
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
               <GradientButton 
                 title="Register" 
-                onClick={() => console.log("Register")}
+                onClick={() => window.location.href = "/register"}
                 ariaLabel="Register for an account"
               />
               <GradientButton 
                 title="Login" 
-                onClick={handleLogin}
+                onClick={() => window.location.href = "/login"}
                 ariaLabel="Login to your account"
               />
             </div>
@@ -230,17 +230,17 @@ const handleLogout = () => {
             // Auth buttons (before login)
             <>
               <GradientButton 
-                title="Register" 
-                onClick={() => console.log("Register")}
-                ariaLabel="Register for an account"
+              title="Register" 
+              onClick={() => window.location.href = "/register"}
+              ariaLabel="Register for an account"
               />
               <GradientButton 
-                title="Login" 
-                onClick={handleLogin}
-                ariaLabel="Login to your account"
+              title="Login" 
+              onClick={() => window.location.href = "/login"}
+              ariaLabel="Login to your account"
               />
             </>
-          ) : (
+            ) : (
             // Notifications and User profile (after login)
             <>
               {/* Notification Bell */}
