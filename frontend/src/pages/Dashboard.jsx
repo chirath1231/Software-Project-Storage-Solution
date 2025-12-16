@@ -1,17 +1,17 @@
 import { useAuth } from "../auth/AuthContext";
+import Navbar from "../components/NavBar/NavBar.jsx";
+import Sidebar from "../components/Sidebar/Sidebar.jsx";
+import Footer from "../components/Footer/Footer.jsx";
 
 export default function Dashboard() {
   const { logout } = useAuth();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl mb-4">Dashboard (Protected)</h1>
-      <button
-        onClick={logout}
-        className="px-4 py-2 bg-red-600 text-white rounded"
-      >
-        Logout
-      </button>
+    
+    <div>
+      <Navbar />
+      <Sidebar/>
+      <Footer/>
     </div>
   );
 }
