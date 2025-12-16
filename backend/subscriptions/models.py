@@ -7,7 +7,6 @@ from django.contrib.postgres.fields import ArrayField
 def generate_order_id():
     return str(uuid.uuid4())
 
-
 class Subscription(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -62,3 +61,15 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.order_id} - {self.status}"
+
+class SubscriptionPayment(models.Model):
+    user_email = models.EmailField()
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE)
+    order_id = models.CharField(max_length=128, unique=True)
+    payment_id = models.CharField(max_length=128, null=True, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, default="ACTIVE")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user_email} - {self.subscription.name}"

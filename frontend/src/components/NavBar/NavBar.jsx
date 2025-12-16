@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Menu, X, Search, User, ChevronDown } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
-
+import "../../index.css";
 // Mock GradientButton component (you can replace with your actual component)
 const GradientButton = ({ title, onClick }) => (
   <button
