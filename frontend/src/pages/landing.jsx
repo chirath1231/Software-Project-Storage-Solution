@@ -10,6 +10,7 @@ import GradientButton from "../components/GradientButton/GradientButton.jsx";
 import "../styles/fonts.css";
 import "../styles/variables.css";
 
+
 // Importing images correctly
 import fast_upload from "../assets/fast_upload.png";
 import flexible_payment from "../assets/flexible_payment.png";
@@ -38,6 +39,8 @@ function Landing() {
     <div>
 
        <Navbar />
+       
+       
       {/* Top Landing Section */}
       <section id="home" className="hero-section">
         <div className="hero-left">
