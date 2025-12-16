@@ -27,7 +27,7 @@ export default function Sidebar() {
 
   const handleMenuClick = (itemId) => {
     setActiveItem(itemId);
-    // Close sidebar on mobile after selection
+    
     if (window.innerWidth < 768) {
       setIsOpen(false);
     }
