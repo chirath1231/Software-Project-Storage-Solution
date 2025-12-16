@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
+import { useAuth } from "../../auth/AuthContext.jsx";
 
 // Mock logo - replace with your actual import
 const LogoDark = () => (
@@ -27,7 +28,7 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isAuthenticated, username, login, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,16 +103,17 @@ export default function Navbar() {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    setMenuOpen(false);
-  };
+const handleLogin = () => {
+  login("dummy-token", "Natasha Avory"); // replace with real login response
+  setMenuOpen(false);
+};
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setShowProfileMenu(false);
-    setShowNotifications(false);
-  };
+const handleLogout = () => {
+  logout();
+  setShowProfileMenu(false);
+  setShowNotifications(false);
+};
+
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -165,7 +167,7 @@ export default function Navbar() {
           md:relative absolute top-full left-0 right-0 bg-gray-800 md:bg-transparent
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
-          {!isLoggedIn ? (
+          {!isAuthenticated ? (
             // Navigation links (before login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
               {[
@@ -206,7 +208,7 @@ export default function Navbar() {
           )}
 
           {/* Mobile auth buttons (only when logged out) */}
-          {!isLoggedIn && (
+          {!isAuthenticated && (
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
               <GradientButton 
                 title="Register" 
@@ -224,7 +226,7 @@ export default function Navbar() {
 
         {/* Right section - Auth buttons or Profile */}
         <div className="hidden md:flex gap-3 items-center relative">
-          {!isLoggedIn ? (
+          {!isAuthenticated ? (
             // Auth buttons (before login)
             <>
               <GradientButton 
@@ -358,13 +360,13 @@ export default function Navbar() {
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
                     {userData.avatar ? (
-                      <img src={userData.avatar} alt={userData.name} className="w-full h-full object-cover" />
+                      <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
                     ) : (
                       <User size={24} className="text-orange-500" />
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-white text-sm font-semibold">{userData.name}</div>
+                    <div className="text-white text-sm font-semibold">{username}</div>
                     <div className="text-gray-400 text-xs">{userData.email}</div>
                   </div>
                   <ChevronDown 
@@ -414,17 +416,6 @@ export default function Navbar() {
             </>
           )} 
         </div>
-      </div>
-
-      {/* Demo toggle button */}
-      <div className="fixed bottom-5 right-5 z-50">
-        <button
-          onClick={() => setIsLoggedIn(!isLoggedIn)}
-          className="py-3 px-6 bg-green-500 text-white rounded-lg text-sm font-semibold shadow-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-          aria-label={isLoggedIn ? "Demo logout" : "Demo login"}
-        >
-          {isLoggedIn ? "👋 Logout (Demo)" : "🔐 Login (Demo)"}
-        </button>
       </div>
     </nav>
   );
