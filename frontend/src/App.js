@@ -6,7 +6,6 @@ import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import Dashboard from "./pages/Dashboard.jsx";
 
 function App() {
   return (
@@ -20,7 +19,6 @@ function App() {
 
           {/* PROTECTED */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
           </Route>
