@@ -1,17 +1,19 @@
-import { useAuth } from "../auth/AuthContext";
-import Navbar from "../components/NavBar/NavBar.jsx";
-import Sidebar from "../components/Sidebar/Sidebar.jsx";
-import Footer from "../components/Footer/Footer.jsx";
+import { Link } from "react-router-dom";
+import Navbar from "../components/NavBar/Navbar.jsx";
+import Footer from "../components/Footer/Footer";
+import Sidebar from "../components/Sidebar/Sidebar";
 
-export default function Dashboard() {
-  const { logout } = useAuth();
-
+function Dashboard() {
   return (
-    
+  
     <div>
       <Navbar />
-      <Sidebar/>
-      <Footer/>
+      <Sidebar />
+      <Footer />
     </div>
+
+   
   );
 }
+
+export default Dashboard;
