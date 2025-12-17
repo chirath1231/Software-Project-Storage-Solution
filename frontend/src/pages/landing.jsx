@@ -4,7 +4,7 @@ import "../landing.css";
 import bg from "../assets/background.png";
 import serversalad from "../assets/server_salad.png";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/NavBar/Navbar.jsx";
+import Navbar from "../components/NavBar/NavBar.jsx";
 import Footer from "../components/Footer/Footer.jsx";
 import GradientButton from "../components/GradientButton/GradientButton.jsx";
 import "../styles/fonts.css";
