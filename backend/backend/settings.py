@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    'django.contrib.postgres',    
+    'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
 ]
@@ -143,6 +143,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # -----------------------------------------------------
 # INTERNATIONALIZATION
 # -----------------------------------------------------
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 
 
