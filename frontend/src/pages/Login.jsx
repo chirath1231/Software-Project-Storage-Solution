@@ -4,6 +4,7 @@ import "../auth.css";
 import Maskgroup from "../assets/Maskgroup.png";
 import Logo_on_Light from "../assets/Logo_on_Light.png";
 import { FcGoogle } from "react-icons/fc";
+import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
 import { useAuth } from "../auth/AuthContext";
 
 function Login() {
@@ -12,6 +13,7 @@ function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // 🔐 NORMAL LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -29,14 +31,35 @@ function Login() {
         return;
       }
 
-      // ✅ Save via AuthContext
-      login(data.token, data.username);
-
-      alert("Login Successful!");
-      navigate("/"); // or "/"
+      login(data.access, data.username);
+      navigate("/dashboard");
     } catch (error) {
       alert("Server error. Please try again.");
-      console.error(error);
+    }
+  };
+
+  // 🔵 GOOGLE LOGIN
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const res = await fetch("http://localhost:8000/api/accounts/google/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: credentialResponse.credential,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert("Google login failed");
+        return;
+      }
+
+      login(data.access, data.username);
+      navigate("/dashboard");
+    } catch (error) {
+      alert("Google login error");
     }
   };
 
@@ -86,9 +109,21 @@ function Login() {
             ___________________________or_____________________________
           </p>
 
-          <button className="social-btn">
-            Continnue with Google <FcGoogle size={20} className="social-logo" />
-          </button>
+          {/* ✅ YOUR BUTTON – GOOGLE LOGIC ATTACHED */}
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => alert("Google Login Failed")}
+            render={(renderProps) => (
+              <button
+                className="social-btn"
+                onClick={renderProps.onClick}
+                disabled={renderProps.disabled}
+              >
+                Continnue with Google
+                <FcGoogle size={20} className="social-logo" />
+              </button>
+            )}
+          />
 
           <p className="footer-text">
             Don’t have an account? <Link to="/register">Create account</Link>
