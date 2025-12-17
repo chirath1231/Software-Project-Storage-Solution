@@ -1,24 +1,56 @@
+// SubscriptionPage.jsx
 import React, { useEffect, useState } from "react";
+import "../landing.css";
+import buynow from "../assets/buy_now.png";
 
 export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
+  const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState(null);
+  const userEmail = localStorage.getItem("username"); // stays as you had it
 
-  // Load subscriptions + user email
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email);
+    // Fetch both subscriptions and user's active subscriptions (if logged in)
+    const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(
+      (res) => res.json()
+    );
 
-    fetch("http://127.0.0.1:8000/api/subscriptions/")
-      .then((res) => res.json())
-      .then((data) => setSubscriptions(data))
-      .catch((err) => console.error(err))
+    const fetchUserActive = userEmail
+      ? fetch(
+          `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
+            userEmail
+          )}/`
+        ).then((res) => {
+          if (!res.ok) return [];
+          return res.json();
+        })
+      : Promise.resolve([]);
+
+    Promise.all([fetchPlans, fetchUserActive])
+      .then(([plans, userActive]) => {
+        setSubscriptions(plans || []);
+
+        // Build a set of subscription IDs the user has paid
+        const paidIds = new Set();
+        (userActive || []).forEach((r) => {
+          // r.subscription_id returned by backend (see views.py change)
+          if (r.subscription_id) paidIds.add(Number(r.subscription_id));
+        });
+        setPaidSubs(paidIds);
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        alert("Could not load subscriptions. See console for details.");
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [userEmail]);
 
-  // ✅ PAY NOW FUNCTION (FORM SUBMIT METHOD)
   const handleSubscribe = async (sub) => {
+    if (paidSubs.has(sub.id)) {
+      alert("You already own this plan.");
+      return;
+    }
+
     if (!userEmail) {
       alert("Please login first");
       return;
@@ -40,24 +72,17 @@ export default function SubscriptionPage() {
       );
 
       const data = await res.json();
+      if (!data.success) return alert("Payment failed");
 
-      if (!data.success) {
-        alert("Payment creation failed");
-        return;
-      }
-
-      const paymentData = data.paymentData;
-
-      // ✅ CREATE AUTO SUBMIT FORM
       const form = document.createElement("form");
       form.method = "POST";
       form.action = "https://sandbox.payhere.lk/pay/checkout";
 
-      Object.entries(paymentData).forEach(([key, value]) => {
+      Object.entries(data.paymentData).forEach(([k, v]) => {
         const input = document.createElement("input");
         input.type = "hidden";
-        input.name = key;
-        input.value = value;
+        input.name = k;
+        input.value = v;
         form.appendChild(input);
       });
 
@@ -69,37 +94,53 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (loading) return <h2 style={{ padding: 20 }}>Loading...</h2>;
+  if (loading) return <h2>Loading...</h2>;
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1 style={{ marginBottom: "20px" }}>Available Subscriptions</h1>
+    <div>
+      <h2 className="features-title">Pricing</h2>
 
-      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))" }}>
-        {subscriptions.map((sub) => (
-          <div key={sub.id} style={{ border: "1px solid #ccc", padding: 20, borderRadius: 10 }}>
-            <h2>{sub.name}</h2>
-            <p>{sub.description}</p>
-            <p style={{ fontWeight: "bold", fontSize: 18 }}>
-              Rs. {sub.price}
-            </p>
+      <div className="pricing-container">
+        {subscriptions.map((sub) => {
+          const isPaid = paidSubs.has(sub.id);
+          return (
+            <div key={sub.id} className="pricing-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="tag">{sub.name}</span>
+                {isPaid ? (
+                  <span
+                    style={{
+                      background: "#2ecc71",
+                      color: "white",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      fontWeight: "700",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    PAID
+                  </span>
+                ) : null}
+              </div>
 
-            <button
-              onClick={() => handleSubscribe(sub)}
-              style={{
-                marginTop: 12,
-                padding: "10px 15px",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                cursor: "pointer",
-              }}
-            >
-              Subscribe Now
-            </button>
-          </div>
-        ))}
+              <h2>Rs. {Number(sub.price).toFixed(2)}</h2>
+              <p>{sub.description}</p>
+
+              <button
+                className="buy-btn"
+                onClick={() => handleSubscribe(sub)}
+                disabled={isPaid}
+                style={{
+                  opacity: isPaid ? 0.6 : 1,
+                  cursor: isPaid ? "not-allowed" : "pointer",
+                }}
+              >
+                <img src={buynow} alt="buy" style={{ width: 22, marginRight: 8 }} />
+                {isPaid ? "Subscribed" : "Subscribe Now"}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
