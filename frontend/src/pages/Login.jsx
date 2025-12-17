@@ -33,7 +33,7 @@ function Login() {
       login(data.token, data.username);
 
       alert("Login Successful!");
-      navigate("/"); // or "/"
+      navigate("/dashboard"); // or "/"
     } catch (error) {
       alert("Server error. Please try again.");
       console.error(error);
