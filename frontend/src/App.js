@@ -11,6 +11,7 @@ import DashboardHome from "./pages/DashboardHome";
 
 function App() {
   return (
+    
     <BrowserRouter>
       <AuthProvider>
         <Routes>
