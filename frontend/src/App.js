@@ -6,27 +6,26 @@ import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import DashboardLayout from "./layouts/DashboardLayout";
-import DashboardHome from "./pages/DashboardHome";
+import Dashboard from "./pages/Dashboard.jsx";
+import ClientChatSystem from "./pages/ClientChatSystem.jsx";
 
 function App() {
   return (
-    
+
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* PUBLIC */}
+          {/* PUBLIC PAGES */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* PROTECTED */}
+          {/* PROTECTED PAGES */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardHome />} />
-              <Route path="subscription" element={<SubscriptionPage />} />
-              <Route path="payment-success" element={<PaymentSuccess />} />
-            </Route>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/subscription" element={<SubscriptionPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/clientchatsystem" element={<ClientChatSystem />} />
           </Route>
         </Routes>
       </AuthProvider>

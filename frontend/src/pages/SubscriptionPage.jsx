@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import "../landing.css";
 import buynow from "../assets/buy_now.png";
 
+
 export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
