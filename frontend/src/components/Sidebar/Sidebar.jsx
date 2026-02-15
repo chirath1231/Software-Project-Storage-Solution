@@ -23,7 +23,7 @@ export default function Sidebar() {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/dashboard" },
     { id: "files", label: "My Files", icon: <Folder />, path: "/dashboard/files" },
-    { id: "clients", label: "Clients", icon: <Users />, path: "/dashboard/clients" },
+    { id: "clients", label: "Clients", icon: <Users />, path: "/ClientChatSystem" },
     { id: "subscription", label: "Subscription", icon: <CreditCard />, path: "/dashboard/subscription" },
     { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
