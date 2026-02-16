@@ -3,12 +3,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from chat.views import ConversationListView, MessageListView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),   
      path('api/accounts/', include('accounts.urls')),
      # if you use accounts app
     path('api/subscriptions/', include('subscriptions.urls')),  # keep this only once
+    path('api/', include('chat.urls')),  # add this line for chat API
 ]
 
 if settings.DEBUG:
