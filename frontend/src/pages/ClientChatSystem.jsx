@@ -10,6 +10,13 @@ const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
 });
 
+// ✅ AUTO attach JWT token to every API request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access"); // save this after login
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 // Helper: format time nicely
 const formatTime = (isoOrDate) => {
   try {
@@ -31,26 +38,22 @@ const ClientChatSystem = () => {
 
   const wsRef = useRef(null);
 
-  // If you use JWT auth, uncomment and set token:
-  // const token = localStorage.getItem("access"); // or whatever you store
-  // useEffect(() => {
-  //   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  // }, [token]);
-
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
     return conversations.find((c) => c.id === selectedConversationId) || null;
   }, [conversations, selectedConversationId]);
 
-  // You will want your backend to provide an "other_user" object for each conversation.
-  // If it doesn't exist yet, we fall back gracefully.
   const selectedClient = useMemo(() => {
     if (!selectedConversation) return null;
 
     const other = selectedConversation.other_user || {};
     return {
       id: other.id ?? selectedConversation.id,
-      name: other.full_name || other.username || other.email || `Conversation #${selectedConversation.id}`,
+      name:
+        other.full_name ||
+        other.username ||
+        other.email ||
+        `Conversation #${selectedConversation.id}`,
       username: other.username || "",
       email: other.email || "",
       phone: other.phone || "",
@@ -59,7 +62,10 @@ const ClientChatSystem = () => {
       online: Boolean(other.is_online),
       lastActive: other.last_active || "",
       recentFiles: selectedConversation.recent_files || [],
-      preview: selectedConversation.last_message?.text || selectedConversation.preview || "",
+      preview:
+        selectedConversation.last_message?.text ||
+        selectedConversation.preview ||
+        "",
       unread: selectedConversation.unread_count || 0,
     };
   }, [selectedConversation]);
@@ -69,10 +75,8 @@ const ClientChatSystem = () => {
     const loadConversations = async () => {
       try {
         const res = await api.get("/conversations/");
-        // Expect: [{id, other_user:{...}, last_message:{text,timestamp}, unread_count, recent_files:[]}, ...]
         setConversations(res.data || []);
 
-        // auto select first conversation if none selected
         if (!selectedConversationId && res.data?.length) {
           setSelectedConversationId(res.data[0].id);
         }
@@ -82,19 +86,15 @@ const ClientChatSystem = () => {
     };
 
     loadConversations();
-    // Optional: refresh list every 20s (for unread/preview updates)
-    // const t = setInterval(loadConversations, 20000);
-    // return () => clearInterval(t);
   }, [selectedConversationId]);
 
-  // ----------------- Load Messages + WebSocket when selecting conversation -----------------
+  // ----------------- Load Messages + WebSocket -----------------
   useEffect(() => {
     if (!selectedConversationId) return;
 
     const loadMessages = async () => {
       try {
         const res = await api.get(`/messages/${selectedConversationId}/`);
-        // Expect: [{id, text, sender, sender_username, timestamp, ...}, ...]
         setMessages(res.data || []);
       } catch (err) {
         console.error("Failed to load messages:", err);
@@ -103,45 +103,51 @@ const ClientChatSystem = () => {
 
     loadMessages();
 
-    // Close old socket if exists
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
 
-    // Connect new socket
     const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log("WS connected:", wsUrl);
-    };
+    ws.onopen = () => console.log("WS connected:", wsUrl);
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // We expect the consumer to send something like:
-        // { id?, text? or message?, sender_username?, sender_id?, timestamp? }
         const incomingText = data.text ?? data.message ?? "";
+        if (!incomingText) return;
+
         const incoming = {
           id: data.id ?? `ws-${Date.now()}`,
           text: incomingText,
           sender: data.sender ?? data.sender_id ?? null,
           sender_username: data.sender_username ?? data.senderName ?? "Unknown",
           timestamp: data.timestamp ?? new Date().toISOString(),
+          is_mine: data.is_mine ?? false,
         };
 
-        setMessages((prev) => [...prev, incoming]);
+        // ✅ prevent duplicates (API already added message)
+        setMessages((prev) => {
+          if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+          // fallback duplicate check by (text+timestamp) if no id
+          const last = prev[prev.length - 1];
+          if (!data.id && last && last.text === incoming.text) return prev;
+          return [...prev, incoming];
+        });
 
-        // update preview in left list (optional)
         setConversations((prev) =>
           prev.map((c) =>
             c.id === selectedConversationId
               ? {
                   ...c,
-                  last_message: { text: incomingText, timestamp: incoming.timestamp },
-                  unread_count: 0, // since you're viewing it
+                  last_message: {
+                    text: incomingText,
+                    timestamp: incoming.timestamp,
+                  },
+                  unread_count: 0,
                 }
               : c
           )
@@ -151,54 +157,46 @@ const ClientChatSystem = () => {
       }
     };
 
-    ws.onclose = () => {
-      console.log("WS closed");
-    };
+    ws.onclose = () => console.log("WS closed");
+    ws.onerror = (e) => console.error("WS error:", e);
 
-    ws.onerror = (e) => {
-      console.error("WS error:", e);
-    };
-
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   }, [selectedConversationId]);
 
-  // ----------------- Send Message -----------------
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("WebSocket not connected");
-      return;
+  // ----------------- Send Message (SAVE TO DB + realtime) -----------------
+  const handleSendMessage = async () => {
+    const text = messageInput.trim();
+    if (!text) return;
+    if (!selectedConversationId) return;
+
+    try {
+      // ✅ 1) Save message to DB using API
+      const res = await api.post("/messages/send/", {
+        conversation_id: selectedConversationId,
+        text: text,
+      });
+
+      // ✅ Add saved message to UI
+      setMessages((prev) => [...prev, res.data]);
+
+      // ✅ 2) Optional: notify WebSocket for realtime
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ message: text }));
+      }
+
+      // ✅ Update preview in left list
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === selectedConversationId
+            ? { ...c, last_message: { text: text, timestamp: res.data.timestamp } }
+            : c
+        )
+      );
+
+      setMessageInput("");
+    } catch (err) {
+      console.error("Send message failed:", err);
     }
-
-    // Send to backend
-    wsRef.current.send(
-      JSON.stringify({
-        message: messageInput, // match your consumer field name
-      })
-    );
-
-    // Optimistic UI (show immediately)
-    const optimistic = {
-      id: `local-${Date.now()}`,
-      text: messageInput,
-      sender_username: "me",
-      timestamp: new Date().toISOString(),
-      // If your API returns sender id/username, you can match styles better
-    };
-    setMessages((prev) => [...prev, optimistic]);
-
-    // Update preview in left list
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedConversationId
-          ? { ...c, last_message: { text: messageInput, timestamp: optimistic.timestamp } }
-          : c
-      )
-    );
-
-    setMessageInput("");
   };
 
   // ----------------- Filtered list for search -----------------
@@ -249,7 +247,6 @@ const ClientChatSystem = () => {
                 const avatar = other.avatar_emoji || "👤";
                 const online = Boolean(other.is_online);
                 const preview = conv.last_message?.text || "";
-
                 const unread = conv.unread_count || 0;
 
                 return (
@@ -318,9 +315,6 @@ const ClientChatSystem = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.map((m) => {
-                // ✅ Decide alignment.
-                // Best: backend should send `is_mine` boolean.
-                // For now: treat sender_username === "me" as mine (optimistic)
                 const isMine = m.is_mine === true || m.sender_username === "me";
 
                 return (

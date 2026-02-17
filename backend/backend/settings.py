@@ -27,6 +27,7 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
