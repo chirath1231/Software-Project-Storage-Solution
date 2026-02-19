@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../landing.css";
 import bg from "../assets/background.png";
 import serversalad from "../assets/server_salad.png";
-
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/NavBar/NavBar.jsx";
 import Footer from "../components/Footer/Footer.jsx";
 import GradientButton from "../components/GradientButton/GradientButton.jsx";
 import "../styles/fonts.css";
 import "../styles/variables.css";
+
 
 // Importing images correctly
 import fast_upload from "../assets/fast_upload.png";
@@ -20,23 +21,39 @@ import cross_platform from "../assets/cross_platform.png";
 import buynow from "../assets/buy_now.png";
 
 function Landing() {
+    const navigate = useNavigate();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/subscriptions/")
+      .then((res) => res.json())
+      .then((data) => setPlans(data))
+      .catch((err) => console.error("Error fetching plans:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <h2 className="loading">Loading...</h2>;
+
   return (
     <div>
 
        <Navbar />
+       
+       
       {/* Top Landing Section */}
-      <section className="hero-section">
+      <section id="home" className="hero-section">
         <div className="hero-left">
           <div className="landing-content">
-            <h1>
-              Smart, Secure &<br />Affordable Cloud<br />
-              <span className="highlight">Storage</span>
-            </h1>
-            <p>
-              Access, share, and manage your files anywhere with <br />
-              fast, secure, and flexible storage.
-            </p>
-            <button>Get Started</button>
+<h1 style={{ fontSize: "75px", lineHeight: "1.2" }}>
+  Smart, Secure &<br />Affordable Cloud<br />
+  <span className="highlight" style={{ fontSize: "60px" }}>Storage</span>
+</h1>
+<p style={{ fontSize: "18px", lineHeight: "1.5" }}>
+  Access, share, and manage your files anywhere with <br />
+  fast, secure, and flexible storage.
+</p>
+            <button onClick={() => navigate("/login")}>Get Started</button>
           </div>
         </div>
 
@@ -49,7 +66,7 @@ function Landing() {
       {/* Features Section */}
 
 
-      <section className="features-section">
+      <section id="features" className="features-section">
          <h2 className="features-title">
           Everything you need,<br /> <span>simplified & secured</span>
          </h2>
@@ -106,101 +123,65 @@ function Landing() {
         </div>
       </section>
 
+    <section id="pricing">
       <h2 className="features-title">
-          Pricing<br /> <span>Choose a Plan That Fits Your Space and<br />Your Workflow</span>
-         </h2>
+        Pricing<br />
+        <span>
+          Choose a Plan That Fits Your Space and
+          <br />
+          Your Workflow
+        </span>
+      </h2>
 
-    
-      {/* Pricing */}
       <div className="pricing-container">
-      {/* Standard */}
-      <div className="pricing-card">
-        
-        <span className="tag standard">Standard</span>
-        <h2><span className="currency">$</span> <span>2/mo</span></h2>
-        <p>Simple and secure for personal use. Essential features included. Best for basic storage needs.</p>
+        {plans.map((plan) => (
+          <div className="pricing-card" key={plan.id}>
+            {/* Tag */}
+            <span className={`tag ${plan.name.toLowerCase()}`}>
+              {plan.name}
+            </span>
 
-        <button className="buy-btn">
-          <img 
-            src={buynow}
-            alt="fire"
-            style={{ width: "18px", height: "18px", marginRight: "8px" }}
-          />
-          Buy now
-        </button>
-        
+            {/* Price */}
+            <h2>
+              <span className="currency">Rs.</span>{" "}
+              <span>{plan.price}/mo</span>
+            </h2>
 
-        <ul>
-          <li>10 GB Space</li>
-          <li>Ideal for individuals</li>
-          <li>Basic upload & download features</li>
-          <li>Secure file sharing</li>
-          <li>7-day link expiry</li>
-          <li>Access on web & mobile</li>
-          <li>Limited to 3 active share links</li>
-        </ul>
+            {/* Description */}
+            <p>{plan.description}</p>
+
+            {/* Buy button (no payment integration) */}
+    <button
+      className="buy-btn"
+      onClick={() => navigate("/subscription")}
+    >
+      <img
+        src={buynow}
+        alt="buy"
+        style={{
+          width: "18px",
+          height: "18px",
+          marginRight: "8px",
+        }}
+      />
+      Buy now
+    </button>
+
+            {/* Features */}
+            {plan.features && plan.features.length > 0 && (
+              <ul>
+                {plan.features.map((feature, index) => (
+                  <li key={index}>{feature}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
       </div>
-
-      {/* Plus */}
-      <div className="pricing-card plus-active">
-        <span className="tag plus">Plus</span>
-        <h2><span className="currency">$</span> <span>10/mo</span></h2>
-        <p>More space and speed. Extra sharing and alerts. Ideal for frequent users.</p>
-
-        <button className="buy-btn">
-          <img 
-            src={buynow}
-            alt="fire"
-            style={{ width: "18px", height: "18px", marginRight: "8px" }}
-          />
-          Buy now
-        </button>
-
-        <ul>
-          <li>100 GB Space</li>
-          <li>Most Popular</li>
-          <li>Everything in Standard, plus</li>
-          <li>Extended 30-day link expiry</li>
-          <li>Priority upload speed</li>
-          <li>Custom share link control</li>
-          <li>Real-time notifications</li>
-          <li>Email support</li>
-        </ul>
-      </div>
-
-      {/* Pro */}
-      <div className="pricing-card">
-        <span className="tag pro">Pro</span>
-        <h2><span className="currency">$</span> <span>30/mo</span></h2>
-        <p>
-          Advanced tools for businesses. Unlimited sharing and strong security.
-          Great for professional workloads.
-        </p>
-
-        <button className="buy-btn">
-          <img 
-            src={buynow}
-            alt="fire"
-            style={{ width: "18px", height: "18px", marginRight: "8px" }}
-          />
-          Buy now
-        </button>
-
-        <ul>
-          <li>1TB Space</li>
-          <li>Best for businesses</li>
-          <li>Everything in Plus, plus</li>
-          <li>Unlimited file sharing</li>
-          <li>Advanced analytics dashboard</li>
-          <li>Client management</li>
-          <li>End-to-end encryption</li>
-          <li>Dedicated 24/7 support</li>
-        </ul>
-      </div>
-    </div>
+    </section>
 
     {/* ABOUT US*/}
-    <section className="about-section">
+    <section id="aboutus" className="about-section">
       <h2 className="about-title">About Us</h2>
 
       <div className="about-container">
