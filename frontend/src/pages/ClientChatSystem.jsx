@@ -10,9 +10,9 @@ const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
 });
 
-// ✅ AUTO attach JWT token to every API request
+// ✅ AUTO attach JWT token to every API request (SESSION STORAGE)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access"); // save this after login
+  const token = sessionStorage.getItem("token"); // saved after login
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -35,6 +35,11 @@ const ClientChatSystem = () => {
 
   const [messages, setMessages] = useState([]); // middle chat messages
   const [messageInput, setMessageInput] = useState("");
+
+  // ✅ New Chat state
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const wsRef = useRef(null);
 
@@ -70,23 +75,68 @@ const ClientChatSystem = () => {
     };
   }, [selectedConversation]);
 
-  // ----------------- Load Conversations -----------------
-  useEffect(() => {
-    const loadConversations = async () => {
-      try {
-        const res = await api.get("/conversations/");
-        setConversations(res.data || []);
+  // ----------------- Helpers: Load Conversations -----------------
+  const loadConversations = async () => {
+    try {
+      const res = await api.get("/conversations/");
+      const list = res.data || [];
+      setConversations(list);
 
-        if (!selectedConversationId && res.data?.length) {
-          setSelectedConversationId(res.data[0].id);
-        }
-      } catch (err) {
-        console.error("Failed to load conversations:", err);
+      // auto-select first if none selected
+      if (!selectedConversationId && list.length) {
+        setSelectedConversationId(list[0].id);
       }
-    };
 
+      return list;
+    } catch (err) {
+      console.error("Failed to load conversations:", err);
+      return [];
+    }
+  };
+
+  // ----------------- New Chat: Load users -----------------
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      // Uses your existing endpoint
+      const res = await api.get("/chat/users/");
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error("Failed to load users:", err);
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // ----------------- New Chat: Start conversation -----------------
+  const startChatWithUser = async (otherUserId) => {
+    try {
+      // create/get conversation
+      const res = await api.post("/conversations/start/", {
+        other_user_id: otherUserId,
+      });
+
+      const newConversationId = res.data?.conversation_id;
+      if (!newConversationId) {
+        console.error("No conversation_id returned");
+        return;
+      }
+
+      // refresh list + open new conversation
+      await loadConversations();
+      setSelectedConversationId(newConversationId);
+      setShowNewChat(false);
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+    }
+  };
+
+  // ----------------- Load Conversations on mount -----------------
+  useEffect(() => {
     loadConversations();
-  }, [selectedConversationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ----------------- Load Messages + WebSocket -----------------
   useEffect(() => {
@@ -98,17 +148,22 @@ const ClientChatSystem = () => {
         setMessages(res.data || []);
       } catch (err) {
         console.error("Failed to load messages:", err);
+        setMessages([]);
       }
     };
 
     loadMessages();
 
+    // close old ws
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/`;
+    // ✅ WS with token in query (requires backend JWT WS middleware)
+    const token = sessionStorage.getItem("token");
+    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/?token=${token || ""}`;
+
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -129,15 +184,15 @@ const ClientChatSystem = () => {
           is_mine: data.is_mine ?? false,
         };
 
-        // ✅ prevent duplicates (API already added message)
+        // prevent duplicates
         setMessages((prev) => {
           if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-          // fallback duplicate check by (text+timestamp) if no id
           const last = prev[prev.length - 1];
           if (!data.id && last && last.text === incoming.text) return prev;
           return [...prev, incoming];
         });
 
+        // update preview
         setConversations((prev) =>
           prev.map((c) =>
             c.id === selectedConversationId
@@ -170,21 +225,21 @@ const ClientChatSystem = () => {
     if (!selectedConversationId) return;
 
     try {
-      // ✅ 1) Save message to DB using API
+      // 1) Save message to DB using API
       const res = await api.post("/messages/send/", {
         conversation_id: selectedConversationId,
         text: text,
       });
 
-      // ✅ Add saved message to UI
+      // Add saved message to UI
       setMessages((prev) => [...prev, res.data]);
 
-      // ✅ 2) Optional: notify WebSocket for realtime
+      // 2) Optional: notify WebSocket for realtime (if backend supports receive)
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ message: text }));
       }
 
-      // ✅ Update preview in left list
+      // Update preview in left list
       setConversations((prev) =>
         prev.map((c) =>
           c.id === selectedConversationId
@@ -223,8 +278,24 @@ const ClientChatSystem = () => {
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
           {/* Sidebar (Clients List) */}
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-            {/* Search */}
+            {/* Header + Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
+              {/* ✅ New Chat button */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-gray-900">Chats</h3>
+                <button
+                  onClick={() => {
+                    setShowNewChat((v) => !v);
+                    // load users when opening
+                    if (!showNewChat) loadUsers();
+                  }}
+                  className="px-3 py-1 rounded-lg bg-orange-500 text-white text-sm hover:bg-orange-600"
+                >
+                  New Chat
+                </button>
+              </div>
+
+              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -235,6 +306,41 @@ const ClientChatSystem = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
+
+              {/* ✅ New Chat panel */}
+              {showNewChat && (
+                <div className="mt-4 p-3 border rounded-lg bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-gray-800">Start a chat</p>
+                    <button
+                      className="text-sm text-gray-500 hover:text-gray-800"
+                      onClick={() => setShowNewChat(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {usersLoading ? (
+                    <p className="text-sm text-gray-500">Loading users...</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto">
+                      {users.length === 0 ? (
+                        <p className="text-sm text-gray-500">No users found.</p>
+                      ) : (
+                        users.map((u) => (
+                          <div
+                            key={u.id}
+                            onClick={() => startChatWithUser(u.id)}
+                            className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
+                          >
+                            {u.username}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Conversations */}
@@ -243,7 +349,11 @@ const ClientChatSystem = () => {
                 const other = conv.other_user || {};
                 const isSelected = selectedConversationId === conv.id;
 
-                const name = other.full_name || other.username || other.email || `Conversation #${conv.id}`;
+                const name =
+                  other.full_name ||
+                  other.username ||
+                  other.email ||
+                  `Conversation #${conv.id}`;
                 const avatar = other.avatar_emoji || "👤";
                 const online = Boolean(other.is_online);
                 const preview = conv.last_message?.text || "";
@@ -267,10 +377,18 @@ const ClientChatSystem = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"}`}>
+                      <h3
+                        className={`font-semibold truncate ${
+                          isSelected ? "text-white" : "text-gray-900"
+                        }`}
+                      >
                         {name}
                       </h3>
-                      <p className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"}`}>
+                      <p
+                        className={`text-sm truncate ${
+                          isSelected ? "text-white/80" : "text-gray-500"
+                        }`}
+                      >
                         {preview}
                       </p>
                     </div>
@@ -348,7 +466,10 @@ const ClientChatSystem = () => {
                   className="flex-1 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
 
-                <button className="p-3 text-gray-500 hover:text-gray-700 transition-colors" title="Attach file (later)">
+                <button
+                  className="p-3 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Attach file (later)"
+                >
                   <Paperclip className="w-6 h-6" />
                 </button>
 
@@ -388,7 +509,9 @@ const ClientChatSystem = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Last Active:</h3>
-                    <p className="text-gray-700">{selectedClient.lastActive || (selectedClient.online ? "Online" : "-")}</p>
+                    <p className="text-gray-700">
+                      {selectedClient.lastActive || (selectedClient.online ? "Online" : "-")}
+                    </p>
                   </div>
 
                   <div>
