@@ -2,67 +2,62 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
-from .models import Message
+from .models import ConversationParticipant, Message
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
-        self.group_name = f"chat_{self.room_id}"
+        user = self.scope["user"]
+        if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
+            await self.close()
+            return
 
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
+        is_member = await self.is_member(user.id, self.conversation_id)
+        if not is_member:
+            await self.close()
+            return
+
+        self.room_group_name = f"chat_{self.conversation_id}"
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if hasattr(self, "room_group_name"):
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
+        user = self.scope["user"]
         data = json.loads(text_data)
-        text = (data.get("message") or "").strip()
+        text = (data.get("text") or "").strip()
         if not text:
             return
 
-        user = self.scope.get("user")
-
-        # ✅ If not logged in, still broadcast but don't save to DB
-        if not user or isinstance(user, AnonymousUser) or user.is_anonymous:
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "chat_message",
-                    "text": text,
-                    "sender_username": "anonymous",
-                    "timestamp": "",
-                },
-            )
-            return
-
-        # ✅ Save message safely
-        msg = await self.save_message(user.id, int(self.room_id), text)
+        msg = await self.create_message(self.conversation_id, user.id, text)
 
         await self.channel_layer.group_send(
-            self.group_name,
-            {
-                "type": "chat_message",
-                "id": msg["id"],
-                "text": msg["text"],
-                "sender_username": msg["sender_username"],
-                "timestamp": msg["timestamp"],
-            },
+            self.room_group_name,
+            {"type": "chat_message", **msg},
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async
-    def save_message(self, user_id, conversation_id, text):
+    def is_member(self, user_id, conversation_id):
+        return ConversationParticipant.objects.filter(
+            user_id=user_id, conversation_id=conversation_id
+        ).exists()
+
+    @database_sync_to_async
+    def create_message(self, conversation_id, sender_id, text):
         m = Message.objects.create(
-            conversation_id=conversation_id,
-            sender_id=user_id,
-            text=text
+            conversation_id=conversation_id, sender_id=sender_id, text=text
         )
         return {
             "id": m.id,
-            "text": m.text,
+            "conversation": m.conversation_id,
+            "sender": m.sender_id,
             "sender_username": m.sender.username,
-            "timestamp": m.timestamp.isoformat(),
+            "text": m.text,
+            "created_at": m.created_at.isoformat(),
         }
