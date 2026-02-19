@@ -8,6 +8,7 @@ import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
+import MyFiles from "./pages/MyFiles";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           {/* PROTECTED */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="files" element={<MyFiles />} />
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
