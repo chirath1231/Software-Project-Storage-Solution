@@ -8,9 +8,12 @@ import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
+
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
+
+import MyFiles from "./pages/MyFiles";
 
 function App() {
   return (
@@ -26,6 +29,7 @@ function App() {
           {/* PROTECTED */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="files" element={<MyFiles />} />
               <Route index element={<DashboardHome />} />
               <Route path="support" element={<DashboardSupport />} />
               <Route path="settings" element={<DashboardSettings />} />
