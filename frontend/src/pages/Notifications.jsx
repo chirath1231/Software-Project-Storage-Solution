@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
+import { X } from "lucide-react"; // Importing the X icon for the close button
 
-
-// Mock data for notifications based on your UI design
+// Mock data for notifications
 const notificationsData = [
   {
     id: 1,
     title: "Update: New Features Added to Your Account!",
-    description: "Exciting news! We've rolled out new features to enhance your experience. Log in to explore what's new!",
+    description: "Exciting news! We've rolled out new features to enhance your experience. Log in to explore what's new! We have added bulk file uploading, enhanced folder sharing, and an upgraded dark mode for better visibility.",
     time: "Just now",
     iconBg: "bg-green-100",
     iconColor: "text-green-600",
@@ -19,7 +19,7 @@ const notificationsData = [
   {
     id: 2,
     title: "Friendly Tip: Optimize Your Workspace",
-    description: "Just a heads-up that your rent payment is due soon. Please make sure to pay on time to avoid any late fees!",
+    description: "Just a heads-up that your rent payment is due soon. Please make sure to pay on time to avoid any late fees! You can update your payment method in the Subscription tab if needed.",
     time: "7 hours ago",
     iconBg: "bg-yellow-100",
     iconColor: "text-yellow-600",
@@ -32,7 +32,7 @@ const notificationsData = [
   {
     id: 3,
     title: "System Notification: Security Check Scheduled",
-    description: "For your safety, a system security check is planned for Thursday at 2:00 PM. No action needed on your part; we'll handle everything!",
+    description: "For your safety, a system security check is planned for Thursday at 2:00 PM. No action needed on your part; we'll handle everything! The platform might experience slight delays during this 15-minute window.",
     time: "Yesterday",
     iconBg: "bg-red-100",
     iconColor: "text-red-500",
@@ -45,7 +45,7 @@ const notificationsData = [
   {
     id: 4,
     title: "Quick Reminder: Weekly Goal Check-In",
-    description: "Take a moment to review your goals for this week. You're doing great - keep up the momentum!",
+    description: "Take a moment to review your goals for this week. You're doing great - keep up the momentum! You have uploaded over 50GB of client files this week alone.",
     time: "20 Sep",
     iconBg: "bg-indigo-100",
     iconColor: "text-indigo-500",
@@ -58,7 +58,7 @@ const notificationsData = [
   {
     id: 5,
     title: "Heads Up: Free Webinar Tomorrow",
-    description: "Join us for a live webinar on Artificial Intelligence! Don't miss out on valuable insights and Q&A with our experts. Register now!",
+    description: "Join us for a live webinar on Artificial Intelligence! Don't miss out on valuable insights and Q&A with our experts. Register now to save your seat, the link has been sent to your registered email.",
     time: "20 Sep",
     iconBg: "bg-orange-100",
     iconColor: "text-orange-500",
@@ -71,8 +71,14 @@ const notificationsData = [
 ];
 
 export default function Notifications() {
+  // State to track which notification is currently clicked
+  const [selectedNotification, setSelectedNotification] = useState(null);
+
+  // Function to close the modal
+  const closeModal = () => setSelectedNotification(null);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8 relative">
       
       {/* Header Section */}
       <div className="mb-8 border-l-4 border-orange-500 pl-4">
@@ -104,7 +110,8 @@ export default function Notifications() {
         {notificationsData.map((notification) => (
           <div 
             key={notification.id} 
-            className="flex items-start p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition duration-150 ease-in-out"
+            onClick={() => setSelectedNotification(notification)} // Set state on click
+            className="flex items-start p-6 border-b border-gray-100 last:border-0 hover:bg-orange-50 transition duration-150 ease-in-out cursor-pointer"
           >
             {/* Icon */}
             <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl ${notification.iconBg} ${notification.iconColor}`}>
@@ -116,7 +123,7 @@ export default function Notifications() {
               <h3 className="text-base font-semibold text-gray-800">
                 {notification.title}
               </h3>
-              <p className="text-sm text-gray-500 mt-1 pr-4">
+              <p className="text-sm text-gray-500 mt-1 pr-4 line-clamp-1">
                 {notification.description}
               </p>
             </div>
@@ -130,6 +137,56 @@ export default function Notifications() {
           </div>
         ))}
       </div>
+
+      {/* Modal / Popup Overlay */}
+      {selectedNotification && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={closeModal} // Clicking outside the modal closes it
+        >
+          {/* Modal Content Box */}
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative transform transition-all"
+            onClick={(e) => e.stopPropagation()} // Prevents closing when clicking inside the box
+          >
+            {/* Close Button */}
+            <button 
+              onClick={closeModal}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+            
+            {/* Modal Header Icon */}
+            <div className={`w-14 h-14 flex items-center justify-center rounded-2xl mb-6 ${selectedNotification.iconBg} ${selectedNotification.iconColor}`}>
+              {selectedNotification.icon}
+            </div>
+            
+            {/* Modal Text content */}
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {selectedNotification.title}
+            </h2>
+            <p className="text-sm text-gray-400 font-medium mb-6">
+              Received {selectedNotification.time}
+            </p>
+            
+            <div className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 mb-8">
+              {selectedNotification.description}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex justify-end">
+              <button 
+                onClick={closeModal}
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
