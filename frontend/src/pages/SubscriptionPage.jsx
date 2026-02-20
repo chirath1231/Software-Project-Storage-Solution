@@ -1,16 +1,14 @@
 // SubscriptionPage.jsx
 import React, { useEffect, useState } from "react";
-import "../landing.css";
 import buynow from "../assets/buy_now.png";
 
 export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const userEmail = localStorage.getItem("username"); // stays as you had it
+  const userEmail = localStorage.getItem("username");
 
   useEffect(() => {
-    // Fetch both subscriptions and user's active subscriptions (if logged in)
     const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(
       (res) => res.json()
     );
@@ -20,20 +18,14 @@ export default function SubscriptionPage() {
           `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
             userEmail
           )}/`
-        ).then((res) => {
-          if (!res.ok) return [];
-          return res.json();
-        })
+        ).then((res) => (res.ok ? res.json() : []))
       : Promise.resolve([]);
 
     Promise.all([fetchPlans, fetchUserActive])
       .then(([plans, userActive]) => {
         setSubscriptions(plans || []);
-
-        // Build a set of subscription IDs the user has paid
         const paidIds = new Set();
         (userActive || []).forEach((r) => {
-          // r.subscription_id returned by backend (see views.py change)
           if (r.subscription_id) paidIds.add(Number(r.subscription_id));
         });
         setPaidSubs(paidIds);
@@ -50,7 +42,6 @@ export default function SubscriptionPage() {
       alert("You already own this plan.");
       return;
     }
-
     if (!userEmail) {
       alert("Please login first");
       return;
@@ -94,48 +85,69 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (loading) return <h2>Loading...</h2>;
+  if (loading) return <h2 className="text-center mt-20 text-xl">Loading...</h2>;
 
   return (
-    <div>
-      <h2 className="features-title">Pricing</h2>
+    <div className="px-6 py-10 bg-gray-50 min-h-screen">
+      <h2 className="text-4xl font-bold mb-4 text-gray-800 text-center">Subscription Plans</h2>
+      <p className="text-center text-gray-500 mb-10">
+        Choose the plan that fits your needs
+      </p>
 
-      <div className="pricing-container">
+      <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
         {subscriptions.map((sub) => {
           const isPaid = paidSubs.has(sub.id);
+          const isBest = sub.name === "Standard"; // Change plan for "Best Value" if needed
+
           return (
-            <div key={sub.id} className="pricing-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="tag">{sub.name}</span>
-                {isPaid ? (
-                  <span
-                    style={{
-                      background: "#2ecc71",
-                      color: "white",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    PAID
+            <div
+              key={sub.id}
+              className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border ${
+                isBest ? "border-orange-400" : "border-gray-200"
+              } hover:scale-105 transition-transform`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    sub.name === "Standard"
+                      ? "bg-gray-200 text-gray-800"
+                      : sub.name === "Plus"
+                      ? "bg-orange-100 text-orange-600"
+                      : "bg-indigo-100 text-indigo-600"
+                  }`}
+                >
+                  {sub.name}
+                </span>
+                {isBest && (
+                  <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    Best Value
                   </span>
-                ) : null}
+                )}
               </div>
 
-              <h2>Rs. {Number(sub.price).toFixed(2)}</h2>
-              <p>{sub.description}</p>
+              <h2 className="text-2xl font-bold mb-2">Rs. {Number(sub.price).toFixed(2)}</h2>
+              <p className="text-gray-500 mb-4">{sub.description}</p>
+
+              <ul className="mb-6 space-y-2 text-gray-600 text-sm">
+                {sub.features.map((feat, i) => (
+                  <li key={i} className="flex items-center">
+                    <span className="mr-2 text-green-500">✔</span> {feat}
+                  </li>
+                ))}
+              </ul>
 
               <button
-                className="buy-btn"
+                className={`flex items-center justify-center gap-2 font-semibold py-2 rounded-xl w-full text-white ${
+                  isPaid
+                    ? "bg-gray-400 cursor-not-allowed opacity-60"
+                    : isBest
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : "bg-blue-500 hover:bg-blue-600"
+                } transition-colors`}
                 onClick={() => handleSubscribe(sub)}
                 disabled={isPaid}
-                style={{
-                  opacity: isPaid ? 0.6 : 1,
-                  cursor: isPaid ? "not-allowed" : "pointer",
-                }}
               >
-                <img src={buynow} alt="buy" style={{ width: 22, marginRight: 8 }} />
+                <img src={buynow} alt="buy" className="w-5" />
                 {isPaid ? "Subscribed" : "Subscribe Now"}
               </button>
             </div>
