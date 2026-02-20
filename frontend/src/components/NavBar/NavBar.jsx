@@ -392,6 +392,7 @@ const handleLogout = () => {
                       onClick={() => {
                         console.log("Profile");
                         setShowProfileMenu(false);
+                        navigate("/dashboard/profile");
                       }}
                       role="menuitem"
                     >
