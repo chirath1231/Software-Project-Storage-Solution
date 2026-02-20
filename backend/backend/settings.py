@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
+    "storages",
+    "storage"
 ]
 
 # -----------------------------------------------------
