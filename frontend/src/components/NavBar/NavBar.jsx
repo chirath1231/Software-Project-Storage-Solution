@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, use } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 // Mock logo - replace with your actual import
 const LogoDark = () => (
@@ -35,6 +36,7 @@ export default function Navbar() {
   
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
+  const navigate = useNavigate();
 
   // User data - would come from auth context in real app
   const userData = {
@@ -336,10 +338,13 @@ const handleLogout = () => {
                       <div className="px-4 py-3 border-t border-gray-200 text-center">
                         <button
                           className="text-orange-500 text-sm hover:text-orange-600 focus:outline-none font-medium"
-                          onClick={() => console.log("View all notifications")}
+                            onClick={() => {
+                              setShowNotifications(false); // Closes the dropdown
+                              navigate("/dashboard/notifications"); // Navigates to the page
+                            }}
                         >
                           View all notifications
-                        </button>
+                      </button>
                       </div>
                     )}
                   </div>

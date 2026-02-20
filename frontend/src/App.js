@@ -9,6 +9,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import MyFiles from "./pages/MyFiles";
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
+              <Route path="/dashboard/notifications" element={<Notifications />} />
             </Route>
           </Route>
         </Routes>
