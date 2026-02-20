@@ -122,9 +122,11 @@ export default function DashboardHome() {
             <h2 className="text-lg font-semibold">
               Notifications
             </h2>
-            <button className="bg-orange-500 text-white px-4 py-1 rounded-full text-sm">
-              See All
-            </button>
+            <Link to="/dashboard/notifications">
+              <button className="bg-orange-500 hover:bg-orange-600 transition text-white px-4 py-1 rounded-full text-sm">
+                See All
+              </button>
+            </Link>
           </div>
 
           <ul className="space-y-4 text-sm">
