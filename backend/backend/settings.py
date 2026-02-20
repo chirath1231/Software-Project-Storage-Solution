@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "storage"
 ]
 
+
 # -----------------------------------------------------
 # MIDDLEWARE
 # -----------------------------------------------------
@@ -196,6 +197,36 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+
+AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
+AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
+
+AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
+AWS_S3_REGION_NAME = "sfo3"
+AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
+
+
+AWS_DEFAULT_ACL = "public-read"
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_LOCATION = "uploads"
+
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
 
 
 CSRF_TRUSTED_ORIGINS = [
