@@ -30,16 +30,22 @@ export default function Sidebar() {
     { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" },
   ];
 
-  // 🔹 Sync active menu with URL (refresh safe)
+  // 🔥 FIXED LOGIC HERE (longest path match first)
   useEffect(() => {
-    const current = menuItems.find((item) =>
+    const sortedMenu = [...menuItems].sort(
+      (a, b) => b.path.length - a.path.length
+    );
+
+    const current = sortedMenu.find((item) =>
       location.pathname.startsWith(item.path)
     );
-    if (current) setActiveItem(current.id);
+
+    if (current) {
+      setActiveItem(current.id);
+    }
   }, [location.pathname]);
 
   const handleMenuClick = (item) => {
-    setActiveItem(item.id);
     navigate(item.path);
 
     if (window.innerWidth < 768) {
