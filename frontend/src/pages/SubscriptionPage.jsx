@@ -18,7 +18,6 @@ export default function SubscriptionPage() {
 
     const fetchUserActive = userEmail
       ? fetch(
-        
           `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
             userEmail
           )}/`
