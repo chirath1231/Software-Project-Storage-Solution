@@ -45,9 +45,7 @@ const ClientChatSystem = () => {
 
   // Current user identity (best you currently have)
   const currentUsername =
-    sessionStorage.getItem("username") ||
-    localStorage.getItem("username") ||
-    "";
+    sessionStorage.getItem("username") || localStorage.getItem("username") || "";
 
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
@@ -137,8 +135,9 @@ const ClientChatSystem = () => {
 
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
-  loadConversations();
-}, []);
+    loadConversations();
+    // eslint-disable-next-line
+  }, []);
 
   // ----------------- Load Messages + WebSocket -----------------
   useEffect(() => {
@@ -168,7 +167,6 @@ const ClientChatSystem = () => {
       wsRef.current = null;
     }
 
-    // ✅ WS with token in query (your backend middleware should read ?token=)
     const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/?token=${encodeURIComponent(
       token
     )}`;
@@ -182,7 +180,6 @@ const ClientChatSystem = () => {
       try {
         const data = JSON.parse(event.data);
 
-        // Your backend sends: {type:"chat_message", id, conversation, sender, sender_username, text, created_at}
         const incomingText = (data.text || "").trim();
         if (!incomingText) return;
 
@@ -192,15 +189,25 @@ const ClientChatSystem = () => {
           sender: data.sender ?? null,
           sender_username: data.sender_username ?? "Unknown",
           timestamp: data.created_at || new Date().toISOString(),
-          // mark mine (best-effort)
           is_mine:
             (data.sender_username && data.sender_username === currentUsername) ||
             false,
         };
 
-        // prevent duplicates
+        // ✅ FIX DUPLICATES: if server echoed back optimistic msg, replace it
         setMessages((prev) => {
+          if (data.client_id) {
+            const idx = prev.findIndex((m) => m.id === data.client_id);
+            if (idx !== -1) {
+              const copy = [...prev];
+              copy[idx] = incoming;
+              return copy;
+            }
+          }
+
+          // normal de-dupe by DB id
           if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+
           return [...prev, incoming];
         });
 
@@ -240,7 +247,7 @@ const ClientChatSystem = () => {
     if (!text) return;
     if (!selectedConversationId) return;
 
-    // Optimistic UI (optional but makes it feel instant)
+    // ✅ Optimistic UI
     const tempId = `temp-${Date.now()}`;
     const optimistic = {
       id: tempId,
@@ -253,9 +260,10 @@ const ClientChatSystem = () => {
     setMessages((prev) => [...prev, optimistic]);
     setMessageInput("");
 
-    // 1) WebSocket primary (your Django consumer saves to DB + broadcasts)
+    // 1) WebSocket primary (server saves + broadcasts)
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ text })); // ✅ IMPORTANT: backend expects "text"
+      // ✅ IMPORTANT: send client_id so we can replace optimistic message
+      wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
       return;
     }
 
@@ -266,13 +274,10 @@ const ClientChatSystem = () => {
         text,
       });
 
-      // Replace optimistic message with real DB message
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? res.data : m))
-      );
+      // Replace optimistic with real DB message
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
     } catch (err) {
       console.error("Send message failed:", err);
-      // If failed, remove optimistic message
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       alert("Message send failed (WS closed and HTTP failed).");
     }
