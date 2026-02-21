@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
@@ -7,13 +7,13 @@ import { useNavigate } from "react-router-dom";
 // Mock logo - replace with your actual import
 const LogoDark = () => (
   <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <div className="flex-none mr-auto">
-          <img
-            src={logo_dark}
-            alt="CEYNOA Logo"
-            className="h-10 w-auto"
-          />
-        </div>
+    <div className="flex-none mr-auto">
+      <img
+        src={logo_dark}
+        alt="CEYNOA Logo"
+        className="h-10 w-auto"
+      />
+    </div>
   </div>
 );
 
@@ -33,6 +33,7 @@ export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
   
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
@@ -45,32 +46,37 @@ export default function Navbar() {
     avatar: null
   };
 
-  // Mock notifications data
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New message received",
-      message: "You have a new message from John Doe",
-      time: "5 min ago",
-      read: false
-    },
-    {
-      id: 2,
-      title: "System update",
-      message: "Your system has been updated successfully",
-      time: "1 hour ago",
-      read: false
-    },
-    {
-      id: 3,
-      title: "Welcome!",
-      message: "Welcome to CEYNOA platform",
-      time: "2 hours ago",
-      read: true
-    }
-  ]);
+  // Fetch notifications from API
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("access");
+      if (!token) return;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+      const response = await fetch("http://localhost:8000/api/accounts/notifications/", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+
+  // Run fetch when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated]);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -105,17 +111,16 @@ export default function Navbar() {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-const handleLogin = () => {
-  login("dummy-token", "Natasha Avory"); // replace with real login response
-  setMenuOpen(false);
-};
+  const handleLogin = () => {
+    login("dummy-token", "Natasha Avory"); // replace with real login response
+    setMenuOpen(false);
+  };
 
-const handleLogout = () => {
-  logout();
-  setShowProfileMenu(false);
-  setShowNotifications(false);
-};
-
+  const handleLogout = () => {
+    logout();
+    setShowProfileMenu(false);
+    setShowNotifications(false);
+  };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -130,16 +135,34 @@ const handleLogout = () => {
     console.log("Navigate to:", href);
   };
 
-  const markAsRead = (notificationId) => {
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, read: true } : n
-    ));
+  // Hit the API to mark a specific notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("access");
+      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      setNotifications(notifications.map(n => 
+        n.id === notificationId ? { ...n, is_read: true } : n
+      ));
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
   };
 
+  // Marks all unread as read
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    notifications.forEach(n => {
+      if (!n.is_read) markAsRead(n.id);
+    });
   };
 
+  // Locally hides the notification (since we don't have a delete API yet)
   const clearNotification = (notificationId) => {
     setNotifications(notifications.filter(n => n.id !== notificationId));
   };
@@ -252,6 +275,8 @@ const handleLogout = () => {
                   onClick={() => {
                     setShowNotifications(!showNotifications);
                     setShowProfileMenu(false);
+                    // Fetch fresh notifications when opening the dropdown
+                    if (!showNotifications) fetchNotifications(); 
                   }}
                   aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
                   aria-expanded={showNotifications}
@@ -292,7 +317,7 @@ const handleLogout = () => {
                           <div
                             key={notification.id}
                             className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                              !notification.read ? 'bg-blue-50' : ''
+                              !notification.is_read ? 'bg-orange-50/50' : ''
                             }`}
                             onClick={() => markAsRead(notification.id)}
                           >
@@ -302,15 +327,15 @@ const handleLogout = () => {
                                   <h4 className="text-gray-800 font-medium text-sm">
                                     {notification.title}
                                   </h4>
-                                  {!notification.read && (
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                  {!notification.is_read && (
+                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
                                   )}
                                 </div>
-                                <p className="text-gray-600 text-xs mt-1">
+                                <p className="text-gray-600 text-xs mt-1 line-clamp-2">
                                   {notification.message}
                                 </p>
                                 <p className="text-gray-400 text-xs mt-1">
-                                  {notification.time}
+                                  {new Date(notification.created_at).toLocaleDateString()}
                                 </p>
                               </div>
                               <button
@@ -334,19 +359,17 @@ const handleLogout = () => {
                     </div>
 
                     {/* Footer */}
-                    {notifications.length > 0 && (
-                      <div className="px-4 py-3 border-t border-gray-200 text-center">
-                        <button
-                          className="text-orange-500 text-sm hover:text-orange-600 focus:outline-none font-medium"
-                            onClick={() => {
-                              setShowNotifications(false); // Closes the dropdown
-                              navigate("/dashboard/notifications"); // Navigates to the page
-                            }}
-                        >
-                          View all notifications
+                    <div className="px-4 py-3 border-t border-gray-200 text-center">
+                      <button
+                        className="text-orange-500 text-sm hover:text-orange-600 focus:outline-none font-medium"
+                          onClick={() => {
+                            setShowNotifications(false);
+                            navigate("/dashboard/notifications");
+                          }}
+                      >
+                        View all notifications
                       </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
