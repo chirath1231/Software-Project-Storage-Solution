@@ -43,6 +43,12 @@ const ClientChatSystem = () => {
 
   const wsRef = useRef(null);
 
+  // Current user identity (best you currently have)
+  const currentUsername =
+    sessionStorage.getItem("username") ||
+    localStorage.getItem("username") ||
+    "";
+
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
     return conversations.find((c) => c.id === selectedConversationId) || null;
@@ -98,7 +104,6 @@ const ClientChatSystem = () => {
   const loadUsers = async () => {
     setUsersLoading(true);
     try {
-      // Uses your existing endpoint
       const res = await api.get("/chat/users/");
       setUsers(res.data || []);
     } catch (err) {
@@ -112,7 +117,6 @@ const ClientChatSystem = () => {
   // ----------------- New Chat: Start conversation -----------------
   const startChatWithUser = async (otherUserId) => {
     try {
-      // create/get conversation
       const res = await api.post("/conversations/start/", {
         other_user_id: otherUserId,
       });
@@ -123,7 +127,6 @@ const ClientChatSystem = () => {
         return;
       }
 
-      // refresh list + open new conversation
       await loadConversations();
       setSelectedConversationId(newConversationId);
       setShowNewChat(false);
@@ -134,13 +137,18 @@ const ClientChatSystem = () => {
 
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
-    loadConversations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  loadConversations();
+}, []);
 
   // ----------------- Load Messages + WebSocket -----------------
   useEffect(() => {
     if (!selectedConversationId) return;
+
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      console.warn("No JWT token found in sessionStorage. WebSocket will not connect.");
+      return;
+    }
 
     const loadMessages = async () => {
       try {
@@ -160,9 +168,10 @@ const ClientChatSystem = () => {
       wsRef.current = null;
     }
 
-    // ✅ WS with token in query (requires backend JWT WS middleware)
-    const token = sessionStorage.getItem("token");
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/?token=${token || ""}`;
+    // ✅ WS with token in query (your backend middleware should read ?token=)
+    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/?token=${encodeURIComponent(
+      token
+    )}`;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -172,23 +181,26 @@ const ClientChatSystem = () => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const incomingText = data.text ?? data.message ?? "";
+
+        // Your backend sends: {type:"chat_message", id, conversation, sender, sender_username, text, created_at}
+        const incomingText = (data.text || "").trim();
         if (!incomingText) return;
 
         const incoming = {
           id: data.id ?? `ws-${Date.now()}`,
           text: incomingText,
-          sender: data.sender ?? data.sender_id ?? null,
-          sender_username: data.sender_username ?? data.senderName ?? "Unknown",
-          timestamp: data.timestamp ?? new Date().toISOString(),
-          is_mine: data.is_mine ?? false,
+          sender: data.sender ?? null,
+          sender_username: data.sender_username ?? "Unknown",
+          timestamp: data.created_at || new Date().toISOString(),
+          // mark mine (best-effort)
+          is_mine:
+            (data.sender_username && data.sender_username === currentUsername) ||
+            false,
         };
 
         // prevent duplicates
         setMessages((prev) => {
           if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-          const last = prev[prev.length - 1];
-          if (!data.id && last && last.text === incoming.text) return prev;
           return [...prev, incoming];
         });
 
@@ -215,42 +227,54 @@ const ClientChatSystem = () => {
     ws.onclose = () => console.log("WS closed");
     ws.onerror = (e) => console.error("WS error:", e);
 
-    return () => ws.close();
-  }, [selectedConversationId]);
+    return () => {
+      try {
+        ws.close();
+      } catch {}
+    };
+  }, [selectedConversationId, currentUsername]);
 
-  // ----------------- Send Message (SAVE TO DB + realtime) -----------------
+  // ----------------- Send Message (REALTIME FIRST) -----------------
   const handleSendMessage = async () => {
     const text = messageInput.trim();
     if (!text) return;
     if (!selectedConversationId) return;
 
+    // Optimistic UI (optional but makes it feel instant)
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = {
+      id: tempId,
+      text,
+      sender_username: currentUsername || "me",
+      timestamp: new Date().toISOString(),
+      is_mine: true,
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
+    setMessageInput("");
+
+    // 1) WebSocket primary (your Django consumer saves to DB + broadcasts)
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ text })); // ✅ IMPORTANT: backend expects "text"
+      return;
+    }
+
+    // 2) HTTP fallback (if WS not connected)
     try {
-      // 1) Save message to DB using API
       const res = await api.post("/messages/send/", {
         conversation_id: selectedConversationId,
-        text: text,
+        text,
       });
 
-      // Add saved message to UI
-      setMessages((prev) => [...prev, res.data]);
-
-      // 2) Optional: notify WebSocket for realtime (if backend supports receive)
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ message: text }));
-      }
-
-      // Update preview in left list
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === selectedConversationId
-            ? { ...c, last_message: { text: text, timestamp: res.data.timestamp } }
-            : c
-        )
+      // Replace optimistic message with real DB message
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? res.data : m))
       );
-
-      setMessageInput("");
     } catch (err) {
       console.error("Send message failed:", err);
+      // If failed, remove optimistic message
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      alert("Message send failed (WS closed and HTTP failed).");
     }
   };
 
@@ -286,7 +310,6 @@ const ClientChatSystem = () => {
                 <button
                   onClick={() => {
                     setShowNewChat((v) => !v);
-                    // load users when opening
                     if (!showNewChat) loadUsers();
                   }}
                   className="px-3 py-1 rounded-lg bg-orange-500 text-white text-sm hover:bg-orange-600"
@@ -433,7 +456,9 @@ const ClientChatSystem = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.map((m) => {
-                const isMine = m.is_mine === true || m.sender_username === "me";
+                const isMine =
+                  m.is_mine === true ||
+                  (m.sender_username && m.sender_username === currentUsername);
 
                 return (
                   <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
