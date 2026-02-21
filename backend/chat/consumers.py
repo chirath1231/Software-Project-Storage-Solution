@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .models import ConversationParticipant, Message
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
@@ -28,16 +29,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         user = self.scope["user"]
         data = json.loads(text_data)
+
         text = (data.get("text") or "").strip()
+        client_id = data.get("client_id")  # ✅ NEW (used to prevent duplicates)
+
         if not text:
             return
 
         msg = await self.create_message(self.conversation_id, user.id, text)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {"type": "chat_message", **msg},
-        )
+        payload = {"type": "chat_message", **msg}
+        if client_id:
+            payload["client_id"] = client_id  # ✅ NEW
+
+        await self.channel_layer.group_send(self.room_group_name, payload)
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
