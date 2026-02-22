@@ -407,6 +407,18 @@ export default function DashboardHome() {
                   </p>
                 </>
               )}
+        {/* Notifications */}
+        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">
+              Notifications
+            </h2>
+            <Link to="/dashboard/notifications">
+              <button className="bg-orange-500 hover:bg-orange-600 transition text-white px-4 py-1 rounded-full text-sm">
+                See All
+              </button>
+            </Link>
+          </div>
 
               {uploadStatus === "uploading" && (
                 <p className="text-sm font-medium text-orange-500 mt-1">
