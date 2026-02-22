@@ -4,31 +4,56 @@ import "../auth.css";
 import Maskgroup from "../assets/Maskgroup.png";
 import Logo_on_Light from "../assets/Logo_on_Light.png";
 import { FcGoogle } from "react-icons/fc";
-import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../auth/AuthContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // ==========================
   // 🔐 NORMAL LOGIN
+  // ==========================
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/accounts/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await fetch(
+        "http://localhost:8000/api/accounts/login/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data?.detail || data?.non_field_errors || "Login failed");
+        alert(
+          data?.detail ||
+            data?.non_field_errors ||
+            "Invalid email or password"
+        );
+        setLoading(false);
         return;
+      }
+
+      // Save tokens
+      if (rememberMe) {
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+        localStorage.setItem("username", data.username);
+      } else {
+        sessionStorage.setItem("access_token", data.access);
+        sessionStorage.setItem("refresh_token", data.refresh);
+        sessionStorage.setItem("username", data.username);
       }
 
       login(data.access, data.username);
@@ -36,36 +61,59 @@ function Login() {
     } catch (error) {
       alert("Server error. Please try again.");
     }
+
+    setLoading(false);
   };
 
+  // ==========================
   // 🔵 GOOGLE LOGIN
+  // ==========================
   const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+
     try {
-      const res = await fetch("http://localhost:8000/api/accounts/google/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: credentialResponse.credential,
-        }),
-      });
+      const res = await fetch(
+        "http://localhost:8000/api/accounts/google/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: credentialResponse.credential,
+          }),
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
         alert("Google login failed");
+        setLoading(false);
         return;
       }
+
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      localStorage.setItem("username", data.username);
 
       login(data.access, data.username);
       navigate("/dashboard");
     } catch (error) {
       alert("Google login error");
     }
+
+    setLoading(false);
   };
 
+  // ==========================
+  // UI
+  // ==========================
   return (
     <div className="auth-container">
-      <img src={Logo_on_Light} alt="Company Logo" className="company-logo" />
+      <img
+        src={Logo_on_Light}
+        alt="Company Logo"
+        className="company-logo"
+      />
 
       <div className="left-side">
         <div className="auth-box">
@@ -94,14 +142,29 @@ function Login() {
             />
 
             <div className="remember-area">
-              <input type="checkbox" id="rememberMe" className="checkbox" />
-              <label htmlFor="rememberMe" className="checkbox-label">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                className="checkbox"
+                checked={rememberMe}
+                onChange={() =>
+                  setRememberMe(!rememberMe)
+                }
+              />
+              <label
+                htmlFor="rememberMe"
+                className="checkbox-label"
+              >
                 Keep me logged in
               </label>
             </div>
 
-            <button className="btn" type="submit">
-              Sign in
+            <button
+              className="btn"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
@@ -109,7 +172,7 @@ function Login() {
             ___________________________or_____________________________
           </p>
 
-          {/* ✅ YOUR BUTTON – GOOGLE LOGIC ATTACHED */}
+          {/* GOOGLE BUTTON */}
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => alert("Google Login Failed")}
@@ -117,16 +180,22 @@ function Login() {
               <button
                 className="social-btn"
                 onClick={renderProps.onClick}
-                disabled={renderProps.disabled}
+                disabled={renderProps.disabled || loading}
               >
-                Continnue with Google
-                <FcGoogle size={20} className="social-logo" />
+                Continue with Google
+                <FcGoogle
+                  size={20}
+                  className="social-logo"
+                />
               </button>
             )}
           />
 
           <p className="footer-text">
-            Don’t have an account? <Link to="/register">Create account</Link>
+            Don’t have an account?{" "}
+            <Link to="/register">
+              Create account
+            </Link>
           </p>
 
           <div className="footer-links">
@@ -137,7 +206,10 @@ function Login() {
         </div>
 
         <div className="right-side">
-          <img src={Maskgroup} alt="Side Visual" />
+          <img
+            src={Maskgroup}
+            alt="Side Visual"
+          />
         </div>
       </div>
     </div>

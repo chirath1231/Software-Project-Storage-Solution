@@ -67,6 +67,8 @@ def user_subscriptions(request, email):
         {
             "subscription_id": r.subscription.id,
             "subscription_name": r.subscription.name,
+            "storage": r.subscription.storage,   # Include storage directly
+
             "amount": str(r.amount),
             "order_id": r.order_id,
             "payment_id": r.payment_id,
@@ -129,7 +131,7 @@ def create_payhere_payment(request):
         "merchant_id": MERCHANT_ID,
         "return_url": "http://localhost:3000/payment-success",
         "cancel_url": "http://localhost:3000/payment-cancel",
-        "notify_url": "https://33bd592269ac.ngrok-free.app/api/subscriptions/payhere/notify/",
+        "notify_url": "https://c28b-2402-4000-13cb-81f2-3cd6-e782-2f38-c710.ngrok-free.app/api/subscriptions/payhere/notify/",
         "order_id": order_id,
         "items": f"Subscription-{subscription_id}",
         "currency": currency,
