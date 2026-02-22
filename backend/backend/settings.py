@@ -47,8 +47,8 @@ INSTALLED_APPS = [
     "django_extensions",
 
     "storages",
-    "storage"
-    "accounts",
+    "storage",
+    
     'anymail',  
 
 ]
