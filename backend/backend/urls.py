@@ -11,7 +11,12 @@ urlpatterns = [
      path('api/accounts/', include('accounts.urls')),
      # if you use accounts app
     path('api/subscriptions/', include('subscriptions.urls')),  # keep this only once
+<<<<<<< HEAD
+    path('api/chat/', include('chat.urls')),  # add this line for chat API
+    path("api/", include("chat.api_urls")),
+=======
     path("api/", include("storage.urls")),
+>>>>>>> 09dd24186fec7dc528f4ce694b942caf1035fecd
 
 ]
 

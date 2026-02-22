@@ -1,14 +1,20 @@
-from rest_framework.decorators import api_view
+# subscriptions/views.py
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+
 from .models import Subscription, Payment, SubscriptionPayment
 from .serializers import SubscriptionSerializer
+
 import uuid
 import hashlib
 import logging
 
-# Setup logger
+
 logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------
@@ -22,12 +28,13 @@ MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 
 
 # --------------------------------------------------------
-# GET ALL SUBSCRIPTIONS
+# GET ALL SUBSCRIPTIONS (PUBLIC)
 # --------------------------------------------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])  # ✅ PUBLIC: anyone can view plans (fixes 401)
 def subscription_list(request):
     """
-    Returns all available subscription plans
+    Returns all available subscription plans (public)
     """
     subs = Subscription.objects.all()
     serializer = SubscriptionSerializer(subs, many=True)
@@ -35,14 +42,21 @@ def subscription_list(request):
 
 
 # --------------------------------------------------------
-# GET USER'S ACTIVE SUBSCRIPTIONS
+# GET USER'S ACTIVE SUBSCRIPTIONS (RECOMMENDED: AUTH REQUIRED)
+# NOTE: Your current frontend passes email in URL.
+#       This is not secure because anyone can query another email.
+#       Kept as-is but protected with IsAuthenticated.
 # --------------------------------------------------------
-# views.py (replace only the user_subscriptions function)
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])  # ✅ Require login (recommended)
 def user_subscriptions(request, email):
     """
     Returns all active subscriptions for a specific user email.
     Includes subscription id so the frontend can match plans.
+
+    SECURITY NOTE:
+    - Better approach: do NOT accept email in URL.
+      Use request.user.email instead.
     """
     records = SubscriptionPayment.objects.filter(
         user_email=email,
@@ -62,19 +76,18 @@ def user_subscriptions(request, email):
         }
         for r in records
     ]
-
     return Response(data)
-
 
 
 # --------------------------------------------------------
 # CREATE PAYMENT → FRONTEND REDIRECTS TO PAYHERE
 # --------------------------------------------------------
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])  # ✅ Require login (recommended)
 def create_payhere_payment(request):
     """
-    Creates a payment record and returns PayHere checkout data
-    Frontend will use this data to redirect user to PayHere payment gateway
+    Creates a payment record and returns PayHere checkout data.
+    Frontend will use this data to redirect user to PayHere payment gateway.
     """
     subscription_id = request.data.get("subscription_id")
     email = request.data.get("email")
@@ -88,7 +101,14 @@ def create_payhere_payment(request):
         )
 
     # Format amount to 2 decimal places
-    amount = f"{float(amount):.2f}"
+    try:
+        amount = f"{float(amount):.2f}"
+    except (TypeError, ValueError):
+        return Response(
+            {"success": False, "error": "Invalid amount"},
+            status=400
+        )
+
     order_id = "ORDER_" + str(uuid.uuid4())
     currency = "LKR"
 
@@ -106,7 +126,6 @@ def create_payhere_payment(request):
     string_to_hash = f"{MERCHANT_ID}{order_id}{amount}{currency}{MERCHANT_SECRET_MD5}"
     md5sig = hashlib.md5(string_to_hash.encode()).hexdigest().upper()
 
-    # Prepare payment data for PayHere checkout
     paymentData = {
         "sandbox": True,
         "merchant_id": MERCHANT_ID,
@@ -129,7 +148,7 @@ def create_payhere_payment(request):
 
         # Security hash
         "hash": md5sig,
-        
+
         # Custom field to store subscription_id
         "custom_1": str(subscription_id),
     }
@@ -138,15 +157,15 @@ def create_payhere_payment(request):
 
 
 # --------------------------------------------------------
-# PAYHERE WEBHOOK (SERVER → SERVER) - DEBUGGING VERSION
+# PAYHERE WEBHOOK (SERVER → SERVER) - PUBLIC + CSRF EXEMPT
 # --------------------------------------------------------
 @csrf_exempt
 @api_view(["POST"])
+@permission_classes([AllowAny])  # ✅ PayHere server can't send JWT, so must be public
 def payhere_notify(request):
     """
     PayHere sends payment notifications to this endpoint
     """
-    # Log all received data for debugging
     print("=" * 60)
     print("🔔 PAYHERE NOTIFICATION RECEIVED")
     print("=" * 60)
@@ -154,22 +173,20 @@ def payhere_notify(request):
     print("Content-Type:", request.content_type)
     print("Raw Data:", request.body)
     print("\nParsed Data:")
-    
+
     # PayHere sends data as form-data, not JSON
-    # Use request.POST instead of request.data
     data = request.POST.dict() if request.POST else request.data
-    
+
     for key, value in data.items():
         print(f"  {key}: {value}")
-    
-    # Extract PayHere notification data
+
     merchant_id = data.get("merchant_id")
     order_id = data.get("order_id")
     pay_amount = data.get("payhere_amount")
     pay_currency = data.get("payhere_currency")
     status_code = data.get("status_code")
     received_md5 = data.get("md5sig")
-    
+
     print("\n📋 EXTRACTED VALUES:")
     print(f"  Merchant ID: {merchant_id}")
     print(f"  Order ID: {order_id}")
@@ -178,7 +195,6 @@ def payhere_notify(request):
     print(f"  Status Code: {status_code}")
     print(f"  Received MD5: {received_md5}")
 
-    # Check if all required fields are present
     if not all([merchant_id, order_id, pay_amount, pay_currency, status_code, received_md5]):
         print("❌ MISSING REQUIRED FIELDS")
         print("=" * 60)
@@ -187,7 +203,7 @@ def payhere_notify(request):
     # VERIFY HASH for security
     verify_string = f"{merchant_id}{order_id}{pay_amount}{pay_currency}{status_code}{MERCHANT_SECRET_MD5}"
     computed_md5 = hashlib.md5(verify_string.encode()).hexdigest().upper()
-    
+
     print("\n🔐 HASH VERIFICATION:")
     print(f"  Verify String: {verify_string}")
     print(f"  Computed MD5: {computed_md5}")
@@ -201,7 +217,6 @@ def payhere_notify(request):
 
     print("✅ HASH VERIFIED SUCCESSFULLY")
 
-    # Map PayHere status codes to our status values
     status_map = {
         "2": "SUCCESS",
         "0": "PENDING",
@@ -209,25 +224,20 @@ def payhere_notify(request):
         "-2": "FAILED",
         "-3": "CHARGEDBACK",
     }
-
     payment_status = status_map.get(status_code, "UNKNOWN")
     print(f"\n💳 PAYMENT STATUS: {payment_status}")
 
-    # Update the Payment record
     updated_count = Payment.objects.filter(order_id=order_id).update(
         status=payment_status,
         payment_id=data.get("payment_id"),
     )
-    
     print(f"📝 Updated {updated_count} Payment record(s)")
 
-    # IF PAYMENT IS SUCCESSFUL → SAVE TO SubscriptionPayment TABLE
     if payment_status == "SUCCESS":
         try:
             payment = Payment.objects.get(order_id=order_id)
             print(f"\n✅ Payment found: {payment}")
-            
-            # Check if subscription payment already exists
+
             if not SubscriptionPayment.objects.filter(order_id=order_id).exists():
                 sub_payment = SubscriptionPayment.objects.create(
                     user_email=payment.payer_email,
@@ -240,7 +250,7 @@ def payhere_notify(request):
                 print(f"✅ SubscriptionPayment created: {sub_payment}")
             else:
                 print(f"⚠️ SubscriptionPayment already exists for order: {order_id}")
-                
+
         except Payment.DoesNotExist:
             print(f"❌ Payment record not found for order: {order_id}")
         except Exception as e:
@@ -256,6 +266,7 @@ def payhere_notify(request):
 # FRONTEND CAN CHECK PAYMENT STATUS
 # --------------------------------------------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])  # ✅ Optional: public is fine (shows only status)
 def check_payment_status(request, order_id):
     """
     Allows frontend to check the current status of a payment
@@ -270,5 +281,3 @@ def check_payment_status(request, order_id):
         }, status=200)
     except Payment.DoesNotExist:
         return JsonResponse({"error": "Order not found"}, status=404)
-    
-

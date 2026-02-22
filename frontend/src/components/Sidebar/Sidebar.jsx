@@ -23,7 +23,7 @@ export default function Sidebar() {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/dashboard" },
     { id: "files", label: "My Files", icon: <Folder />, path: "/dashboard/files" },
-    { id: "clients", label: "Clients", icon: <Users />, path: "/dashboard/clients" },
+    { id: "clients", label: "Clients", icon: <Users />, path: "/ClientChatSystem" },
     { id: "subscription", label: "Subscription", icon: <CreditCard />, path: "/dashboard/subscription" },
     { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
@@ -48,7 +48,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-white">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -74,7 +74,7 @@ export default function Sidebar() {
             bg-gradient-to-b from-white via-orange-50 to-orange-200
             flex flex-col py-6
             transition-transform duration-300 ease-in-out
-            z-40 mt-5 ml-5 rounded-2xl mb-5
+            z-40 mt-5 ml-10 rounded-2xl mb-5  mr-10
             
             ${isOpen ? "fixed inset-y-0 left-0 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full"}
             md:relative md:translate-x-0 md:w-[260px]
