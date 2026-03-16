@@ -10,6 +10,7 @@ def generate_order_id():
 class Subscription(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    storage = models.IntegerField(default=0)  
     price = models.DecimalField(max_digits=10, decimal_places=2)
     features = ArrayField(
         models.CharField(max_length=255, blank=True),
@@ -17,6 +18,7 @@ class Subscription(models.Model):
         blank=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return self.name
