@@ -6,6 +6,7 @@ import Logo_on_Light from "../assets/Logo_on_Light.png";
 import { FcGoogle } from "react-icons/fc";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../auth/AuthContext";
+import axios from "axios";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -56,8 +57,20 @@ function Login() {
         sessionStorage.setItem("username", data.username);
       }
 
-      login(data.access, data.username);
-      navigate("/dashboard");
+      if (data.role === "admin") {
+        // Redirect to admin dashboard
+        navigate("/admin-dashboard");
+        return;
+      } else if (data.role === "user") {
+        // Normal user
+        login(data.access, data.username);
+        navigate("/dashboard");
+        return;
+      } else {
+        alert("Invalid login");
+        setLoading(false);
+        return;
+      }
     } catch (error) {
       alert("Server error. Please try again.");
     }

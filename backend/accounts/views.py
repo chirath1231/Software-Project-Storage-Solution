@@ -7,12 +7,17 @@ from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from rest_framework.decorators import api_view
+from django.contrib.auth import authenticate
+from .models import Admin
+from django.contrib.auth.hashers import make_password, check_password
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
+
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -57,7 +62,27 @@ class LoginAPIView(APIView):
 
         return Response(serializer.errors, status=400)
 
+@api_view(['POST'])
+def login_view(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
 
+    # 1️⃣ Check admin table
+    admin = Admin.objects.filter(email=email).first()
+    if admin:
+        if check_password(password, admin.password):
+            return Response({"role": "admin", "message": "Admin login successful"})
+        else:
+            return Response({"error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 2️⃣ Check normal Django user
+    user = authenticate(username=email, password=password)
+    if user:
+        return Response({"role": "user", "message": "User login successful"})
+
+    # 3️⃣ Invalid credentials
+    return Response({"error": "Invalid email  password"}, status=status.HTTP_401_UNAUTHORIZED)
+    
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleLoginAPIView(APIView):
     permission_classes = [AllowAny]

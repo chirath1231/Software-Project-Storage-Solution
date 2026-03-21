@@ -4,8 +4,15 @@ import { useAuth } from "../auth/AuthContext";
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
 
+  // ✅ Bypass authentication in development
+  if (process.env.NODE_ENV === "development") {
+    return <Outlet />;
+  }
+
   if (loading) {
-    return <div style={{ textAlign: "center", marginTop: "50px" }}>Checking authentication...</div>;
+    return <div style={{ textAlign: "center", marginTop: "50px" }}>
+      Checking authentication...
+    </div>;
   }
 
   if (!isAuthenticated) {

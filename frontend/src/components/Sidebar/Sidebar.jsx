@@ -10,9 +10,12 @@ import {
   HelpCircle,
   Menu,
   X,
+  BarChart2,
+  TrendingUp,
+  FileText,
 } from "lucide-react";
 
-export default function Sidebar() {
+export default function Sidebar({ isAdmin = false }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,7 +23,7 @@ export default function Sidebar() {
   const [activeItem, setActiveItem] = useState("dashboard");
 
   // 🔹 Menu config with ROUTES
-  const menuItems = [
+  const userMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/dashboard" },
     { id: "files", label: "My Files", icon: <Folder />, path: "/dashboard/files" },
     { id: "clients", label: "Clients", icon: <Users />, path: "/dashboard/clients" },
@@ -29,6 +32,17 @@ export default function Sidebar() {
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
     { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" },
   ];
+
+  const adminMenuItems = [
+    { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/admin-dashboard" },
+    { id: "users", label: "User Management", icon: <Users />, path: "/admin/users" },
+    { id: "reports", label: "Reports and Analytics", icon: <BarChart2 />, path: "/admin/reports" },
+    { id: "subs_analytics", label: "Subscription Analytics", icon: <TrendingUp />, path: "/admin/subscription-analytics" },
+    { id: "tickets", label: "Ticket Submissions", icon: <FileText />, path: "/admin/tickets" },
+    { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings" },
+  ];
+
+  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
 
   // 🔥 FIXED LOGIC HERE (longest path match first)
   useEffect(() => {
@@ -43,7 +57,7 @@ export default function Sidebar() {
     if (current) {
       setActiveItem(current.id);
     }
-  }, [location.pathname]);
+  }, [location.pathname, menuItems]);
 
   const handleMenuClick = (item) => {
     navigate(item.path);
