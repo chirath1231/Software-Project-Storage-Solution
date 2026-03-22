@@ -26,12 +26,14 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
   </button>
 );
 
-export default function Navbar() {
+export default function Navbar({ isDashboard = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, username, login, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const showDashboardView = isAuthenticated || isDashboard;
   
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
@@ -167,7 +169,7 @@ const handleLogout = () => {
           md:relative absolute top-full left-0 right-0 bg-gray-800 md:bg-transparent
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
-          {!isAuthenticated ? (
+          {!showDashboardView ? (
             // Navigation links (before login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
               {[
@@ -208,7 +210,7 @@ const handleLogout = () => {
           )}
 
           {/* Mobile auth buttons (only when logged out) */}
-          {!isAuthenticated && (
+          {!showDashboardView && (
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
               <GradientButton 
                 title="Register" 
@@ -226,7 +228,7 @@ const handleLogout = () => {
 
         {/* Right section - Auth buttons or Profile */}
         <div className="hidden md:flex gap-3 items-center relative">
-          {!isAuthenticated ? (
+          {!showDashboardView ? (
             // Auth buttons (before login)
             <>
               <GradientButton 
@@ -366,7 +368,7 @@ const handleLogout = () => {
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-white text-sm font-semibold">{username}</div>
+                    <div className="text-white text-sm font-semibold">{username || userData.name}</div>
                     <div className="text-gray-400 text-xs">{userData.email}</div>
                   </div>
                   <ChevronDown 
