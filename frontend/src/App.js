@@ -9,6 +9,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import MyFiles from "./pages/MyFiles";
+import ClientChatSystem from "./pages/ClientChatSystem.jsx";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="files" element={<MyFiles />} />
+              <Route path="chat" element={<ClientChatSystem />} />
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
