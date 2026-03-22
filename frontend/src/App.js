@@ -13,9 +13,12 @@ import ClientChatSystem from "./pages/ClientChatSystem.jsx";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import MyFiles from "./pages/MyFiles";
+<<<<<<< HEAD
 import Notifications from './pages/Notifications';
 import MyProfile from './pages/MyProfile';
 >>>>>>> 09dd24186fec7dc528f4ce694b942caf1035fecd
+=======
+>>>>>>> chirath
 
 function App() {
   return (
@@ -41,8 +44,6 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
-              <Route path="/dashboard/notifications" element={<Notifications />} />
-              <Route path="profile" element={<MyProfile />} />
             </Route>
 >>>>>>> 09dd24186fec7dc528f4ce694b942caf1035fecd
           </Route>
