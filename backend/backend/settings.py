@@ -33,17 +33,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "subscriptions",
+
+    # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    'django.contrib.postgres',
-    # YOUR APPS
-    "accounts",  # your authentication app
-    "storages",
-    "storage"
+    "django.contrib.postgres",
+    "anymail",
+    "storages",  # django-storages
+
+    # Your apps
     "accounts",
-    'anymail',  
+    "storage",
+    "subscriptions",
 ]
 
 
