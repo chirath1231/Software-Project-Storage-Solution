@@ -23,11 +23,11 @@ export default function Sidebar() {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/dashboard" },
     { id: "files", label: "My Files", icon: <Folder />, path: "/dashboard/files" },
-    { id: "clients", label: "Clients", icon: <Users />, path: "/ClientChatSystem" },
+    { id: "clients", label: "Clients", icon: <Users />, path: "/dashboard/chat" },
     { id: "subscription", label: "Subscription", icon: <CreditCard />, path: "/dashboard/subscription" },
     { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
-    { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" },
+    { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" }
   ];
 
   // 🔹 Sync active menu with URL (refresh safe)

@@ -299,10 +299,8 @@ const ClientChatSystem = () => {
   // ----------------- Render -----------------
   return (
     <div>
-      <Navbar />
 
       <div className="flex h-screen bg-white">
-        <Sidebar />
 
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
           {/* Sidebar (Clients List) */}
@@ -574,7 +572,6 @@ const ClientChatSystem = () => {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 };
