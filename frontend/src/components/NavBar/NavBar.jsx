@@ -49,7 +49,7 @@ export default function Navbar() {
   // Fetch notifications from API
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("access");
+      const token = localStorage.getItem("access_token");
       if (!token) return;
 
       const response = await fetch("http://localhost:8000/api/accounts/notifications/", {
@@ -62,6 +62,7 @@ export default function Navbar() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("🚨 DATA FROM DJANGO:", data);
         setNotifications(data);
       }
     } catch (err) {

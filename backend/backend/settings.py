@@ -38,11 +38,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     'django.contrib.postgres',
-    # YOUR APPS
-    "accounts",  # your authentication app
-    "storages",
-    "storage"
     "accounts",
+    "storages",
+    "storage",  
     'anymail',  
 ]
 

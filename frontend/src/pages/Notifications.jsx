@@ -14,7 +14,7 @@ export default function Notifications() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("access"); // Assuming you store your JWT here
+      const token = localStorage.getItem("access_token"); // Assuming you store your JWT here
       
       const response = await fetch("http://localhost:8000/api/accounts/notifications/", {
         method: "GET",
