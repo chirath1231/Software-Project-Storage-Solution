@@ -1,30 +1,19 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-# Updated imports to include Notification and NotificationSerializer
-from .models import Notification
-from .serializers import (
-    RegisterSerializer, 
-    LoginSerializer, 
-    GoogleAuthSerializer, 
-    NotificationSerializer
-)
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
 
-
-# -------------------------
-# Authentication Views
-# -------------------------
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
@@ -109,32 +98,3 @@ class GoogleLoginAPIView(APIView):
                 {"detail": "Invalid Google token"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-
-# -------------------------
-# Notification Views
-# -------------------------
-
-class NotificationListView(APIView):
-    # Requires the user to be logged in and send a valid JWT token
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        # Fetch notifications only for the logged-in user
-        notifications = Notification.objects.filter(user=request.user)
-        serializer = NotificationSerializer(notifications, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class MarkNotificationReadView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, pk):
-        try:
-            # Find the notification by ID, ensuring it belongs to the logged-in user
-            notification = Notification.objects.get(pk=pk, user=request.user)
-            notification.is_read = True
-            notification.save()
-            return Response({"message": "Notification marked as read."}, status=status.HTTP_200_OK)
-        except Notification.DoesNotExist:
-            return Response({"error": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)

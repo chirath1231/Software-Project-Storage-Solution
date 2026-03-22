@@ -33,19 +33,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # Third-party
+    "subscriptions",
+    # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    "django.contrib.postgres",
-    "anymail",
-    "storages",  # django-storages
-
-    # Your apps
-    "accounts",
-    "storage",
-    "subscriptions",
+    'django.contrib.postgres',
+    # YOUR APPS
+    "accounts",  # your authentication app
+    "storages",
+    "storage"
 ]
 
 
@@ -59,6 +56,8 @@ SESSION_COOKIE_SAMESITE = "None"
 CSRF_USE_SESSIONS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
+
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -85,6 +84,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
 
 # -----------------------------------------------------
 # URL CONFIG
@@ -142,6 +149,8 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -224,17 +233,3 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-
-# -----------------------------------------------------
-# MAILGUN ANYMAIL SETUP
-# -----------------------------------------------------
-ANYMAIL = {
-    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY"), 
-    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_DOMAIN"), 
-}
-
-# Tell Django to use Anymail for sending emails
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
-
-# The default email address your emails will come from (make sure to use your domain here)
-DEFAULT_FROM_EMAIL = f"CEYNOA Notifications <postmaster@{os.getenv('MAILGUN_DOMAIN')}>"
