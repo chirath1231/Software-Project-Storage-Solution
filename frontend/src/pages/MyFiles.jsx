@@ -19,9 +19,12 @@ export default function MyFiles() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [totalStorageGB, setTotalStorageGB] = useState(5);
-  const [storageUsed, setStorageUsed] = useState(0);   // percentage
-  const [totalUsedGB, setTotalUsedGB] = useState(0);   // number in GB
+  const [storageUsed, setStorageUsed] = useState(0); // percentage
+  const [totalUsedGB, setTotalUsedGB] = useState(0); // number in GB
   const [isStorageFull, setIsStorageFull] = useState(false);
+
+  const [openMenuId, setOpenMenuId] = useState(null); // NEW: tracks which file's menu is open
+  const [shareExpiry, setShareExpiry] = useState("");
 
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("username");
@@ -40,7 +43,7 @@ export default function MyFiles() {
   };
 
   // ==========================
-  // FETCH SUBSCRIPTION — same as dashboard
+  // FETCH SUBSCRIPTION
   // ==========================
   const fetchSubscription = async () => {
     if (!userEmail) return 5;
@@ -63,7 +66,7 @@ export default function MyFiles() {
   };
 
   // ==========================
-  // FETCH FILES — same as dashboard (api + user_id filter)
+  // FETCH FILES
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
@@ -71,7 +74,6 @@ export default function MyFiles() {
       const data = res.data;
       setFiles(data);
 
-      // Calculate usage — same as dashboard
       const totalBytes = data.reduce((sum, f) => sum + (f.size || 0), 0);
       const usedGB = totalBytes / 1024 / 1024 / 1024;
 
@@ -96,7 +98,7 @@ export default function MyFiles() {
   };
 
   // ==========================
-  // STORAGE LIMIT CHECK — same as dashboard
+  // STORAGE LIMIT CHECK
   // ==========================
   const checkStorageLimit = (file) => {
     const MAX_SINGLE_FILE = 2 * 1024 * 1024 * 1024;
@@ -131,7 +133,7 @@ export default function MyFiles() {
   };
 
   // ==========================
-  // UPLOAD FILE — api instance, no manual token
+  // UPLOAD FILE
   // ==========================
   const uploadFile = async () => {
     if (!selectedFile) {
@@ -185,7 +187,7 @@ export default function MyFiles() {
   };
 
   // ==========================
-  // DELETE FILE — api instance, no manual token
+  // DELETE FILE
   // ==========================
   const deleteFile = async (id) => {
     if (!window.confirm("Are you sure you want to delete this file?")) return;
@@ -289,7 +291,7 @@ export default function MyFiles() {
         </div>
       </div>
 
-      {/* STORAGE BAR — dashboard method: totalUsedGB / totalStorageGB */}
+      {/* STORAGE BAR */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-gray-600">Storage Used</span>
@@ -332,28 +334,34 @@ export default function MyFiles() {
       {/* LOADING */}
       {loading && <p className="text-gray-400">Loading files...</p>}
 
-      {/* FILE GRID — original layout from screenshot */}
+      {/* FILE GRID */}
       {!loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {files.length === 0 && (
             <p className="text-gray-400 col-span-full">No files uploaded yet</p>
           )}
 
-          {files.map((file) => (
+          {files.map((file) => {
+  console.log(file);
+  return (
             <div
               key={file.id}
-              className="bg-white p-5 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center"
+              className="bg-white p-5 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative"
             >
+              {/* File Icon */}
               <div className="mb-4">{getFileIcon(file.name)}</div>
 
+              {/* File Name */}
               <p className="font-medium truncate w-full" title={file.name}>
                 {file.name}
               </p>
 
+              {/* File Size */}
               <p className="text-xs text-gray-400 mt-1">
                 {(file.size / 1024).toFixed(1)} KB
               </p>
 
+              {/* Uploaded Date */}
               {file.uploaded_at && (
                 <p className="text-xs text-gray-300 mt-0.5">
                   {new Date(file.uploaded_at).toLocaleDateString("en-US", {
@@ -364,7 +372,8 @@ export default function MyFiles() {
                 </p>
               )}
 
-              <div className="flex gap-3 mt-4">
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-4 relative">
                 <a
                   href={file.url}
                   target="_blank"
@@ -380,9 +389,67 @@ export default function MyFiles() {
                   <Trash2 size={14} />
                   Delete
                 </button>
+
+                {/* 3 Dots Menu */}
+                
+{/* 3 Dots Menu */}
+<div className="relative">
+  <button
+    onClick={() =>
+      setOpenMenuId(openMenuId === file.id ? null : file.id)
+    }
+    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-lg font-bold"
+  >
+    ⋮
+  </button>
+
+  {openMenuId === file.id && (
+    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-10 p-2">
+      {/* Expiry Input */}
+      <label className="text-xs text-gray-500 mb-1 block">Expiry Date:</label>
+      <input
+        type="datetime-local"
+        className="w-full border border-gray-300 rounded px-2 py-1 mb-2 text-sm"
+        value={shareExpiry}
+        onChange={(e) => setShareExpiry(e.target.value)}
+      />
+      <button
+  onClick={async () => {
+    if (!shareExpiry) {
+      alert("Please select expiry date");
+      return;
+    }
+
+    try {
+      const res = await api.post(`/api/files/${file.id}/share/`, {
+        expiry_date: shareExpiry,
+      });
+
+      navigator.clipboard.writeText(res.data.url);
+      alert(
+        "Sharable URL copied! It will expire at " +
+          new Date(res.data.expiry).toLocaleString()
+      );
+
+      setOpenMenuId(null);
+      setShareExpiry("");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to generate link");
+    }
+  }}
+  className="block w-full text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded"
+>
+  Generate & Copy Link
+</button>
+    </div>
+  )}
+</div>
+                
               </div>
             </div>
-          ))}
+                    );
+        })}
         </div>
       )}
     </div>
