@@ -19,13 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-niq()9d-nh7fjeg^_3*5r98u!1!suywhiz7-&x=8%r9imlnja("
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # allow all during development
+ALLOWED_HOSTS = ["*", "192.168.8.101"]
+  # allow all during development
 
 # -----------------------------------------------------
 # INSTALLED APPS
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -33,14 +35,24 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "subscriptions",
-    # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-
+    'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
+<<<<<<< HEAD
+    "channels", # for WebSocket support
+    'chat', # your chat app
+    "django_extensions",
+=======
+    "storages",
+    "storage"
+    "accounts",
+    'anymail',  
+>>>>>>> 09dd24186fec7dc528f4ce694b942caf1035fecd
 ]
+
 
 # -----------------------------------------------------
 # MIDDLEWARE
@@ -52,8 +64,6 @@ SESSION_COOKIE_SAMESITE = "None"
 CSRF_USE_SESSIONS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
-
-
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -73,19 +83,15 @@ MIDDLEWARE = [
 # CORS SETTINGS
 # -----------------------------------------------------
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React app
+    "http://localhost:3000",
+    "http://192.168.8.105:8081",
+    "http://127.0.0.1:8081"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-
-
 
 # -----------------------------------------------------
 # URL CONFIG
@@ -109,6 +115,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+
+ASGI_APPLICATION = 'backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # -----------------------------------------------------
 # DATABASE (POSTGRESQL)
@@ -140,8 +157,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # -----------------------------------------------------
 # INTERNATIONALIZATION
 # -----------------------------------------------------
-
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -174,7 +192,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ),
         "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -190,7 +208,51 @@ SIMPLE_JWT = {
 }
 
 
+
+AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
+AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
+
+AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
+AWS_S3_REGION_NAME = "sfo3"
+AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
+
+
+AWS_DEFAULT_ACL = "public-read"
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_LOCATION = "uploads"
+
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
+
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+# -----------------------------------------------------
+# MAILGUN ANYMAIL SETUP
+# -----------------------------------------------------
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY"), 
+    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_DOMAIN"), 
+}
+
+# Tell Django to use Anymail for sending emails
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+
+# The default email address your emails will come from (make sure to use your domain here)
+DEFAULT_FROM_EMAIL = f"CEYNOA Notifications <postmaster@{os.getenv('MAILGUN_DOMAIN')}>"
