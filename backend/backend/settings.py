@@ -42,19 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
-<<<<<<< HEAD
     "channels", # for WebSocket support
     'chat', # your chat app
     "django_extensions",
-=======
     "storages",
-    "storage"
-<<<<<<< HEAD
-    "accounts",
-    'anymail',  
->>>>>>> 09dd24186fec7dc528f4ce694b942caf1035fecd
-=======
->>>>>>> chirath
+    "storage",
+    'anymail',
+
 ]
 
 
