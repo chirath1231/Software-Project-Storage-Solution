@@ -75,11 +75,3 @@ class SubscriptionPayment(models.Model):
 
     def __str__(self):
         return f"{self.user_email} - {self.subscription.name}"
-
-
-class Admin(models.Model):
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.email

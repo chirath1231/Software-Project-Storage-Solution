@@ -112,7 +112,7 @@ def create_payhere_payment(request):
         "merchant_id": MERCHANT_ID,
         "return_url": "http://localhost:3000/payment-success",
         "cancel_url": "http://localhost:3000/payment-cancel",
-        "notify_url": "https://ungladly-paraphrasable-sherwood.ngrok-free.dev/api/subscriptions/payhere/notify/",
+        "notify_url": "https://f0ed-112-134-156-182.ngrok-free.app/api/subscriptions/payhere/notify/",
         "order_id": order_id,
         "items": f"Subscription-{subscription_id}",
         "currency": currency,
