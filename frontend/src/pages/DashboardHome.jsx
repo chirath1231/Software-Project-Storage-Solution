@@ -61,6 +61,13 @@ export default function DashboardHome() {
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
     console.log(userId);
+    if(!userId){
+      setFiles([]);
+      setStorageUsed(0);
+      setTotalStorageGB(0);
+      setIsStorageFull(false);
+      return;
+    }
     
     try {
       const res = await api.get(`/api/files/?user_id=${userId}`);
@@ -365,6 +372,18 @@ export default function DashboardHome() {
                     or <span className="text-orange-500 font-medium underline">browse to upload</span> (Max 2GB)
                   </p>
                 </>
+              )}
+
+              {uploadStatus === "uploading" && (
+                <p className="text-sm font-medium text-orange-500 mt-1">
+                  {uploadMessage}
+                </p>
+              )}
+
+              {uploadStatus === "success" && (
+                <p className="text-sm font-medium text-green-600 mt-1">
+                  {uploadMessage}
+                </p>
               )}
 
               {uploadStatus === "uploading" && <p className="text-sm font-medium text-orange-500 mt-1">{uploadMessage}</p>}

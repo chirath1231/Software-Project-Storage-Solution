@@ -1,4 +1,3 @@
-// SubscriptionPage.jsx
 import React, { useEffect, useState } from "react";
 import buynow from "../assets/buy_now.png";
 
@@ -6,42 +5,74 @@ export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
+
   const userEmail = localStorage.getItem("username");
+  const token = localStorage.getItem("access_token"); // change key if needed
 
   useEffect(() => {
-    const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(
-      (res) => res.json()
-    );
+    const authHeaders = token
+      ? {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      : {
+          "Content-Type": "application/json",
+        };
+
+    const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/", {
+      headers: authHeaders,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Plans request failed: ${res.status} ${text}`);
+      }
+      return res.json();
+    });
 
     const fetchUserActive = userEmail
       ? fetch(
           `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
             userEmail
-          )}/`
-        ).then((res) => (res.ok ? res.json() : []))
+          )}/`,
+          {
+            headers: authHeaders,
+          }
+        ).then(async (res) => {
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`User subscriptions request failed: ${res.status} ${text}`);
+          }
+          return res.json();
+        })
       : Promise.resolve([]);
 
     Promise.all([fetchPlans, fetchUserActive])
       .then(([plans, userActive]) => {
-        setSubscriptions(plans || []);
+        console.log("plans response:", plans);
+        console.log("userActive response:", userActive);
+
+        setSubscriptions(Array.isArray(plans) ? plans : []);
+
         const paidIds = new Set();
-        (userActive || []).forEach((r) => {
+        (Array.isArray(userActive) ? userActive : []).forEach((r) => {
           if (r.subscription_id) paidIds.add(Number(r.subscription_id));
         });
         setPaidSubs(paidIds);
       })
       .catch((err) => {
         console.error("Fetch error:", err);
-        alert("Could not load subscriptions. See console for details.");
+        setSubscriptions([]);
+        setPaidSubs(new Set());
       })
       .finally(() => setLoading(false));
-  }, [userEmail]);
+  }, [userEmail, token]);
 
   const handleSubscribe = async (sub) => {
     if (paidSubs.has(sub.id)) {
       alert("You already own this plan.");
       return;
     }
+
     if (!userEmail) {
       alert("Please login first");
       return;
@@ -52,7 +83,10 @@ export default function SubscriptionPage() {
         "http://127.0.0.1:8000/api/subscriptions/create-payment/",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             subscription_id: sub.id,
             email: userEmail,
@@ -63,7 +97,11 @@ export default function SubscriptionPage() {
       );
 
       const data = await res.json();
-      if (!data.success) return alert("Payment failed");
+
+      if (!data.success) {
+        alert("Payment failed");
+        return;
+      }
 
       const form = document.createElement("form");
       form.method = "POST";
@@ -89,7 +127,10 @@ export default function SubscriptionPage() {
 
   return (
     <div className="px-6 py-10 bg-gray-50 min-h-screen">
-      <h2 className="text-4xl font-bold mb-4 text-gray-800 text-center">Subscription Plans</h2>
+      <h2 className="text-4xl font-bold mb-4 text-gray-800 text-center">
+        Subscription Plans
+      </h2>
+
       <p className="text-center text-gray-500 mb-10">
         Choose the plan that fits your needs
       </p>
@@ -97,7 +138,7 @@ export default function SubscriptionPage() {
       <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
         {subscriptions.map((sub) => {
           const isPaid = paidSubs.has(sub.id);
-          const isBest = sub.name === "Standard"; // Change plan for "Best Value" if needed
+          const isBest = sub.name === "Standard";
 
           return (
             <div
@@ -107,17 +148,10 @@ export default function SubscriptionPage() {
               } hover:scale-105 transition-transform`}
             >
               <div className="flex justify-between items-center mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    sub.name === "Standard"
-                      ? "bg-gray-200 text-gray-800"
-                      : sub.name === "Plus"
-                      ? "bg-orange-100 text-orange-600"
-                      : "bg-indigo-100 text-indigo-600"
-                  }`}
-                >
+                <span className="px-3 py-1 rounded-full text-sm font-semibold">
                   {sub.name}
                 </span>
+
                 {isBest && (
                   <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                     Best Value
@@ -125,11 +159,14 @@ export default function SubscriptionPage() {
                 )}
               </div>
 
-              <h2 className="text-2xl font-bold mb-2">Rs. {Number(sub.price).toFixed(2)}</h2>
+              <h2 className="text-2xl font-bold mb-2">
+                Rs. {Number(sub.price).toFixed(2)}
+              </h2>
+
               <p className="text-gray-500 mb-4">{sub.description}</p>
 
               <ul className="mb-6 space-y-2 text-gray-600 text-sm">
-                {sub.features.map((feat, i) => (
+                {(Array.isArray(sub.features) ? sub.features : []).map((feat, i) => (
                   <li key={i} className="flex items-center">
                     <span className="mr-2 text-green-500">✔</span> {feat}
                   </li>
