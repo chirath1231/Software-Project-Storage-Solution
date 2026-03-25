@@ -7,13 +7,16 @@ from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from .models import PasswordResetOTP
+from .serializers import ForgotPasswordSerializer, ResetPasswordSerializer
+from django.core.mail import send_mail
+import random
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-
-GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
-
+GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com" 
+# GOOGLE_CLIENT_ID = "24543519606-c5f9nj651gt4rqjhh2k9ntl06it1fl7m.apps.googleusercontent.com" 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
@@ -53,6 +56,7 @@ class LoginAPIView(APIView):
                 "refresh": str(refresh),
                 "username": user.username,
                 "email": user.email,
+                "message": f"Welcome {user.username}"
             })
 
         return Response(serializer.errors, status=400)
@@ -80,8 +84,13 @@ class GoogleLoginAPIView(APIView):
 
             user, created = User.objects.get_or_create(
                 email=email,
-                defaults={"username": email}
+                defaults={"username": name}
             )
+
+            # If the user exists but username is still 'User' or empty, update it
+            if not created and (user.username == "" or user.username.lower() == "user"):
+                user.username = name
+                user.save()
 
             refresh = RefreshToken.for_user(user)
 
@@ -90,7 +99,8 @@ class GoogleLoginAPIView(APIView):
                 "refresh": str(refresh),
                 "username": user.username,
                 "email": user.email,
-                "is_new_user": created
+                "is_new_user": created,
+                "message": f"Welcome {user.username}"
             })
 
         except ValueError:
@@ -98,3 +108,61 @@ class GoogleLoginAPIView(APIView):
                 {"detail": "Invalid Google token"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ForgotPasswordAPIView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Email not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate OTP
+        otp = str(random.randint(100000, 999999))
+        PasswordResetOTP.objects.create(user=user, otp=otp)
+
+        # Send email
+        send_mail(
+            "Your Password Reset OTP",
+            f"Your OTP is: {otp}. It will expire in 10 minutes.",
+            "no-reply@example.com",
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({"detail": "OTP sent to your email."}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordAPIView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        otp = serializer.validated_data["otp"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Invalid email"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp).latest("created_at")
+        except PasswordResetOTP.DoesNotExist:
+            return Response({"detail": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not otp_record.is_valid():
+            return Response({"detail": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Reset password
+        user.set_password(new_password)
+        user.save()
+
+        # Delete used OTP
+        otp_record.delete()
+
+        return Response({"detail": "Password reset successfully"}, status=status.HTTP_200_OK)

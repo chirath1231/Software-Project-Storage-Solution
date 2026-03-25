@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
 
 export default function DashboardHome() {
   const [files, setFiles] = useState([]);
@@ -18,6 +19,7 @@ export default function DashboardHome() {
   const fileInputRef = useRef(null);
 
   const userEmail = localStorage.getItem("username");
+  const { username } = useAuth();
   const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
@@ -233,13 +235,15 @@ export default function DashboardHome() {
 
   const recentFiles = files.slice(0, 5);
 
+  
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
 
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, <span className="text-orange-500">User</span> 👋
+          Welcome back, <span className="text-orange-500">{username}</span> 👋
         </h1>
         <p className="text-gray-500 mt-1">
           Here's a quick look at your storage and recent activity
@@ -519,4 +523,4 @@ export default function DashboardHome() {
       </div>
     </div>
   );
-}
+};

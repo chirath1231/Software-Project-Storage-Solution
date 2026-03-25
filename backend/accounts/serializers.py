@@ -63,7 +63,16 @@ class LoginSerializer(serializers.Serializer):
         data["user"] = user
         return data
     
-from rest_framework import serializers
+# -------------------------
+# Forget Password Serializer
+# -------------------------
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(min_length=6)
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
