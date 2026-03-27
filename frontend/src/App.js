@@ -11,6 +11,9 @@ import DashboardHome from "./pages/DashboardHome";
 import MyFiles from "./pages/MyFiles";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import ProfilePage from "./pages/MyProfile.jsx";
+import ProfileSettings from "./pages/ProfileSettings.jsx"
+import DashboardSettings from "./pages/DashboardSettings.jsx";
 
 function App() {
   return (
@@ -30,10 +33,13 @@ function App() {
           {/* PROTECTED */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile-settings" element={<ProfileSettings />} />              
               <Route path="files" element={<MyFiles />} />
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
+              <Route path="settings" element={<DashboardSettings />} />              
             </Route>
           </Route>
         </Routes>

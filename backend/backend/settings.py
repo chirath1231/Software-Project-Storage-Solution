@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     "corsheaders",
     'django.contrib.postgres',
     # YOUR APPS
-    "accounts",  # your authentication app
+    # "accounts",  
+    "accounts.apps.AccountsConfig",
     "storages",
     "storage"
 ]
@@ -193,8 +194,8 @@ REST_FRAMEWORK = {
 DOMAIN = 'http://localhost:3000'
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 

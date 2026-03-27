@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Menu,
   X,
+  User,
 } from "lucide-react";
 
 export default function Sidebar() {

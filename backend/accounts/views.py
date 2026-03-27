@@ -8,12 +8,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from .models import PasswordResetOTP
-from .serializers import ForgotPasswordSerializer, ResetPasswordSerializer
+from .serializers import ForgotPasswordSerializer, ResetPasswordSerializer, ProfileSerializer, ProfileUpdateSerializer
 from django.core.mail import send_mail
 import random
-
+from rest_framework.permissions import IsAuthenticated
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from rest_framework.generics import UpdateAPIView
+
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com" 
 # GOOGLE_CLIENT_ID = "24543519606-c5f9nj651gt4rqjhh2k9ntl06it1fl7m.apps.googleusercontent.com" 
@@ -33,6 +35,8 @@ class RegisterView(APIView):
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
                 },
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -166,3 +170,28 @@ class ResetPasswordAPIView(APIView):
         otp_record.delete()
 
         return Response({"detail": "Password reset successfully"}, status=status.HTTP_200_OK)
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = request.user.profile
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+
+    def put(self, request):
+        profile = request.user.profile
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+    
+class ProfileUpdateView(UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = ProfileUpdateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        # Return the currently logged-in user
+        return self.request.user.profile

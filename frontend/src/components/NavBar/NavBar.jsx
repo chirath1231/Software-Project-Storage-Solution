@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, use } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { Link, useNavigate } from "react-router-dom";
 
 // Mock logo - replace with your actual import
 const LogoDark = () => (
@@ -32,7 +33,7 @@ export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const navigate = useNavigate();
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -384,20 +385,14 @@ const handleLogout = () => {
                   >
                     <button
                       className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Profile");
-                        setShowProfileMenu(false);
-                      }}
+                      onClick={() => navigate("/dashboard/profile")}
                       role="menuitem"
                     >
                       My Profile
                     </button>
                     <button
                       className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Settings");
-                        setShowProfileMenu(false);
-                      }}
+                      onClick={() => navigate("/dashboard/settings")}
                       role="menuitem"
                     >
                       Settings

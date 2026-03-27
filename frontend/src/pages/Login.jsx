@@ -52,20 +52,6 @@ function Login() {
         return;
       }
 
-      // Save tokens
-      // if (rememberMe) {
-      //   localStorage.setItem("access_token", data.access);
-      //   localStorage.setItem("refresh_token", data.refresh);
-      //   localStorage.setItem("username", data.username);
-      // } else {
-      //   sessionStorage.setItem("access_token", data.access);
-      //   sessionStorage.setItem("refresh_token", data.refresh);
-      //   sessionStorage.setItem("username", data.username);
-      // }
-
-      // Pass the correct username from backend
-      // login(data.access, data.username);
-      // navigate("/dashboard");
       login(data.access, data.username, rememberMe);
       navigate("/dashboard");
       // localStorage.setItem("user_id", data.user.id); // ✅ Add this line
@@ -221,24 +207,6 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
-            <div className="remember-area">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                className="checkbox"
-                checked={rememberMe}
-                onChange={() =>
-                  setRememberMe(!rememberMe)
-                }
-              />
-              <label
-                htmlFor="rememberMe"
-                className="checkbox-label"
-              >
-                Keep me logged in
-              </label>
-            </div>
 
             <button
               className="btn"
