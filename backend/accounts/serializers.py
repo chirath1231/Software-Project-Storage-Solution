@@ -116,18 +116,19 @@ class GoogleAuthSerializer(serializers.Serializer):
 # -------------------------
 # Profile Serializer
 # -------------------------
-# accounts/serializers.py
+
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
     email = serializers.EmailField(source='user.email', read_only=True)
     first_name = serializers.CharField(source='user.first_name', required=False, allow_blank=True)
     last_name = serializers.CharField(source='user.last_name', required=False, allow_blank=True)
+    profile_picture = serializers.SerializerMethodField() 
 
     class Meta:
         model = Profile
         fields = [
             'username', 'first_name', 'last_name', 'email',
-            'address', 'contact_number', 'city', 'state'
+            'address', 'contact_number', 'city', 'state',"profile_picture"
         ]
 
     def update(self, instance, validated_data):
@@ -143,6 +144,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+    def get_profile_picture(self, obj):
+        request = self.context.get("request")  # important!
+        if obj.profile_picture:
+            return request.build_absolute_uri(obj.profile_picture.url)
+        return None
+    
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -152,10 +159,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True, allow_empty_file=True)
 
     class Meta:
         model = Profile
-        fields = ["username", "first_name", "last_name", "contact_number", "city", "state", "address"]
+        fields = ["username", "first_name", "last_name", "contact_number", "city", "state", "address", "profile_picture"]
 
     def update(self, instance, validated_data):
         # Update User fields
@@ -167,6 +175,15 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         if 'last_name' in validated_data:
             user.last_name = validated_data.pop('last_name')
         user.save()
+
+        # Handle profile picture removal
+        if 'profile_picture' in validated_data:
+            if validated_data['profile_picture'] in [None, ""]:
+                instance.profile_picture.delete(save=False)
+                instance.profile_picture = None
+            else:
+                instance.profile_picture = validated_data['profile_picture']
+            validated_data.pop('profile_picture', None)
 
         # Update remaining Profile fields
         for attr, value in validated_data.items():

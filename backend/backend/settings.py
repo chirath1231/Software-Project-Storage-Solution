@@ -217,18 +217,15 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 AWS_LOCATION = "uploads"
 
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-
-
+# MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+#     },
+#     "staticfiles": {
+#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+#     },
+# }
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
@@ -241,3 +238,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'poojanidanulya@gmail.com'
 EMAIL_HOST_PASSWORD = 'vxunyhppfinjqgyk'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

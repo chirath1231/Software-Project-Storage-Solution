@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../auth/AuthContext";
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
 
-  // const [profilePic, setProfilePic] = useState(null);
+  const [profilePic, setProfilePic] = useState(null); // actual File object
+  const [profilePicURL, setProfilePicURL] = useState(""); // preview Displaying image
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -14,6 +17,7 @@ export default function ProfileSettings() {
   const [contact, setContact] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     api.get("/api/accounts/profile/")
@@ -27,29 +31,45 @@ export default function ProfileSettings() {
         setContact(user.contact_number || "");
         setCity(user.city || "");
         setState(user.state || "");
-        // setProfilePic(user.profile_picture || null);
+        setProfilePicURL(user.profile_picture || "");
+        setProfilePic(null); // important: no file yet
       })
       .catch(err => {
         console.error("Error fetching profile:", err);
       });
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = () => setShowMenu(false);
+    if (showMenu) {
+      window.addEventListener("click", handleClickOutside);
+    }
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, [showMenu]);
+
   const handleSave = async () => {
     try {
       const formData = new FormData();
-      // if (profilePic) formData.append("profile_picture", profilePic);
       formData.append("first_name", firstName);
       formData.append("last_name", lastName);
       formData.append("username", username);
-      // formData.append("email", email);
       formData.append("address", address);
       formData.append("contact_number", contact);
       formData.append("city", city);
       formData.append("state", state);
 
-      await api.put("/api/accounts/profile-update/", formData, {
+      if (profilePic) {
+        formData.append("profile_picture", profilePic) // attach selected file
+      }else if (profilePicURL === "") {
+        formData.append("profile_picture", ""); // tell backend to remove
+      };  
+
+      const res = await api.put("/api/accounts/profile-update/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      
+      // Update preview with saved URL
+      if (res.data.profile_picture) setProfilePicURL(res.data.profile_picture);
 
       alert("Profile updated successfully!");
       // Navigate back to profile page
@@ -63,7 +83,9 @@ export default function ProfileSettings() {
   const handleProfileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePic(URL.createObjectURL(file));
+      setProfilePic(file); // store file for upload
+      setProfilePicURL(URL.createObjectURL(file)); // show preview
+      setShowMenu(false);
     }
   };
 
@@ -77,19 +99,20 @@ export default function ProfileSettings() {
       </div>
 
       {/* Profile Picture */}
-      <div className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer border-4 border-orange-400">
-        {/* <img
-          src={
-            profilePic
-              ? typeof profilePic === "string"
-                ? profilePic
-                : URL.createObjectURL(profilePic)
-              : "https://via.placeholder.com/140?text=+"
-          }
-          alt="profile"
-          className="w-full h-full object-cover"
-          onClick={() => document.getElementById("profileInput").click()}
-        /> */}
+      <div className="relative w-24 h-24"> 
+        {/* Circle Image Container */}
+        <div className="w-24 h-24 rounded-full overflow-hidden cursor-pointer border-4 border-orange-400"> 
+          <img
+            src={profilePicURL || "/default-profile.png"}
+            alt="profile"
+            className="w-full h-full object-cover"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+          />
+        </div>
+        {/* Hidden Input */}
         <input
           id="profileInput"
           type="file"
@@ -97,6 +120,33 @@ export default function ProfileSettings() {
           onChange={handleProfileChange}
           className="hidden"
         />
+        {/* Popup Menu */}
+        {showMenu && (
+          <div
+            className="absolute w-40 h-15 overflow-visible p-2 top-full mt-2 left-0 bg-white shadow-lg rounded-md border z-[99999]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="block w-full h-7 text-left hover:bg-gray-100"
+              onClick={() => document.getElementById("profileInput").click()}
+            >
+              Upload a photo
+            </button>
+
+            {profilePicURL && (
+              <button
+                className="block w-full h-7 text-left hover:bg-gray-100"
+                onClick={() => {
+                  setProfilePic(null);
+                  setProfilePicURL("");
+                  setShowMenu(false);
+                }}
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
 

@@ -9,8 +9,6 @@ export const AuthProvider = ({ children }) => {
 
   // Load session on page refresh ONLY (not after close)
   useEffect(() => {
-    // const savedToken = sessionStorage.getItem("token");
-    // const savedUsername = sessionStorage.getItem("username");
     const savedToken =
       sessionStorage.getItem("token") || localStorage.getItem("token");
 
@@ -25,17 +23,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // const login = (token, username) => {
-  //   sessionStorage.setItem("token", token);
-  //   sessionStorage.setItem("username", username);
-  //   setToken(token);
-  //   setUsername(username);
-  // };
-
   const login = (token, username, rememberMe = false) => {
     if (rememberMe) {
       localStorage.setItem("token", token);
-      // localStorage.setItem("username", username);
       localStorage.setItem("user_id", data.user.id); // save user id (or whatever backend returns)
     } else {
       sessionStorage.setItem("token", token);
@@ -49,7 +39,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     sessionStorage.clear();        // clear all session data
     localStorage.clear();
-    // localStorage.removeItem("username"); // if using localStorage too
     setToken(null);
     setUsername(null);
   };

@@ -176,7 +176,7 @@ class ProfileView(APIView):
 
     def get(self, request):
         profile = request.user.profile
-        serializer = ProfileSerializer(profile)
+        serializer = ProfileSerializer(profile, context={"request": request})
         return Response(serializer.data)
 
     def put(self, request):

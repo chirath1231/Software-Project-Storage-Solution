@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/subscriptions/', include('subscriptions.urls')),  # keep this only once
     path("api/", include("storage.urls")),
 
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) #When a user uploads a profile picture:It gets saved in your backend and Django stores the path in DB
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

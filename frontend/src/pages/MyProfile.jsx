@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-
+  const [profilePicURL, setProfilePicURL] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -14,6 +14,9 @@ export default function ProfilePage() {
     api.get("/api/accounts/profile/")
       .then((res) => {
         setUser(res.data);
+        if (res.data.profile_picture) {
+          setProfilePicURL(res.data.profile_picture);
+      }
       })
       .catch((err) => {
         console.error("Error fetching profile:", err);
@@ -37,8 +40,18 @@ export default function ProfilePage() {
           <div className="bg-white rounded-xl shadow-md p-10 border-l-4 mb-6 border-orange-500">
             {/* Top Section - Profile */}
             <div className="flex flex-col items-center border-r pr-4">
-              <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-3xl">
-                👤
+              <div className="w-24 h-24 rounded-full overflow-hidden">
+                {profilePicURL ? (
+                  <img
+                    src={profilePicURL.startsWith("/media") ? `http://localhost:8000${profilePicURL}` : profilePicURL}
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center text-3xl">
+                    👤
+                  </div>
+                )}
               </div>
 
               <h2 className="mt-4 font-semibold text-2xl">{user.username}</h2>
