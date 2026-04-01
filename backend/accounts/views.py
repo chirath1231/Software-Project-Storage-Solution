@@ -5,16 +5,17 @@ from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializ
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken #Token creation happens here
 from django.contrib.auth.models import User
-from .models import PasswordResetOTP
-from .serializers import ForgotPasswordSerializer, ResetPasswordSerializer, ProfileSerializer, ProfileUpdateSerializer
+from .models import AccountDeletion, PasswordResetOTP
+from .serializers import ForgotPasswordSerializer, ResetPasswordSerializer, ProfileSerializer, ProfileUpdateSerializer, DeleteAccountSerializer
 from django.core.mail import send_mail
 import random
 from rest_framework.permissions import IsAuthenticated
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework.generics import UpdateAPIView
+from django.utils.timezone import now
 
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com" 
@@ -53,6 +54,21 @@ class LoginAPIView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+            
+            # BLOCK if marked for deletion
+            if AccountDeletion.objects.filter(user=user, is_deleted=True).exists():
+                return Response(
+                    {"error": "Account is scheduled for deletion (You have tried to delete your account). Contact support to restore."},
+                    status=403
+                )
+            
+            # BLOCK if inactive
+            if not user.is_active:
+                return Response(
+                    {"error": "Your account has been deactivated."},
+                    status=403
+                )
+
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -95,6 +111,20 @@ class GoogleLoginAPIView(APIView):
             if not created and (user.username == "" or user.username.lower() == "user"):
                 user.username = name
                 user.save()
+            
+            # BLOCK if marked for deletion
+            if AccountDeletion.objects.filter(user=user, is_deleted=True).exists():
+                return Response(
+                    {"error": "Account is scheduled for deletion (You have tried to delete your account). Contact support to restore."},
+                    status=403
+                )
+            
+            # BLOCK if inactive
+            if not user.is_active:
+                return Response(
+                    {"error": "Your account has been deactivated. Contact our team for more clarification."},
+                    status=403
+                )
 
             refresh = RefreshToken.for_user(user)
 
@@ -195,3 +225,54 @@ class ProfileUpdateView(UpdateAPIView):
     def get_object(self):
         # Return the currently logged-in user
         return self.request.user.profile
+    
+class DeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        serializer = DeleteAccountSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        password = serializer.validated_data["password"]
+        user = request.user
+
+        if not user.check_password(password):
+            return Response({"error": "Incorrect password"}, status=400)
+
+        user.is_active = False
+        user.save()
+
+        deletion_obj, _ = AccountDeletion.objects.get_or_create(user=user)
+        deletion_obj.is_deleted = True
+        deletion_obj.deleted_at = now()
+        deletion_obj.save()
+
+        return Response({"message": "Account scheduled for deletion"})
+
+class RestoreAccountView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "Account not found"}, status=404)
+
+        deletion_obj = AccountDeletion.objects.filter(user=user, is_deleted=True).first()
+
+        if not deletion_obj:
+            return Response({"error": "No deletion request found"}, status=400)
+
+        # Restore
+        user.is_active = True
+        user.save()
+
+        deletion_obj.is_deleted = False
+        deletion_obj.deleted_at = None
+        deletion_obj.save()
+
+        return Response({"message": "Account restored successfully"})

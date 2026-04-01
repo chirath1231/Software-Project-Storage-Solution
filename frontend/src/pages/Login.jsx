@@ -35,27 +35,47 @@ function Login() {
         }
       );
 
-      const data = await res.json(); // after successful login
-
-      // Store token & user info
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
-      localStorage.setItem("username", data.username);
+      const data = await res.json();
 
       if (!res.ok) {
+
+        // CASE 1: Account scheduled for deletion
+        if (data.error?.includes("scheduled for deletion")) {
+          localStorage.setItem("userEmail", email); // save email for restore
+          alert(data.error);
+
+          navigate("/restore-account"); // 👉 redirect
+          setLoading(false);
+          return;
+        }
+
+        // CASE 2: Inactive account
+        if (data.error?.includes("deactivated")) {
+          alert(data.error);
+          setLoading(false);
+          return;
+        }
+
+        // CASE 3: Other errors
         alert(
+          data?.error ||
           data?.detail ||
-            data?.non_field_errors ||
-            "Invalid email or password"
+          data?.non_field_errors ||
+          "Invalid email or password"
         );
+
         setLoading(false);
         return;
       }
 
+      // ONLY STORE AFTER SUCCESS
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("userEmail", email);
+
       login(data.access, data.username, rememberMe);
       navigate("/dashboard");
-      // localStorage.setItem("user_id", data.user.id); // ✅ Add this line
-
 
     } catch (error) {
       alert("Server error. Please try again.");
@@ -246,17 +266,24 @@ function Login() {
 
           <p className="footer-text">
             Don’t have an account?{" "}
-            <Link to="/register">
+            <Link to="/register" className="hover:underline">
               Create account
             </Link>
           </p>
 
-          <div className="footer-text">
+          <div className="footer-text flex flex-col gap-2">
             <button
               className="hover:underline"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot Password?
+            </button>
+
+            <button
+              className="hover:underline "
+              onClick={() => navigate("/restore-account")}
+            >
+              Restore your account
             </button>
           </div>
 

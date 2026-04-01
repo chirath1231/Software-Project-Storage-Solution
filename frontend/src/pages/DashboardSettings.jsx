@@ -9,9 +9,8 @@ export default function DashboardSettings() {
     { name: "Security", path: "/dashboard/settings/security" },
     { name: "Notifications", path: "/dashboard/settings/notifications" },
     { name: "Privacy", path: "/dashboard/settings/privacy" },
-    { name: "Appearance", path: "/dashboard/settings/appearance" },
     { name: "Connected Devices", path: "/dashboard/settings/devices" },
-    { name: "Delete Account", path: "/dashboard/settings/delete" },
+    { name: "Delete Account", path: "/dashboard/delete-account" },
   ];
 
   return (

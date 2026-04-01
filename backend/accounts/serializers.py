@@ -22,25 +22,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("username", "email", "password", "password2", "first_name", "last_name")
-    #     extra_kwargs = {"email": {"required": True}}
-
-    # def validate(self, data):
-    #     if data["password"] != data["password2"]:
-    #         raise serializers.ValidationError({"password": "Passwords do not match"})
-    #     return data
-
-    # def create(self, validated_data):
-    #     validated_data.pop("password2")
-    #     first_name = validated_data.pop("first_name", "")
-    #     last_name = validated_data.pop("last_name", "")
-
-    #     user = User.objects.create_user(
-    #         username=validated_data["username"],
-    #         email=validated_data["email"],
-    #         password=validated_data["password"],
-    #         first_name=validated_data.get("first_name", ""),
-    #         last_name=validated_data.get("last_name", "")
-    #     )
 
         extra_kwargs = {
             "email": {"required": True},
@@ -86,14 +67,14 @@ class LoginSerializer(serializers.Serializer):
 
         # find the username from the email
         try:
-            username = User.objects.get(email=email).username
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("Invalid email or password")
 
         # authenticate user
-        user = authenticate(username=username, password=password)
+        # user = authenticate(username=username, password=password)
 
-        if not user:
+        if not user.check_password(password):
             raise serializers.ValidationError("Invalid email or password")
 
         data["user"] = user
@@ -149,11 +130,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         if obj.profile_picture:
             return request.build_absolute_uri(obj.profile_picture.url)
         return None
-    
-
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Profile
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
@@ -191,3 +167,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+# -------------------------
+# Account Deletion Serializer
+# -------------------------
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(required=True)

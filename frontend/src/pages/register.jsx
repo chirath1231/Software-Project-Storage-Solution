@@ -14,6 +14,8 @@ function Register() {
     email: "",
     password: "",
     password2: "",
+    first_name: "",
+    last_name: "",
   });
   const [errors, setErrors] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -114,7 +116,27 @@ function Register() {
               value={form.email}
               onChange={onChange}
               type="email"
-              placeholder="Email / Phone"
+              placeholder="Email"
+              className="input"
+            />
+
+            <input
+              name="first_name"
+              required
+              value={form.first_name}
+              onChange={onChange}
+              type="text"
+              placeholder="First Name"
+              className="input"
+            />
+
+            <input
+              name="last_name"
+              required
+              value={form.last_name}
+              onChange={onChange}
+              type="text"
+              placeholder="Last Name"
               className="input"
             />
 
@@ -152,9 +174,11 @@ function Register() {
             </button>
           </form>
 
-          <p className="or">
-            ___________________________or_____________________________
-          </p>
+           <div className="flex items-center my-4">
+            <div className="flex-grow h-px bg-gray-300"></div>
+            <span className="px-3 text-gray-400 font-medium">or</span>
+            <div className="flex-grow h-px bg-gray-300"></div>
+          </div>
 
           {/* ✅ YOUR BUTTON – GOOGLE LOGIN ATTACHED */}
           <div className="social">
@@ -179,7 +203,7 @@ function Register() {
           </div>
 
           <p className="footer-text">
-            Already have an account? <Link to="/login">Sign in</Link>
+            Already have an account? <Link to="/login" className="hover:underline">Sign in</Link>
           </p>
 
           <div className="footer-links">

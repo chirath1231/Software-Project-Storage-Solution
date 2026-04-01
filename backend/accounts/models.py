@@ -31,3 +31,8 @@ class Profile(models.Model):
     
     class Meta:
         ordering = ['id']
+
+class AccountDeletion(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
