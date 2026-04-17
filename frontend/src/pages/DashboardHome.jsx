@@ -58,6 +58,16 @@ export default function DashboardHome() {
   // FETCH FILES
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
+    //======= dummy ==========
+    if (!userId) {
+      setFiles([]);
+      setStorageUsed(0);
+      setTotalUsedGB(0);
+      setIsStorageFull(false);
+      return;
+    }
+    //======================
+    
     try {
       // Fetch from storage_file table filtered by user_id
       const res = await api.get(`/api/files/?user_id=${userId}`);
