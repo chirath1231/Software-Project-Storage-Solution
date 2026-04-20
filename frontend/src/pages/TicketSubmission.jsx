@@ -50,12 +50,21 @@ export default function TicketSubmission() {
     if (Object.keys(e).length) { setErrors(e); return; }
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1100));
-    setTicketId("TKT-" + Math.random().toString(36).substring(2, 5).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase());
+    setTicketId(
+      "TKT-" +
+        Math.random().toString(36).substring(2, 5).toUpperCase() +
+        Date.now().toString(36).slice(-3).toUpperCase()
+    );
     setSubmitted(true);
     setLoading(false);
   };
 
-  const priorityColor = { Low: "#22c55e", Medium: "#f5a623", High: "#f97316", Critical: "#ef4444" };
+  const priorityColor = {
+    Low: "#22c55e",
+    Medium: "#f5a623",
+    High: "#f97316",
+    Critical: "#ef4444",
+  };
 
   const baseCls = (field) =>
     `w-full bg-white border-2 rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 text-gray-900 placeholder-gray-400 font-medium ${
@@ -68,45 +77,48 @@ export default function TicketSubmission() {
 
   if (submitted) {
     return (
-      <div className="w-full max-w-lg mx-auto">
+      <div className="w-full max-w-lg mx-auto px-4 sm:px-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');*{font-family:'Sora',sans-serif}`}</style>
         <div className="bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/10">
-          {/* Top accent bar */}
           <div className="h-1.5 w-full bg-gradient-to-r from-[#f5a623] via-[#ffcd70] to-[#f5a623]" />
-          <div className="p-10 text-center">
-            {/* Animated check */}
-            <div className="relative w-20 h-20 mx-auto mb-6">
-              <div className="absolute inset-0 rounded-full bg-[#f5a623]/10 animate-ping" style={{ animationDuration: "2s" }} />
-              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#f5a623] to-[#e09610] flex items-center justify-center shadow-lg shadow-[#f5a623]/30">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <div className="p-6 sm:p-10 text-center">
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-5 sm:mb-6">
+              <div
+                className="absolute inset-0 rounded-full bg-[#f5a623]/10 animate-ping"
+                style={{ animationDuration: "2s" }}
+              />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-[#f5a623] to-[#e09610] flex items-center justify-center shadow-lg shadow-[#f5a623]/30">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
                   <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
 
-            <h2 className="text-gray-900 text-2xl font-700 mb-2" style={{ fontWeight: 700 }}>Ticket submitted!</h2>
-            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+            <h2 className="text-gray-900 text-xl sm:text-2xl font-bold mb-2">Ticket submitted!</h2>
+            <p className="text-gray-500 text-sm leading-relaxed mb-6 sm:mb-8 px-2 sm:px-0">
               Your request has been received. We'll follow up at{" "}
-              <span className="text-[#f5a623] font-semibold">{form.email}</span> within 1–2 business days.
+              <span className="text-[#f5a623] font-semibold break-all">{form.email}</span>{" "}
+              within 1–2 business days.
             </p>
 
-            {/* Ticket ID pill */}
-            <div className="inline-flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-6 py-3 mb-6">
-              <div className="w-2 h-2 rounded-full bg-[#f5a623] animate-pulse" />
-              <span className="text-gray-400 text-xs font-semibold uppercase tracking-widest">Ticket ID</span>
-              <span className="text-gray-900 font-700 text-sm tracking-wider" style={{ fontWeight: 700 }}>{ticketId}</span>
+            <div className="inline-flex items-center gap-2 sm:gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-6 py-3 mb-5 sm:mb-6">
+              <div className="w-2 h-2 rounded-full bg-[#f5a623] animate-pulse flex-shrink-0" />
+              <span className="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-widest">Ticket ID</span>
+              <span className="text-gray-900 font-bold text-sm tracking-wider">{ticketId}</span>
             </div>
 
-            {/* Summary card */}
-            <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-8">
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-5 text-left space-y-3 mb-6 sm:mb-8">
               {[
                 ["Category", form.category],
                 ["Priority", form.priority],
                 ["Subject", form.subject],
               ].map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between text-sm border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                  <span className="text-gray-400 font-medium">{k}</span>
-                  <span className="text-gray-800 font-semibold">{v}</span>
+                <div
+                  key={k}
+                  className="flex items-center justify-between text-sm border-b border-gray-100 pb-3 last:border-0 last:pb-0 gap-4"
+                >
+                  <span className="text-gray-400 font-medium flex-shrink-0">{k}</span>
+                  <span className="text-gray-800 font-semibold text-right truncate">{v}</span>
                 </div>
               ))}
             </div>
@@ -124,30 +136,34 @@ export default function TicketSubmission() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto px-4 sm:px-0">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');*{font-family:'Sora',sans-serif}`}</style>
 
       <div className="bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/10">
         {/* Top accent bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-[#f5a623] via-[#ffcd70] to-[#f5a623]" />
 
-        <div className="p-8">
+        <div className="p-5 sm:p-8">
           {/* Header */}
-          <div className="flex items-start gap-4 mb-8">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#f5a623] to-[#e09610] flex items-center justify-center shadow-md shadow-[#f5a623]/30 flex-shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-[#f5a623] to-[#e09610] flex items-center justify-center shadow-md shadow-[#f5a623]/30 flex-shrink-0">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-gray-900 text-xl font-700 leading-tight" style={{ fontWeight: 700 }}>Submit a Support Ticket</h2>
-              <p className="text-gray-400 text-sm mt-0.5">Fill in the details below and we'll get back to you.</p>
+              <h2 className="text-gray-900 text-lg sm:text-xl font-bold leading-tight">
+                Submit a Support Ticket
+              </h2>
+              <p className="text-gray-400 text-xs sm:text-sm mt-0.5">
+                Fill in the details and we'll get back to you.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-5">
-            {/* Name + Email */}
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4 sm:space-y-5">
+            {/* Name + Email — stacks on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label text="Full Name" error={errors.name} />
                 <input
@@ -168,8 +184,8 @@ export default function TicketSubmission() {
               </div>
             </div>
 
-            {/* Category + Priority */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Category + Priority — stacks on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label text="Category" error={errors.category} />
                 <div className="relative">
@@ -201,8 +217,10 @@ export default function TicketSubmission() {
                 {errors.priority && <Err msg={errors.priority} />}
                 {form.priority && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: priorityColor[form.priority] }} />
-                    <span className="text-xs font-medium" style={{ color: priorityColor[form.priority] }}>{form.priority} priority</span>
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: priorityColor[form.priority] }} />
+                    <span className="text-xs font-medium" style={{ color: priorityColor[form.priority] }}>
+                      {form.priority} priority
+                    </span>
                   </div>
                 )}
               </div>
@@ -229,7 +247,7 @@ export default function TicketSubmission() {
                 rows={5}
                 className={`${baseCls("description")} resize-none leading-relaxed`}
               />
-              <div className="flex justify-between mt-1">
+              <div className="flex justify-between items-center mt-1">
                 {errors.description ? <Err msg={errors.description} /> : <span />}
                 <span className={`text-xs font-medium ml-auto ${form.description.length > 0 ? "text-gray-400" : "text-gray-300"}`}>
                   {form.description.length} / 1000
@@ -241,8 +259,7 @@ export default function TicketSubmission() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full relative overflow-hidden bg-gradient-to-r from-[#f5a623] to-[#e09610] hover:from-[#e09610] hover:to-[#cc8800] disabled:opacity-50 disabled:cursor-not-allowed text-white font-700 text-sm py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#f5a623]/30 hover:shadow-[#f5a623]/40 hover:-translate-y-px flex items-center justify-center gap-2"
-              style={{ fontWeight: 700 }}
+              className="w-full bg-gradient-to-r from-[#f5a623] to-[#e09610] hover:from-[#e09610] hover:to-[#cc8800] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#f5a623]/30 hover:shadow-[#f5a623]/40 hover:-translate-y-px flex items-center justify-center gap-2 active:translate-y-0"
             >
               {loading ? (
                 <>
@@ -256,14 +273,16 @@ export default function TicketSubmission() {
                 <>
                   Submit Ticket
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
                   </svg>
                 </>
               )}
             </button>
 
             <p className="text-center text-gray-400 text-xs">
-              Typical response time: <span className="text-gray-600 font-semibold">1–2 business days</span>
+              Typical response time:{" "}
+              <span className="text-gray-600 font-semibold">1–2 business days</span>
             </p>
           </div>
         </div>
@@ -274,7 +293,7 @@ export default function TicketSubmission() {
 
 function Label({ text, error }) {
   return (
-    <label className={`block text-xs font-700 uppercase tracking-wider mb-1.5 ${error ? "text-red-400" : "text-gray-500"}`} style={{ fontWeight: 700 }}>
+    <label className={`block text-[11px] font-bold uppercase tracking-wider mb-1.5 ${error ? "text-red-400" : "text-gray-500"}`}>
       {text}
     </label>
   );
