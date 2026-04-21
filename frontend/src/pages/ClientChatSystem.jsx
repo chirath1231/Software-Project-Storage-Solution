@@ -115,24 +115,19 @@ const ClientChatSystem = () => {
   // ----------------- New Chat: Start conversation -----------------
   const startChatWithUser = async (otherUserId) => {
     try {
-      const res = await api.post("/conversations/start/", {
-        other_user_id: otherUserId,
-      });
-
-      const newConversationId = res.data?.conversation_id;
-      if (!newConversationId) {
-        console.error("No conversation_id returned");
-        return;
-      }
-
+      const res = await api.post("/conversations/start/", { other_user_id: otherUserId });
       await loadConversations();
-      setSelectedConversationId(newConversationId);
-      setShowNewChat(false);
+      setSelectedConversationId(res.data?.conversation_id);
+      setSearch(""); // Reset search after starting
     } catch (err) {
       console.error("Failed to start chat:", err);
     }
   };
 
+  useEffect(() => {
+    loadConversations();
+    loadUsers();
+  }, []);
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
     loadConversations();
@@ -296,6 +291,12 @@ const ClientChatSystem = () => {
     });
   }, [conversations, search]);
 
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return users.filter((u) => u.username.toLowerCase().includes(q));
+  }, [users, search]);
+
   // ----------------- Render -----------------
   return (
     <div>
@@ -307,64 +308,40 @@ const ClientChatSystem = () => {
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
           {/* Sidebar (Clients List) */}
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-            {/* Header + Search */}
+            {/* Header + Unified Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
-              {/* ✅ New Chat button */}
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Chats</h3>
-                <button
-                  onClick={() => {
-                    setShowNewChat((v) => !v);
-                    if (!showNewChat) loadUsers();
-                  }}
-                  className="px-3 py-1 rounded-lg bg-orange-500 text-white text-sm hover:bg-orange-600"
-                >
-                  New Chat
-                </button>
-              </div>
-
-              {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
-              {/* ✅ New Chat panel */}
-              {showNewChat && (
-                <div className="mt-4 p-3 border rounded-lg bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-gray-800">Start a chat</p>
-                    <button
-                      className="text-sm text-gray-500 hover:text-gray-800"
-                      onClick={() => setShowNewChat(false)}
-                    >
-                      Close
-                    </button>
-                  </div>
-
-                  {usersLoading ? (
-                    <p className="text-sm text-gray-500">Loading users...</p>
-                  ) : (
-                    <div className="max-h-48 overflow-y-auto">
-                      {users.length === 0 ? (
-                        <p className="text-sm text-gray-500">No users found.</p>
-                      ) : (
-                        users.map((u) => (
-                          <div
-                            key={u.id}
-                            onClick={() => startChatWithUser(u.id)}
-                            className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
-                          >
-                            {u.username}
-                          </div>
-                        ))
-                      )}
+              {/* Search Results Panel */}
+              {search.length > 0 && (
+                <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  {filteredConversations.length > 0 && (
+                    <div className="p-2 border-b">
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">Chats</p>
+                      {filteredConversations.map((c) => (
+                        <div key={c.id} onClick={() => { setSelectedConversationId(c.id); setSearch(""); }} className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm">
+                          {c.other_user?.username || "Chat"}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {filteredUsers.length > 0 && (
+                    <div className="p-2">
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">People</p>
+                       {filteredUsers.map((u) => (
+                        <div key={u.id} onClick={() => { startChatWithUser(u.id); }} className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium">
+                          + Start chat with {u.username}
+                        </div>
+                      ))} 
                     </div>
                   )}
                 </div>
@@ -372,6 +349,7 @@ const ClientChatSystem = () => {
             </div>
 
             {/* Conversations */}
+            {search.length === 0 && (
             <div className="flex-1 overflow-y-auto">
               {filteredConversations.map((conv) => {
                 const other = conv.other_user || {};
@@ -430,7 +408,9 @@ const ClientChatSystem = () => {
                 );
               })}
             </div>
+            )}
           </div>
+          
 
           {/* Chat Area */}
           <div className="flex-1 flex flex-col bg-white">
