@@ -54,7 +54,9 @@ const handleSend = async () => {
 
   setInput("");
 
+  setLoading(true); 
   const aiReply = await sendMessage(userText);
+  setLoading(false);
 
   // show bot message
   setMessages(prev => [
@@ -124,8 +126,15 @@ const handleSend = async () => {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-orange-100 px-4 py-3 rounded-2xl text-sm shadow-sm">
-                  Thinking...
+                <div className="bg-white border border-orange-100 px-4 py-3 rounded-2xl text-sm shadow-sm flex items-center gap-2">
+                  
+                  <span className="flex gap-1">
+                    <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></span>
+                    <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  </span>
+
+                  <span className="text-gray-500"></span>
                 </div>
               </div>
             )}
@@ -142,6 +151,7 @@ const handleSend = async () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    if (loading) return;
                     handleSend();
                   }
                 }}
