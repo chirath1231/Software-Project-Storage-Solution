@@ -42,6 +42,21 @@ const ClientChatSystem = () => {
   const [usersLoading, setUsersLoading] = useState(false);
 
   const wsRef = useRef(null);
+ const fileInputRef = useRef(null); // ✅ For file attachments
+
+ // ----------------- Handle Attachments -----------------
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log("File selected:", file);
+      // TODO: Call your Upload API here
+      // 1. Create FormData
+      // 2. POST to /api/messages/upload/ (or similar)
+      // 3. Get URL back
+      // 4. Send URL via WS (as discussed in previous steps)
+    }
+  };
+  
 
   // Current user identity (best you currently have)
   const currentUsername =
@@ -518,12 +533,11 @@ const ClientChatSystem = () => {
                   
                 />
 
-                <button
-                  className="p-3 text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Attach file (later)"
-                >
-                  <Paperclip className="w-6 h-6" />
-                </button>
+              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                 
+                 <button onClick={() => fileInputRef.current.click()} className="p-3 text-gray-500 hover:text-gray-700">
+                   <Paperclip className="w-6 h-6" />
+                 </button>
 
                 <button
                   onClick={handleSendMessage}
