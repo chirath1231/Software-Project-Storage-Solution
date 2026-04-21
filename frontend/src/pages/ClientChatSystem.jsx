@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Search, Paperclip, Send } from "lucide-react";
+import { Search, Paperclip, Send, X } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
@@ -211,13 +211,13 @@ const ClientChatSystem = () => {
           prev.map((c) =>
             c.id === selectedConversationId
               ? {
-                  ...c,
-                  last_message: {
-                    text: incomingText,
-                    timestamp: incoming.timestamp,
-                  },
-                  unread_count: 0,
-                }
+                ...c,
+                last_message: {
+                  text: incomingText,
+                  timestamp: incoming.timestamp,
+                },
+                unread_count: 0,
+              }
               : c
           )
         );
@@ -232,7 +232,7 @@ const ClientChatSystem = () => {
     return () => {
       try {
         ws.close();
-      } catch {}
+      } catch { }
     };
   }, [selectedConversationId, currentUsername]);
 
@@ -302,28 +302,54 @@ const ClientChatSystem = () => {
     <div>
       <Navbar />
 
+      <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Clients
+          </h1>
+          <p className="text-gray-500 mt-1">Manage your clients, share files, and track activity </p>
+        </div>
+      </div>
+
       <div className="flex h-screen bg-white">
         <Sidebar />
 
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
+
           {/* Sidebar (Clients List) */}
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
             {/* Header + Unified Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+                {!search && (
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                )}
+                {/* Input */}
                 <input
                   type="text"
                   placeholder="Search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className={`w-full ${search ? "pl-4" : "pl-5"
+                    } pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setShowNewChat(false);
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
-
               {/* Search Results Panel */}
               {search.length > 0 && (
                 <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+
                   {filteredConversations.length > 0 && (
                     <div className="p-2 border-b">
                       <p className="px-2 text-xs text-gray-400 font-bold uppercase">Chats</p>
@@ -337,11 +363,11 @@ const ClientChatSystem = () => {
                   {filteredUsers.length > 0 && (
                     <div className="p-2">
                       <p className="px-2 text-xs text-gray-400 font-bold uppercase">People</p>
-                       {filteredUsers.map((u) => (
+                      {filteredUsers.map((u) => (
                         <div key={u.id} onClick={() => { startChatWithUser(u.id); }} className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium">
                           + Start chat with {u.username}
                         </div>
-                      ))} 
+                      ))}
                     </div>
                   )}
                 </div>
@@ -350,67 +376,64 @@ const ClientChatSystem = () => {
 
             {/* Conversations */}
             {search.length === 0 && (
-            <div className="flex-1 overflow-y-auto">
-              {filteredConversations.map((conv) => {
-                const other = conv.other_user || {};
-                const isSelected = selectedConversationId === conv.id;
+              <div className="flex-1 overflow-y-auto">
+                {filteredConversations.map((conv) => {
+                  const other = conv.other_user || {};
+                  const isSelected = selectedConversationId === conv.id;
 
-                const name =
-                  other.full_name ||
-                  other.username ||
-                  other.email ||
-                  `Conversation #${conv.id}`;
-                const avatar = other.avatar_emoji || "👤";
-                const online = Boolean(other.is_online);
-                const preview = conv.last_message?.text || "";
-                const unread = conv.unread_count || 0;
+                  const name =
+                    other.full_name ||
+                    other.username ||
+                    other.email ||
+                    `Conversation #${conv.id}`;
+                  const avatar = other.avatar_emoji || "👤";
+                  const online = Boolean(other.is_online);
+                  const preview = conv.last_message?.text || "";
+                  const unread = conv.unread_count || 0;
 
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => setSelectedConversationId(conv.id)}
-                    className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${
-                      isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
-                        {avatar}
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => setSelectedConversationId(conv.id)}
+                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"
+                        }`}
+                    >
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
+                          {avatar}
+                        </div>
+                        {online && (
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                        )}
                       </div>
-                      {online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"
+                            }`}
+                        >
+                          {name}
+                        </h3>
+                        <p
+                          className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"
+                            }`}
+                        >
+                          {preview}
+                        </p>
+                      </div>
+
+                      {unread > 0 && (
+                        <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                          {unread}
+                        </div>
                       )}
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-semibold truncate ${
-                          isSelected ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        {name}
-                      </h3>
-                      <p
-                        className={`text-sm truncate ${
-                          isSelected ? "text-white/80" : "text-gray-500"
-                        }`}
-                      >
-                        {preview}
-                      </p>
-                    </div>
-
-                    {unread > 0 && (
-                      <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                        {unread}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-          
+
 
           {/* Chat Area */}
           <div className="flex-1 flex flex-col bg-white">
@@ -448,11 +471,10 @@ const ClientChatSystem = () => {
                 return (
                   <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-md rounded-2xl p-4 ${
-                        isMine
-                          ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
-                          : "bg-white shadow-lg text-gray-900"
-                      }`}
+                      className={`max-w-md rounded-2xl p-4 ${isMine
+                        ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
+                        : "bg-white shadow-lg text-gray-900"
+                        }`}
                     >
                       <p className={isMine ? "text-white" : "text-gray-900"}>{m.text}</p>
                       <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
