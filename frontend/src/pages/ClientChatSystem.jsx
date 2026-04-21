@@ -47,6 +47,21 @@ const ClientChatSystem = () => {
   const currentUsername =
     sessionStorage.getItem("username") || localStorage.getItem("username") || "";
 
+  // ================= AUTO SCROLL FIX =================
+  const messagesContainerRef = useRef(null);
+
+  const scrollToBottom = () => {
+    const el = messagesContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
     return conversations.find((c) => c.id === selectedConversationId) || null;
@@ -462,15 +477,17 @@ const ClientChatSystem = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4" >
+              
               {messages.map((m) => {
                 const isMine =
                   m.is_mine === true ||
                   (m.sender_username && m.sender_username === currentUsername);
 
                 return (
-                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                    <div
+                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`} >
+                    
+                    <div 
                       className={`max-w-md rounded-2xl p-4 ${isMine
                         ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
                         : "bg-white shadow-lg text-gray-900"
@@ -480,7 +497,9 @@ const ClientChatSystem = () => {
                       <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
                         {formatTime(m.timestamp)}
                       </p>
+                      
                     </div>
+                    
                   </div>
                 );
               })}
@@ -496,6 +515,7 @@ const ClientChatSystem = () => {
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="flex-1 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  
                 />
 
                 <button
@@ -511,7 +531,9 @@ const ClientChatSystem = () => {
                 >
                   <Send className="w-5 h-5" />
                 </button>
+                
               </div>
+              
             </div>
           </div>
 
@@ -577,6 +599,7 @@ const ClientChatSystem = () => {
       </div>
 
       <Footer />
+      
     </div>
   );
 };
