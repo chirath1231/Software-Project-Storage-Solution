@@ -14,7 +14,7 @@ export default function DashboardSettings() {
   ];
 
   return (
-    <div className="p-10 bg-gray-100 min-h-screen">
+    <div className="p-10 min-h-screen">
 
       {/* HEADER */}
       <div className="flex items-stretch gap-5 mb-10">

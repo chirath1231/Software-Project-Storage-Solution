@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
+import ChatAssistant from "../components/ChatAssistant/ChatAssistant";
 
 export default function DashboardLayout() {
   return (
@@ -16,6 +17,7 @@ export default function DashboardLayout() {
         </main>
 
         <Footer />
+        <ChatAssistant />
       </div>
     </div>
   );

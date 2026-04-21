@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     # "accounts",  
     "accounts.apps.AccountsConfig",
     "storages",
-    "storage"
+    "storage",
+    'assistant'
 ]
 
 
