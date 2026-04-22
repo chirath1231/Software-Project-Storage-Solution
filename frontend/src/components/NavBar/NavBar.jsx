@@ -29,20 +29,13 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, username, login, logout } = useAuth();
+  const { isAuthenticated, user, login, logout } = useAuth();console.log("AUTH USER:", user);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
-
-  // User data - would come from auth context in real app
-  const userData = {
-    name: "Natasha Avory",
-    email: "natasha@example.com",
-    avatar: null
-  };
 
   // Mock notifications data
   const [notifications, setNotifications] = useState([
@@ -105,8 +98,10 @@ export default function Navbar() {
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
 const handleLogin = () => {
-  login("dummy-token", "Natasha Avory"); // replace with real login response
-  setMenuOpen(false);
+login("dummy-token", {
+    username: "Natasha Avory",
+    email: "natasha@example.com"
+  });  setMenuOpen(false);
 };
 
 const handleLogout = () => {
@@ -359,16 +354,23 @@ const handleLogout = () => {
                   aria-expanded={showProfileMenu}
                   aria-haspopup="true"
                 >
+
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
-                    {userData.avatar ? (
-                      <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
+                    {user?.avatar ? (
+                      <img 
+                        src={user?.avatar} 
+                        alt={user?.username} 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
-                      <User size={24} className="text-orange-500" />
+                      <span className="text-white font-semibold text-lg">
+                        {user?.username?.[0]?.toUpperCase()}
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-white text-sm font-semibold">{username}</div>
-                    <div className="text-gray-400 text-xs">{userData.email}</div>
+                    <div className="text-white text-sm font-semibold">{user?.username}</div>
+                    <div className="text-gray-400 text-xs">{user?.email}</div>
                   </div>
                   <ChevronDown 
                     size={16} 

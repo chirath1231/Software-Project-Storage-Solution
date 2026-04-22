@@ -19,7 +19,7 @@ export default function DashboardHome() {
   const fileInputRef = useRef(null);
 
   const userEmail = localStorage.getItem("username");
-  const { username } = useAuth();
+  const { user } = useAuth();
   const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
@@ -243,10 +243,10 @@ export default function DashboardHome() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, <span className="text-orange-500">{username}</span> 👋
+          Welcome back, <span className="text-orange-500">{user?.username}</span> 👋
         </h1>
         <p className="text-gray-500 mt-1">
-          Here's a quick look at your storage and recent activity
+          Here's a quick look at your storage and recent activities
         </p>
       </div>
 

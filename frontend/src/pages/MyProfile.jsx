@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
               <button className="mt-4 px-4 py-2 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white"
               onClick={() => navigate("/dashboard/subscription")}>
-                Update Plan
+                Upgrade Plan
               </button>
             </div>
           </div>
