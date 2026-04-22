@@ -253,14 +253,19 @@ class DeleteView(APIView):
 
 class RestoreAccountView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         email = request.data.get("email")
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email=email, is_active=False)
         except User.DoesNotExist:
             return Response({"error": "Account not found"}, status=404)
+        
+        if user.is_active:
+            return Response({"message": "Account is already active"}, status=200)
+
 
         deletion_obj = AccountDeletion.objects.filter(user=user, is_deleted=True).first()
 
