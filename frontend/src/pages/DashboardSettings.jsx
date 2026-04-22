@@ -6,7 +6,7 @@ export default function DashboardSettings() {
 
   const settingsItems = [
     { name: "Profile Settings", path: "/dashboard/profile-settings" },
-    { name: "Security", path: "/dashboard/settings/security" },
+    { name: "Security", path: "/dashboard/security" },
     { name: "Notifications", path: "/dashboard/settings/notifications" },
     { name: "Privacy", path: "/dashboard/settings/privacy" },
     { name: "Connected Devices", path: "/dashboard/settings/devices" },

@@ -16,7 +16,8 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework.generics import UpdateAPIView
 from django.utils.timezone import now
-
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import update_session_auth_hash
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com" 
 # GOOGLE_CLIENT_ID = "24543519606-c5f9nj651gt4rqjhh2k9ntl06it1fl7m.apps.googleusercontent.com" 
@@ -281,3 +282,39 @@ class RestoreAccountView(APIView):
         deletion_obj.save()
 
         return Response({"message": "Account restored successfully"})
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+
+        # 1. Verify current password
+        if not user.check_password(current_password):
+            return Response(
+                {"error": "Current password is incorrect"},
+                status=400
+            )
+
+        # 2. Validate new password strength (Django validators)
+        try:
+            validate_password(new_password, user)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=400
+            )
+
+        # 3. Set new password
+        user.set_password(new_password)
+        user.save()
+
+        # 4. Keep user logged in (important if session auth used)
+        update_session_auth_hash(request, user)
+
+        return Response(
+            {"message": "Password changed successfully"}
+        )

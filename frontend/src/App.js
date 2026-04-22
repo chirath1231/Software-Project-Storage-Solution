@@ -16,6 +16,7 @@ import ProfileSettings from "./pages/ProfileSettings.jsx"
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import DeleteAccount from "./pages/DeleteAccount.jsx";
 import RestoreAccount from "./pages/RestoreAccount.jsx";
+import SecuritySettings from "./pages/SecuritySettings.jsx"
 
 function App() {
   return (
@@ -44,7 +45,8 @@ function App() {
               <Route path="subscription" element={<SubscriptionPage />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
               <Route path="settings" element={<DashboardSettings />} /> 
-              <Route path="delete-account" element={<DeleteAccount />} />            
+              <Route path="delete-account" element={<DeleteAccount />} /> 
+              <Route path="security" element={<SecuritySettings />} />         
             </Route>
           </Route>
         </Routes>
