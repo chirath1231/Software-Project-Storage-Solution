@@ -42,9 +42,9 @@ const ClientChatSystem = () => {
   const [usersLoading, setUsersLoading] = useState(false);
 
   const wsRef = useRef(null);
- const fileInputRef = useRef(null); // ✅ For file attachments
+  const fileInputRef = useRef(null); // ✅ For file attachments
 
- // ----------------- Handle Attachments -----------------
+  // ----------------- Handle Attachments -----------------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -56,7 +56,7 @@ const ClientChatSystem = () => {
       // 4. Send URL via WS (as discussed in previous steps)
     }
   };
-  
+
 
   // Current user identity (best you currently have)
   const currentUsername =
@@ -204,7 +204,6 @@ const ClientChatSystem = () => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-
         const incomingText = (data.text || "").trim();
         if (!incomingText) return;
 
@@ -214,12 +213,10 @@ const ClientChatSystem = () => {
           sender: data.sender ?? null,
           sender_username: data.sender_username ?? "Unknown",
           timestamp: data.created_at || new Date().toISOString(),
-          is_mine:
-            (data.sender_username && data.sender_username === currentUsername) ||
-            false,
+          is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
         };
 
-        // ✅ FIX DUPLICATES: if server echoed back optimistic msg, replace it
+        // Update Message UI
         setMessages((prev) => {
           if (data.client_id) {
             const idx = prev.findIndex((m) => m.id === data.client_id);
@@ -229,33 +226,24 @@ const ClientChatSystem = () => {
               return copy;
             }
           }
-
-          // normal de-dupe by DB id
           if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-
           return [...prev, incoming];
         });
 
-        // update preview
-        setConversations((prev) =>
-          prev.map((c) =>
+        // Update Conversation List + SORT TO TOP
+        setConversations((prev) => {
+          const updated = prev.map((c) =>
             c.id === selectedConversationId
-              ? {
-                ...c,
-                last_message: {
-                  text: incomingText,
-                  timestamp: incoming.timestamp,
-                },
-                unread_count: 0,
-              }
+              ? { ...c, last_message: { text: incomingText, timestamp: incoming.timestamp }, unread_count: 0 }
               : c
-          )
-        );
+          );
+          // Sort by date (newest first)
+          return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
+        });
       } catch (e) {
         console.error("WS message parse error:", e);
       }
     };
-
     ws.onclose = () => console.log("WS closed");
     ws.onerror = (e) => console.error("WS error:", e);
 
@@ -272,7 +260,6 @@ const ClientChatSystem = () => {
     if (!text) return;
     if (!selectedConversationId) return;
 
-    // ✅ Optimistic UI
     const tempId = `temp-${Date.now()}`;
     const optimistic = {
       id: tempId,
@@ -285,26 +272,33 @@ const ClientChatSystem = () => {
     setMessages((prev) => [...prev, optimistic]);
     setMessageInput("");
 
-    // 1) WebSocket primary (server saves + broadcasts)
+    // Update Conversation List (Move to top locally immediately)
+    setConversations((prev) => {
+      const updated = prev.map((c) =>
+        c.id === selectedConversationId
+          ? { ...c, last_message: { text, timestamp: new Date().toISOString() } }
+          : c
+      );
+      return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
+    });
+
+    // WebSocket send
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // ✅ IMPORTANT: send client_id so we can replace optimistic message
       wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
       return;
     }
 
-    // 2) HTTP fallback (if WS not connected)
+    // HTTP fallback
     try {
       const res = await api.post("/messages/send/", {
         conversation_id: selectedConversationId,
         text,
       });
-
-      // Replace optimistic with real DB message
       setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
     } catch (err) {
       console.error("Send message failed:", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      alert("Message send failed (WS closed and HTTP failed).");
+      alert("Message send failed.");
     }
   };
 
@@ -493,7 +487,7 @@ const ClientChatSystem = () => {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4" >
-              
+
               {messages.map((m) => {
                 const isMine =
                   m.is_mine === true ||
@@ -501,8 +495,8 @@ const ClientChatSystem = () => {
 
                 return (
                   <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`} >
-                    
-                    <div 
+
+                    <div
                       className={`max-w-md rounded-2xl p-4 ${isMine
                         ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
                         : "bg-white shadow-lg text-gray-900"
@@ -512,9 +506,9 @@ const ClientChatSystem = () => {
                       <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
                         {formatTime(m.timestamp)}
                       </p>
-                      
+
                     </div>
-                    
+
                   </div>
                 );
               })}
@@ -530,14 +524,14 @@ const ClientChatSystem = () => {
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="flex-1 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  
+
                 />
 
-              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                 
-                 <button onClick={() => fileInputRef.current.click()} className="p-3 text-gray-500 hover:text-gray-700">
-                   <Paperclip className="w-6 h-6" />
-                 </button>
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+
+                <button onClick={() => fileInputRef.current.click()} className="p-3 text-gray-500 hover:text-gray-700">
+                  <Paperclip className="w-6 h-6" />
+                </button>
 
                 <button
                   onClick={handleSendMessage}
@@ -545,9 +539,9 @@ const ClientChatSystem = () => {
                 >
                   <Send className="w-5 h-5" />
                 </button>
-                
+
               </div>
-              
+
             </div>
           </div>
 
@@ -613,7 +607,7 @@ const ClientChatSystem = () => {
       </div>
 
       <Footer />
-      
+
     </div>
   );
 };
