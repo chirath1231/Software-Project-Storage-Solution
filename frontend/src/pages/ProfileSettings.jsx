@@ -19,6 +19,9 @@ export default function ProfileSettings() {
   const [state, setState] = useState("");
   const [showMenu, setShowMenu] = useState(false);
 
+  // contact validation state
+  const [contactError, setContactError] = useState("");
+
   useEffect(() => {
     api.get("/api/accounts/profile/")
       .then(res => {
@@ -48,6 +51,14 @@ export default function ProfileSettings() {
   }, [showMenu]);
 
   const handleSave = async () => {
+
+    // validation BEFORE API call
+    const phoneRegex = /^(?:\+94|0)?7\d{8}$/;
+    if (!phoneRegex.test(contact)) {
+      setContactError("Invalid phone number format");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("first_name", firstName);
@@ -198,15 +209,20 @@ export default function ProfileSettings() {
       </div>
 
       <div className="col-span-2">
-        <label className="text-gray-700 font-semibold text-base">
-          Contact Number
-        </label>
+        <label className="text-gray-700 font-semibold text-base">Contact Number</label>
         <input
+          type="tel"
           className="w-full border rounded-lg p-2"
           placeholder="Contact Number"
           value={contact}
-          onChange={(e) => setContact(e.target.value)}
+          onChange={(e) => {
+              setContact(e.target.value);
+              setContactError(""); // clear error on typing
+          }}
         />
+        {contactError && (
+            <p className="text-red-500 text-sm mt-1">{contactError}</p>
+        )}
       </div>
 
       <div>

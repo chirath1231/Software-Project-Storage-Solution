@@ -238,7 +238,7 @@ export default function DashboardHome() {
   
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen p-8">
 
       {/* Header */}
       <div className="mb-8">

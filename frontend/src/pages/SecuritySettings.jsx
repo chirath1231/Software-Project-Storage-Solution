@@ -75,9 +75,9 @@ export default function SecuritySettings() {
       </h1>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
 
-        {/* 🔑 Change Password */}
+        {/* Change Password */}
         <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Change Password
@@ -119,11 +119,17 @@ export default function SecuritySettings() {
           )}
         </div>
 
-        {/* 🔒 Connected Devices */}
+        {/* Connected Devices */}
         <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Connected Devices
           </h2>
+          <button
+            onClick={() => window.open("https://your-app-link.com", "_blank")}
+            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 py-2 rounded-lg font-semibold hover:scale-105 transition mb-6"
+            >
+            Download Mobile App
+          </button>
 
           <div className="space-y-3">
             {devices.map((device) => (
@@ -144,7 +150,7 @@ export default function SecuritySettings() {
                 </div>
 
                 <button className="text-sm text-red-500 hover:underline">
-                  Remove
+                  Logout
                 </button>
               </div>
             ))}
@@ -152,8 +158,8 @@ export default function SecuritySettings() {
         </div>
       </div>
 
-      {/* 🚨 Restore Account Button */}
-      <div className="mt-6 bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500 flex items-center justify-between">
+      {/*  Restore Account Button */}
+      <div className="mt-10 bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-700">
             Account Recovery

@@ -46,7 +46,7 @@ function App() {
               <Route path="payment-success" element={<PaymentSuccess />} />
               <Route path="settings" element={<DashboardSettings />} /> 
               <Route path="delete-account" element={<DeleteAccount />} /> 
-              <Route path="security" element={<SecuritySettings />} />         
+              <Route path="security" element={<SecuritySettings />} />      
             </Route>
           </Route>
         </Routes>
