@@ -10,7 +10,11 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./layouts/AdminLayout";
+import AdminReports from "./pages/AdminReports";
 import AdminUsers from "./pages/AdminUsers"; // Import the new page
+import AdminSettings from "./pages/AdminSettings";
+import AdminTickets from "./pages/AdminTickets";
+import AdminSubscriptionAnalytics from "./pages/AdminSubscriptionAnalytics";
 
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
@@ -35,10 +39,10 @@ function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             
             {/* Stubs for other admin pages (using AdminUsers as placeholder if files not created yet) */}
-            <Route path="/admin/reports" element={<div>Reports Page</div>} />
-            <Route path="/admin/subscription-analytics" element={<div>Subscription Analytics Page</div>} />
-            <Route path="/admin/tickets" element={<div>Tickets Page</div>} />
-            <Route path="/admin/settings" element={<div>Admin Settings Page</div>} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/subscription-analytics" element={<AdminSubscriptionAnalytics />} />
+            <Route path="/admin/tickets" element={<AdminTickets />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>
 
           {/* PROTECTED */}
