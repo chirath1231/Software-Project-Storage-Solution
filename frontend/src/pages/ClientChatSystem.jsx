@@ -50,13 +50,8 @@ const ClientChatSystem = () => {
     if (file) {
       console.log("File selected:", file);
       // TODO: Call your Upload API here
-      // 1. Create FormData
-      // 2. POST to /api/messages/upload/ (or similar)
-      // 3. Get URL back
-      // 4. Send URL via WS (as discussed in previous steps)
     }
   };
-
 
   // Current user identity (best you currently have)
   const currentUsername =
@@ -75,7 +70,6 @@ const ClientChatSystem = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
 
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
@@ -204,6 +198,27 @@ const ClientChatSystem = () => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        // --- NEW EDIT: Handle Status Updates ---
+        if (data.type === "status_update") {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.other_user?.id === data.user_id
+                ? {
+                    ...c,
+                    other_user: {
+                      ...c.other_user,
+                      is_online: data.is_online,
+                      last_active: data.is_online ? "Active now" : "Just now",
+                    },
+                  }
+                : c
+            )
+          );
+          return; // Stop processing this as a message
+        }
+        // --- END EDIT ---
+
         const incomingText = (data.text || "").trim();
         if (!incomingText) return;
 
