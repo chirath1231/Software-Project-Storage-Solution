@@ -80,7 +80,7 @@ export default function EventCalendar() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">Your Schedule</h2>
         <button 
-          onClick={() => setShowModal(True)}
+          onClick={() => setShowModal(true)}
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition"
         >
           <Plus size={16} /> Schedule Meeting
@@ -121,6 +121,16 @@ export default function EventCalendar() {
                 value={newEvent.title}
                 onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
               />
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Guest Email (Optional)</label>
+                <input
+                    type="email"
+                    placeholder="colleague@example.com"
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                    value={newEvent.attendee_email}
+                    onChange={(e) => setNewEvent({...newEvent, attendee_email: e.target.value})}
+                />
+                </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-gray-500">Start Time</label>
