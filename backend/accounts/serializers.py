@@ -4,6 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from .models import Event
 
 
 # -------------------------
@@ -67,3 +68,16 @@ from rest_framework import serializers
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
+
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ['id', 'title', 'description', 'start_time', 'end_time', 'meeting_link', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, data):
+        """Make sure the user doesn't schedule an event that ends before it starts!"""
+        if data['start_time'] >= data['end_time']:
+            raise serializers.ValidationError({"end_time": "End time must be after the start time."})
+        return data

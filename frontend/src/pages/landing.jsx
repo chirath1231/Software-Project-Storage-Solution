@@ -134,7 +134,7 @@ function Landing() {
       </h2>
 
       <div className="pricing-container">
-        {plans.map((plan) => (
+        {Array.isArray(plans) && plans.map((plan) => (
           <div className="pricing-card" key={plan.id}>
             {/* Tag */}
             <span className={`tag ${plan.name.toLowerCase()}`}>

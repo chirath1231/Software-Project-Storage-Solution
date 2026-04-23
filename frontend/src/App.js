@@ -10,7 +10,8 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./layouts/AdminLayout";
-import AdminUsers from "./pages/AdminUsers"; // Import the new page
+import AdminUsers from "./pages/AdminUsers"; 
+import Notifications from "./pages/Notifications";
 
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
@@ -47,6 +48,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="files" element={<MyFiles />} />
               <Route path="chat" element={<ClientChatSystem />} />
+              <Route path="notifications" element={<Notifications />} />
               <Route index element={<DashboardHome />} />
               <Route path="support" element={<DashboardSupport />} />
               <Route path="settings" element={<DashboardSettings />} />

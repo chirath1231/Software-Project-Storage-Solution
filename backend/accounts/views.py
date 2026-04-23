@@ -4,12 +4,16 @@ from rest_framework.views import APIView
 from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
+
+from rest_framework import generics
+from .models import Event
+from .serializers import EventSerializer
 
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
@@ -100,3 +104,28 @@ class GoogleLoginAPIView(APIView):
                 {"detail": "Invalid Google token"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+# -------------------------
+# Calendar Event Views
+# -------------------------
+
+class EventListCreateView(generics.ListCreateAPIView):
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Only return events that belong to the currently logged-in user
+        return Event.objects.filter(user=self.request.user).order_by('start_time')
+
+    def perform_create(self, serializer):
+        # Automatically attach the logged-in user to the new event
+        serializer.save(user=self.request.user)
+
+
+class EventDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure users can only edit or delete their OWN events
+        return Event.objects.filter(user=self.request.user)

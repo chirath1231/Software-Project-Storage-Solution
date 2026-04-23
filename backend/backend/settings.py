@@ -27,32 +27,30 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
-    "daphne",
+    # DJANGO CORE APPS
+    "daphne",  # Must be at the top if using Channels/WebSockets
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "subscriptions",
+    "django.contrib.postgres",
+
     # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    'django.contrib.postgres',
-    "accounts",
-    "storages",
-    "storage",  
-    'anymail',  
-    # YOUR APPS
-    "accounts",  # your authentication app
-    "channels", # for WebSocket support
-    'chat', # your chat app
+    "storages",         # For AWS S3 / Cloud storage
+    "anymail",          # For Email services
+    "channels",         # For WebSockets
     "django_extensions",
-    "storages",
-    "storage",
-    'anymail',
 
+    # YOUR LOCAL APPS
+    "accounts",         # Your authentication app
+    "subscriptions",    # Subscription management
+    "storage",          # Your local storage logic app
+    "chat",             # Your chat app
 ]
 
 

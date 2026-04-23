@@ -1,5 +1,6 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from .models import Subscription, Payment, SubscriptionPayment
@@ -25,6 +26,7 @@ MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 # GET ALL SUBSCRIPTIONS
 # --------------------------------------------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def subscription_list(request):
     """
     Returns all available subscription plans
