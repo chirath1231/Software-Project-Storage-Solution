@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { useNotifications } from '../../context/NotificationContext';
 
 // Mock logo component
 const LogoDark = () => (
@@ -33,67 +34,18 @@ export default function Navbar({ isDashboard = false }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // State for notifications
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New message received",
-      message: "You have a new message from John Doe",
-      time: "5 min ago",
-      read: false
-    },
-    {
-      id: 2,
-      title: "System update",
-      message: "Your system has been updated successfully",
-      time: "1 hour ago",
-      read: false
-    },
-    {
-      id: 3,
-      title: "Welcome!",
-      message: "Welcome to CEYNOA platform",
-      time: "2 hours ago",
-      read: true
-    }
-  ]);
+  // --- GRAB LIVE DATA FROM THE GLOBAL BRAIN ---
+  const { notifications, unreadCount, fetchGlobalNotifications, setNotifications } = useNotifications();
 
   const showDashboardView = isAuthenticated || isDashboard;
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
   const userData = {
-    name: "Natasha Avory",
-    email: "natasha@example.com",
+    name: "User",
+    email: "user@example.com",
     avatar: null
   };
-
-  // --- FIXED SECTION: fetchNotifications ---
-  const fetchNotifications = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
-
-      const response = await fetch("http://localhost:8000/api/accounts/notifications/", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("🚨 DATA FROM DJANGO:", data);
-        setNotifications(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
-  // ------------------------------------------
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -128,11 +80,6 @@ export default function Navbar({ isDashboard = false }) {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const handleLogin = () => {
-    login("dummy-token", "Natasha Avory");
-    setMenuOpen(false);
-  };
-
   const handleLogout = () => {
     logout();
     setShowProfileMenu(false);
@@ -147,17 +94,26 @@ export default function Navbar({ isDashboard = false }) {
 
   const handleNavClick = (href) => {
     setMenuOpen(false);
-    console.log("Navigate to:", href);
   };
 
-  const markAsRead = (notificationId) => {
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, read: true } : n
-    ));
+  // --- INTERACT WITH DJANGO TO MARK AS READ ---
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      // Tell the global brain to refresh the list!
+      fetchGlobalNotifications();
+    } catch (error) {
+      console.error("Failed to mark read:", error);
+    }
   };
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    // Instantly update the UI state locally so it feels fast
+    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
   };
 
   const clearNotification = (notificationId) => {
@@ -175,9 +131,7 @@ export default function Navbar({ isDashboard = false }) {
         {/* Mobile menu toggle */}
         <button
           onClick={toggleMenu}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          className="md:hidden text-white p-2 hover:bg-gray-700 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="md:hidden text-white p-2 hover:bg-gray-700 rounded transition-colors"
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -191,37 +145,17 @@ export default function Navbar({ isDashboard = false }) {
         `}>
           {!showDashboardView ? (
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
-              {[
-                { href: "#home", label: "Home" },
-                { href: "#features", label: "Features" },
-                { href: "#pricing", label: "Pricing" },
-                { href: "#aboutus", label: "About Us" }
-              ].map((item) => (
-                <li key={item.href} className="m-0 before:content-none">
-                  <a
-                    href={item.href}
-                    className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
-                    onClick={() => handleNavClick(item.href)}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
+              {/* Public Links */}
             </ul>
           ) : (
             <div className="relative w-full max-w-xl">
-              <Search 
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-                size={18} 
-                aria-hidden="true"
-              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                aria-label="Search"
                 className="w-full py-3 pl-12 pr-4 rounded-full bg-gray-700 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
               />
             </div>
@@ -240,13 +174,14 @@ export default function Navbar({ isDashboard = false }) {
               {/* Notification Bell */}
               <div className="relative" ref={notificationRef}>
                 <button
-                  className="relative p-2 rounded-full hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="relative p-2 rounded-full hover:bg-gray-700 transition-colors"
                   onClick={() => {
                     setShowNotifications(!showNotifications);
                     setShowProfileMenu(false);
                   }}
                 >
                   <Bell size={22} className="text-gray-300" />
+                  {/* Dynamic Unread Badge */}
                   {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                       {unreadCount}
@@ -269,20 +204,23 @@ export default function Navbar({ isDashboard = false }) {
                         notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
+                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.is_read ? 'bg-orange-50/50' : ''}`}
                             onClick={() => markAsRead(notification.id)}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   <h4 className="text-gray-800 font-medium text-sm">{notification.title}</h4>
-                                  {!notification.read && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+                                  {!notification.is_read && <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></span>}
                                 </div>
                                 <p className="text-gray-600 text-xs mt-1">{notification.message}</p>
-                                <p className="text-gray-400 text-xs mt-1">{notification.time}</p>
+                                {/* Formatted Django Timestamp */}
+                                <p className="text-gray-400 text-[10px] mt-1 font-medium">
+                                  {new Date(notification.created_at).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                                </p>
                               </div>
-                              <button onClick={(e) => { e.stopPropagation(); clearNotification(notification.id); }} className="text-gray-400 hover:text-red-500">
-                                <X size={16} />
+                              <button onClick={(e) => { e.stopPropagation(); clearNotification(notification.id); }} className="text-gray-400 hover:text-red-500 mt-1">
+                                <X size={14} />
                               </button>
                             </div>
                           </div>
@@ -298,18 +236,14 @@ export default function Navbar({ isDashboard = false }) {
               {/* User Profile */}
               <div className="relative" ref={profileMenuRef}>
                 <button
-                  className="flex items-center gap-3 py-2 px-3 rounded-full hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="flex items-center gap-3 py-2 px-3 rounded-full hover:bg-gray-700 transition-colors"
                   onClick={() => {
                     setShowProfileMenu(!showProfileMenu);
                     setShowNotifications(false);
                   }}
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
-                    {userData.avatar ? (
-                      <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={24} className="text-orange-500" />
-                    )}
+                    <User size={24} className="text-orange-500" />
                   </div>
                   <div className="flex flex-col gap-0.5 text-left">
                     <div className="text-white text-sm font-semibold">{username || userData.name}</div>
