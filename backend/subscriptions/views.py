@@ -9,6 +9,10 @@ import uuid
 import hashlib
 import logging
 
+# --- 1. IMPORT USER MODEL AND OUR NOTIFICATION HELPER ---
+from django.contrib.auth.models import User
+from accounts.views import create_system_notification 
+
 # Setup logger
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,6 @@ def subscription_list(request):
 # --------------------------------------------------------
 # GET USER'S ACTIVE SUBSCRIPTIONS
 # --------------------------------------------------------
-# views.py (replace only the user_subscriptions function)
 @api_view(["GET"])
 def user_subscriptions(request, email):
     """
@@ -56,7 +59,6 @@ def user_subscriptions(request, email):
             "subscription_id": r.subscription.id,
             "subscription_name": r.subscription.name,
             "storage": r.subscription.storage,   # Include storage directly
-
             "amount": str(r.amount),
             "order_id": r.order_id,
             "payment_id": r.payment_id,
@@ -66,7 +68,6 @@ def user_subscriptions(request, email):
     ]
 
     return Response(data)
-
 
 
 # --------------------------------------------------------
@@ -240,6 +241,20 @@ def payhere_notify(request):
                     status="ACTIVE"
                 )
                 print(f"✅ SubscriptionPayment created: {sub_payment}")
+
+                # --- 2. TRIGGER THE NOTIFICATION UPON SUCCESS ---
+                try:
+                    # Find the user by the email saved in the payment record
+                    user = User.objects.get(email=payment.payer_email)
+                    create_system_notification(
+                        user=user,
+                        title="Subscription Upgraded! 🎉",
+                        message=f"Thank you for your purchase! You are now subscribed to the {payment.subscription.name} plan."
+                    )
+                    print(f"✅ Upgrade notification sent to {user.email}")
+                except User.DoesNotExist:
+                    print(f"⚠️ Could not send notification: No User account found matching email {payment.payer_email}.")
+
             else:
                 print(f"⚠️ SubscriptionPayment already exists for order: {order_id}")
                 
@@ -272,5 +287,3 @@ def check_payment_status(request, order_id):
         }, status=200)
     except Payment.DoesNotExist:
         return JsonResponse({"error": "Order not found"}, status=404)
-    
-
