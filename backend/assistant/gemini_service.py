@@ -1,7 +1,10 @@
+import re
 import os, time
 from google import genai
+
+from .knowledge_base import INTENTS, KNOWLEDGE_BASE
 from .prompts import SYSTEM_PROMPT
-from google.genai.errors import ClientError
+from google.genai.errors import ClientError, ServerError
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 CACHE = {}
@@ -195,51 +198,95 @@ def check_faq(prompt):
 
     return None
 
-def ask_gemini(prompt: str):
+GREETING_PATTERNS = re.compile(
+    r'^\s*(hi+|hello+|hey+|good\s+(morning|evening|afternoon|night))[!.,\s]*$',
+    re.IGNORECASE
+)
 
-    # 1. Check FAQ first
-    faq_answer = check_faq(prompt)
+def handle_greetings(prompt):
+    if GREETING_PATTERNS.match(prompt.strip()):
+        return "Hi 👋 I'm your Ceynoa Assistant. I can help you with uploads, sharing, storage, and account settings."
+    return None
 
+def check_intent(prompt):
+    text = prompt.lower().strip()
+    
+    # Use word-boundary safe tokenization
+    text_words = set(re.findall(r'\b\w+\b', text))
+
+    best_intent = None
+    best_score = 0
+
+    for intent, keywords in INTENTS.items():
+        score = 0
+
+        for keyword in keywords:
+            words = keyword.split()
+            keyword_words = set(words)
+            
+            # All words in keyword must exist as whole words in the text
+            if keyword_words.issubset(text_words):
+                # Longer (more specific) keywords score higher
+                score += len(words) * 2  # weight multi-word phrases more
+
+        if score > best_score:
+            best_score = score
+            best_intent = intent
+
+    # Raise threshold — require at least a 2-word match OR a very specific single word
+    # Single-word keywords score 2, so threshold of 3 requires multi-word match
+    # Lower to 2 only if you want single-word matches (be careful)
+    if best_score >= 2 and best_intent:
+        return KNOWLEDGE_BASE.get(best_intent)
+
+    return None
+   
+def ask_gemini(user_message: str):
+    # These now correctly receive just "hi", "how to delete", etc.
+    
+    greeting = handle_greetings(user_message)
+    if greeting:
+        return greeting
+
+    kb_answer = check_intent(user_message)
+    if kb_answer:
+        return kb_answer
+
+    faq_answer = check_faq(user_message)
     if faq_answer:
         return faq_answer
 
-    # normalize question
-    key = prompt.strip().lower()
-
-    # 2. Check cache 
+    key = user_message.strip().lower()
     if key in CACHE:
-        print("Using cached answer")
         return CACHE[key]
 
-    # 3. Only call Gemini if not cached
+    # Only here do we build the full prompt for Gemini
+    full_prompt = f"""
+    {SYSTEM_PROMPT}
+
+    --- KNOWLEDGE BASE ---
+    {KNOWLEDGE_BASE}
+
+    User: {user_message}
+    """
+
     for attempt in range(2):
         try:
             print("CALLING GEMINI API")
             response = client.models.generate_content(
-                # model="gemini-2.5-flash",
-                # model="gemini-2.5-flash-lite",
-                model="gemini-3.1-flash-lite-preview",
-                contents=[
-                    SYSTEM_PROMPT,
-                    f"User question: {prompt}",
-                    "Follow output format strictly."
-                ]
+                model="gemini-2.5-flash",
+                contents=[full_prompt]  # single assembled string
             )
-
             answer = response.text
-
-            # 3. Save response in cache
             CACHE[key] = answer
-
             return answer
 
+        except ServerError:
+            return "AI is currently busy. Please try again in a few seconds."
         except ClientError as e:
-            print("GEMINI ERROR:", e)
             if "429" in str(e):
                 time.sleep(2)
                 continue
             return f"AI error: {str(e)}"
 
-            return "AI limit reached. Try again later." # Hit a rate limit or quota limit from Gemini
-
-    return "AI is busy. Please retry after a few seconds." # System or retry failure (temporary issue)
+    return "AI is busy. Please retry after a few seconds."

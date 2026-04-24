@@ -18,17 +18,8 @@ class ChatAssistantView(APIView):
                 {"error": "Message is required"},
                 status=400
             )
-
-        # You can personalize later using user info
-        prompt = f"""
-{SYSTEM_PROMPT}
-
---- KNOWLEDGE BASE ---
-{KNOWLEDGE_BASE}
-
-User: {user_message}
-"""
-        reply = ask_gemini(prompt)
+        
+        reply = ask_gemini(user_message)
 
         return Response({
             "user": user.username,
