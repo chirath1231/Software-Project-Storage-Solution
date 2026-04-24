@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
 
-// Mock logo - replace with your actual import
+// Mock logo component
 const LogoDark = () => (
   <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <div className="flex-none mr-auto">
-          <img
-            src={logo_dark}
-            alt="CEYNOA Logo"
-            className="h-10 w-auto"
-          />
-        </div>
+    <div className="flex-none mr-auto">
+      <img
+        src={logo_dark}
+        alt="CEYNOA Logo"
+        className="h-10 w-auto"
+      />
+    </div>
   </div>
 );
 
@@ -33,19 +33,7 @@ export default function Navbar({ isDashboard = false }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  const showDashboardView = isAuthenticated || isDashboard;
-  
-  const profileMenuRef = useRef(null);
-  const notificationRef = useRef(null);
-
-  // User data - would come from auth context in real app
-  const userData = {
-    name: "Natasha Avory",
-    email: "natasha@example.com",
-    avatar: null
-  };
-
-  // Mock notifications data
+  // State for notifications
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -69,6 +57,41 @@ export default function Navbar({ isDashboard = false }) {
       read: true
     }
   ]);
+
+  const showDashboardView = isAuthenticated || isDashboard;
+  const profileMenuRef = useRef(null);
+  const notificationRef = useRef(null);
+
+  const userData = {
+    name: "Natasha Avory",
+    email: "natasha@example.com",
+    avatar: null
+  };
+
+  // --- FIXED SECTION: fetchNotifications ---
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const response = await fetch("http://localhost:8000/api/accounts/notifications/", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("🚨 DATA FROM DJANGO:", data);
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+  // ------------------------------------------
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -105,28 +128,25 @@ export default function Navbar({ isDashboard = false }) {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-const handleLogin = () => {
-  login("dummy-token", "Natasha Avory"); // replace with real login response
-  setMenuOpen(false);
-};
+  const handleLogin = () => {
+    login("dummy-token", "Natasha Avory");
+    setMenuOpen(false);
+  };
 
-const handleLogout = () => {
-  logout();
-  setShowProfileMenu(false);
-  setShowNotifications(false);
-};
-
+  const handleLogout = () => {
+    logout();
+    setShowProfileMenu(false);
+    setShowNotifications(false);
+  };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       console.log("Searching for:", searchQuery);
-      // Add your search logic here
     }
   };
 
   const handleNavClick = (href) => {
     setMenuOpen(false);
-    // In real app, handle navigation here
     console.log("Navigate to:", href);
   };
 
@@ -146,9 +166,9 @@ const handleLogout = () => {
 
   return (
     <nav className="py-4 relative shadow-lg bg-[#323D41]">
-      <div className="max-w-7xl mx-auto px-0  flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-0 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex-none mr-auto ">
+        <div className="flex-none mr-auto">
           <LogoDark />
         </div>
 
@@ -162,7 +182,7 @@ const handleLogout = () => {
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Center section - Navigation or Search */}
+        {/* Center section */}
         <div className={`
           flex-1 flex justify-center items-center mx-10
           ${menuOpen ? 'flex' : 'hidden'} md:flex
@@ -170,15 +190,14 @@ const handleLogout = () => {
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
           {!showDashboardView ? (
-            // Navigation links (before login)
-            <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
+            <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
               {[
                 { href: "#home", label: "Home" },
                 { href: "#features", label: "Features" },
                 { href: "#pricing", label: "Pricing" },
                 { href: "#aboutus", label: "About Us" }
               ].map((item) => (
-                <li key={item.href} className="m-0 before:content-none" >
+                <li key={item.href} className="m-0 before:content-none">
                   <a
                     href={item.href}
                     className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
@@ -190,7 +209,6 @@ const handleLogout = () => {
               ))}
             </ul>
           ) : (
-            // Search bar (after login)
             <div className="relative w-full max-w-xl">
               <Search 
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
@@ -208,42 +226,16 @@ const handleLogout = () => {
               />
             </div>
           )}
-
-          {/* Mobile auth buttons (only when logged out) */}
-          {!showDashboardView && (
-            <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
-              <GradientButton 
-                title="Register" 
-                onClick={() => window.location.href = "/register"}
-                ariaLabel="Register for an account"
-              />
-              <GradientButton 
-                title="Login" 
-                onClick={() => window.location.href = "/login"}
-                ariaLabel="Login to your account"
-              />
-            </div>
-          )}
         </div>
 
-        {/* Right section - Auth buttons or Profile */}
+        {/* Right section */}
         <div className="hidden md:flex gap-3 items-center relative">
           {!showDashboardView ? (
-            // Auth buttons (before login)
             <>
-              <GradientButton 
-              title="Register" 
-              onClick={() => window.location.href = "/register"}
-              ariaLabel="Register for an account"
-              />
-              <GradientButton 
-              title="Login" 
-              onClick={() => window.location.href = "/login"}
-              ariaLabel="Login to your account"
-              />
+              <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
+              <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
             </>
-            ) : (
-            // Notifications and User profile (after login)
+          ) : (
             <>
               {/* Notification Bell */}
               <div className="relative" ref={notificationRef}>
@@ -253,9 +245,6 @@ const handleLogout = () => {
                     setShowNotifications(!showNotifications);
                     setShowProfileMenu(false);
                   }}
-                  aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-                  aria-expanded={showNotifications}
-                  aria-haspopup="true"
                 >
                   <Bell size={22} className="text-gray-300" />
                   {unreadCount > 0 && (
@@ -265,85 +254,43 @@ const handleLogout = () => {
                   )}
                 </button>
 
-                {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div 
-                    className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl w-80 z-50 overflow-hidden"
-                    role="menu"
-                    aria-orientation="vertical"
-                  >
-                    {/* Header */}
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl w-80 z-50 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                       <h3 className="text-gray-800 font-semibold text-sm">Notifications</h3>
                       {unreadCount > 0 && (
-                        <button
-                          onClick={markAllAsRead}
-                          className="text-orange-500 text-xs hover:text-orange-600 focus:outline-none"
-                        >
+                        <button onClick={markAllAsRead} className="text-orange-500 text-xs hover:text-orange-600">
                           Mark all as read
                         </button>
                       )}
                     </div>
-
-                    {/* Notifications List */}
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length > 0 ? (
                         notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                              !notification.read ? 'bg-blue-50' : ''
-                            }`}
+                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
                             onClick={() => markAsRead(notification.id)}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="text-gray-800 font-medium text-sm">
-                                    {notification.title}
-                                  </h4>
-                                  {!notification.read && (
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                  )}
+                                  <h4 className="text-gray-800 font-medium text-sm">{notification.title}</h4>
+                                  {!notification.read && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
                                 </div>
-                                <p className="text-gray-600 text-xs mt-1">
-                                  {notification.message}
-                                </p>
-                                <p className="text-gray-400 text-xs mt-1">
-                                  {notification.time}
-                                </p>
+                                <p className="text-gray-600 text-xs mt-1">{notification.message}</p>
+                                <p className="text-gray-400 text-xs mt-1">{notification.time}</p>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  clearNotification(notification.id);
-                                }}
-                                className="text-gray-400 hover:text-red-500 focus:outline-none"
-                                aria-label="Clear notification"
-                              >
+                              <button onClick={(e) => { e.stopPropagation(); clearNotification(notification.id); }} className="text-gray-400 hover:text-red-500">
                                 <X size={16} />
                               </button>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                          No notifications
-                        </div>
+                        <div className="px-4 py-8 text-center text-gray-500 text-sm">No notifications</div>
                       )}
                     </div>
-
-                    {/* Footer */}
-                    {notifications.length > 0 && (
-                      <div className="px-4 py-3 border-t border-gray-200 text-center">
-                        <button
-                          className="text-orange-500 text-sm hover:text-orange-600 focus:outline-none font-medium"
-                          onClick={() => console.log("View all notifications")}
-                        >
-                          View all notifications
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -356,9 +303,6 @@ const handleLogout = () => {
                     setShowProfileMenu(!showProfileMenu);
                     setShowNotifications(false);
                   }}
-                  aria-label="User menu"
-                  aria-expanded={showProfileMenu}
-                  aria-haspopup="true"
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
                     {userData.avatar ? (
@@ -371,47 +315,15 @@ const handleLogout = () => {
                     <div className="text-white text-sm font-semibold">{username || userData.name}</div>
                     <div className="text-gray-400 text-xs">{userData.email}</div>
                   </div>
-                  <ChevronDown 
-                    size={16} 
-                    className={`text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
-                  />
+                  <ChevronDown size={16} className={`text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile dropdown menu */}
                 {showProfileMenu && (
-                  <div 
-                    className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl min-w-[200px] z-50 overflow-hidden"
-                    role="menu"
-                    aria-orientation="vertical"
-                  >
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Profile");
-                        setShowProfileMenu(false);
-                      }}
-                      role="menuitem"
-                    >
-                      My Profile
-                    </button>
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Settings");
-                        setShowProfileMenu(false);
-                      }}
-                      role="menuitem"
-                    >
-                      Settings
-                    </button>
-                    <div className="h-px bg-gray-200 my-1" role="separator"></div>
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-red-50 transition-colors text-sm text-red-500 font-medium focus:outline-none focus:bg-red-50"
-                      onClick={handleLogout}
-                      role="menuitem"
-                    >
-                      Logout
-                    </button>
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl min-w-[200px] z-50 overflow-hidden">
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-100 text-sm text-gray-800" onClick={() => setShowProfileMenu(false)}>My Profile</button>
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-100 text-sm text-gray-800" onClick={() => setShowProfileMenu(false)}>Settings</button>
+                    <div className="h-px bg-gray-200 my-1"></div>
+                    <button className="w-full py-3 px-4 text-left hover:bg-red-50 text-sm text-red-500 font-medium" onClick={handleLogout}>Logout</button>
                   </div>
                 )}
               </div>

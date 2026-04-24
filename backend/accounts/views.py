@@ -51,6 +51,7 @@ class LoginAPIView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "user_id": user.id,
                 "username": user.username,
                 "email": user.email,
             })
@@ -88,6 +89,7 @@ class GoogleLoginAPIView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "user_id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "is_new_user": created
