@@ -23,7 +23,7 @@ export default function Trash() {
 
   const fetchTrash = async () => {
     try {
-      const res = await api.get("/api/files/trash/");
+      const res = await api.get("/api/trash/");
       setFiles(res.data);
       setLoading(false);
     } catch (err) {
@@ -39,7 +39,7 @@ export default function Trash() {
 
   const restoreFile = async (id) => {
     try {
-      await api.post(`/api/files/trash/${id}/restore/`);
+      await api.post(`/api/trash/${id}/restore/`);
       await fetchTrash();
     } catch (err) {
       console.error(err);
@@ -60,7 +60,7 @@ export default function Trash() {
     )
       return;
     try {
-      await api.delete(`/api/files/trash/${id}/`);
+      await api.delete(`/api/trash/${id}/`);
       await fetchTrash();
     } catch (err) {
       console.error(err);
@@ -82,7 +82,7 @@ export default function Trash() {
       return;
     try {
       await Promise.all(
-        files.map((f) => api.delete(`/api/files/trash/${f.id}/`))
+        files.map((f) => api.delete(`/api/trash/${f.id}/`))
       );
       await fetchTrash();
     } catch (err) {
