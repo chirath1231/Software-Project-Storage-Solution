@@ -1,35 +1,50 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../api/axios'; // Make sure this path is correct for your project
+import api from '../api/axios';
 
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    
+    // --- NEW: Pagination States ---
+    const [nextPageUrl, setNextPageUrl] = useState(null);
+    const [prevPageUrl, setPrevPageUrl] = useState(null);
 
-    const fetchGlobalNotifications = async () => {
+    const fetchGlobalNotifications = async (sortBy = 'newest', pageUrl = null) => {
         try {
             const token = localStorage.getItem("access_token");
-            if (!token) return; // Don't fetch if not logged in
+            if (!token) return;
             
-            const res = await api.get("/api/auth/notifications/");
-            const sorted = res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            // If we click "Next Page", use that URL. Otherwise, build the default one with our sort rule!
+            const targetUrl = pageUrl || `/api/auth/notifications/?sort=${sortBy}`;
             
-            setNotifications(sorted);
-            // Calculate how many are unread for the red badge!
-            setUnreadCount(sorted.filter(n => !n.is_read).length);
+            const res = await api.get(targetUrl);
+            
+            // --- NEW: Extract data from Django's Paginator ---
+            setNotifications(res.data.results); 
+            setUnreadCount(res.data.unread_count); // Perfectly accurate bell count!
+            setNextPageUrl(res.data.next);
+            setPrevPageUrl(res.data.previous);
+            
         } catch (err) {
             console.error("Error fetching global notifications", err);
         }
     };
 
-    // Fetch once when the user logs in/app loads
     useEffect(() => {
         fetchGlobalNotifications();
     }, []);
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, fetchGlobalNotifications, setNotifications, setUnreadCount }}>
+        <NotificationContext.Provider value={{ 
+            notifications, 
+            unreadCount, 
+            fetchGlobalNotifications, 
+            setNotifications, 
+            nextPageUrl,
+            prevPageUrl
+        }}>
             {children}
         </NotificationContext.Provider>
     );
