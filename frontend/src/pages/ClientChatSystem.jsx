@@ -5,6 +5,9 @@ import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
 
+// --- 1. IMPORT GLOBAL NOTIFICATIONS ---
+import { useNotifications } from '../context/NotificationContext';
+
 // ✅ one axios client (avoid URL mistakes)
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
@@ -28,6 +31,9 @@ const formatTime = (isoOrDate) => {
 };
 
 const ClientChatSystem = () => {
+  // --- 2. HOOK INTO THE GLOBAL BRAIN ---
+  const { fetchGlobalNotifications } = useNotifications();
+
   // ----------------- State -----------------
   const [search, setSearch] = useState("");
   const [conversations, setConversations] = useState([]); // left list
@@ -128,6 +134,10 @@ const ClientChatSystem = () => {
       await loadConversations();
       setSelectedConversationId(newConversationId);
       setShowNewChat(false);
+      
+      // --- 3. REFRESH NOTIFICATIONS ON NEW CHAT ---
+      fetchGlobalNotifications();
+      
     } catch (err) {
       console.error("Failed to start chat:", err);
     }
@@ -264,6 +274,9 @@ const ClientChatSystem = () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       // ✅ IMPORTANT: send client_id so we can replace optimistic message
       wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
+      
+      // --- 4. REFRESH NOTIFICATIONS (WS PATH) ---
+      fetchGlobalNotifications();
       return;
     }
 
@@ -276,6 +289,10 @@ const ClientChatSystem = () => {
 
       // Replace optimistic with real DB message
       setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
+      
+      // --- 5. REFRESH NOTIFICATIONS (HTTP PATH) ---
+      fetchGlobalNotifications();
+      
     } catch (err) {
       console.error("Send message failed:", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -299,9 +316,7 @@ const ClientChatSystem = () => {
   // ----------------- Render -----------------
   return (
     <div>
-
       <div className="flex h-screen bg-white">
-
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
           {/* Sidebar (Clients List) */}
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
@@ -571,7 +586,6 @@ const ClientChatSystem = () => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };
