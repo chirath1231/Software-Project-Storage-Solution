@@ -40,19 +40,14 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     'django.contrib.postgres',
-    "accounts",
     "storages",
-    "storage",  
     'anymail',  
     # YOUR APPS
     "accounts",  # your authentication app
     "channels", # for WebSocket support
     'chat', # your chat app
     "django_extensions",
-    "storages",
     "storage",
-    'anymail',
-
 ]
 
 
