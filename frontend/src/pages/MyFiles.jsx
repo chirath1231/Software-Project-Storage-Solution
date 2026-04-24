@@ -97,7 +97,7 @@ export default function MyFiles() {
 
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
-      const res = await api.get("/api/files/");
+      const res = await api.get("/api/?user_id=${userId}");
       const data = res.data;
       setFiles(data);
       const totalBytes = data.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -139,7 +139,7 @@ export default function MyFiles() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      await api.post("/api/files/upload/", formData);
+      await api.post("/api/upload/", formData);
       setSelectedFile(null);
       const input = document.getElementById("file-input");
       if (input) input.value = "";
@@ -159,7 +159,7 @@ export default function MyFiles() {
   const deleteFile = async (id) => {
     if (!window.confirm("Move this file to Trash?")) return;
     try {
-      await api.delete(`/api/files/${id}/trash/`);
+      await api.delete(`/api/${id}/trash/`);
       const planGB = await fetchSubscription();
       await fetchFiles(planGB);
     } catch (err) {
