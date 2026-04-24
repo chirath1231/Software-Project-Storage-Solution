@@ -11,13 +11,14 @@ import DashboardHome from "./pages/DashboardHome";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminUsers from "./pages/AdminUsers"; // Import the new page
-
+import Notifications from "./pages/Notifications.jsx";
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
-
 import MyFiles from "./pages/MyFiles";
 import ClientChatSystem from "./pages/ClientChatSystem.jsx";
+import Trash from "./pages/Trash.jsx";
+
 
 function App() {
   return (
@@ -51,7 +52,9 @@ function App() {
               <Route path="support" element={<DashboardSupport />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="subscription" element={<SubscriptionPage />} />
+              <Route path="trash" element={<Trash />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
+              <Route path="notifications" element={<Notifications />} />
               <Route path="settings/profile" element={<ProfileSettings />} />
             </Route>
           </Route>
@@ -60,5 +63,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;
