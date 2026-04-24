@@ -106,3 +106,5 @@ node_modules/
 *.key
 *.cpython
 *.pyc
+
+__init__.py
