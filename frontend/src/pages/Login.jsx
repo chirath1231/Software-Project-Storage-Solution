@@ -1,214 +1,149 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../auth.css";
-import Maskgroup from "../assets/Maskgroup.png";
-import Logo_on_Light from "../assets/Logo_on_Light.png";
-import { FcGoogle } from "react-icons/fc";
-import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../auth/AuthContext";
-import axios from "axios";
+import { GoogleLogin } from "@react-oauth/google";
+import "../auth.css";
+import myImage from "../assets/tech.png";
+import googleLogo from "../assets/plus.png";
+import logo from "../assets/logo.png";
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // ==========================
-  // 🔐 NORMAL LOGIN
-  // ==========================
-  const handleLogin = async (e) => {
+  function onChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setError(null);
 
+    // 2. Normal User Login Flow
+    setLoading(true);
     try {
-      const res = await fetch(
-        "http://localhost:8000/api/accounts/login/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      // Determine which endpoint to hit based on the email
+      const endpoint = form.email === "support@ceynoa.com" 
+        ? "http://localhost:8000/api/admin/login/" 
+        : "http://localhost:8000/api/accounts/login/";
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(
-          data?.detail ||
-            data?.non_field_errors ||
-            "Invalid email or password"
-        );
+        setError(data.detail || "Invalid credentials");
         setLoading(false);
         return;
       }
 
-      // Save tokens
-      if (rememberMe) {
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
-        localStorage.setItem("username", data.username);
-      } else {
-        sessionStorage.setItem("access_token", data.access);
-        sessionStorage.setItem("refresh_token", data.refresh);
-        sessionStorage.setItem("username", data.username);
-      }
+      // Detect if user is staff via backend response
+      const role = data.user.is_staff ? "admin" : "user";
+      login(data.access, { ...data.user, role });
 
-      if (data.role === "admin") {
-        // Redirect to admin dashboard
-        navigate("/admin-dashboard");
-        return;
-      } else if (data.role === "user") {
-        // Normal user
-        login(data.access, data.username);
-        navigate("/dashboard");
-        return;
-      } else {
-        alert("Invalid login");
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      alert("Server error. Please try again.");
+      setLoading(false);
+      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // ==========================
-  // 🔵 GOOGLE LOGIN
-  // ==========================
   const handleGoogleSuccess = async (credentialResponse) => {
-    setLoading(true);
-
     try {
-      const res = await fetch(
-        "http://localhost:8000/api/accounts/google/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: credentialResponse.credential,
-          }),
-        }
-      );
+      const res = await fetch("http://localhost:8000/api/accounts/google/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: credentialResponse.credential,
+        }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert("Google login failed");
-        setLoading(false);
+        alert("Google sign-in failed");
         return;
       }
 
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
-      localStorage.setItem("username", data.username);
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
+      
+      // Determine role and update context
+      const userData = data.user || data; // Handle different backend structures
+      const role = userData.is_staff ? "admin" : "user";
+      const sessionUser = { ...userData, role };
 
-      login(data.access, data.username);
-      navigate("/dashboard");
+      localStorage.setItem("username", userData.email || userData.username);
+      localStorage.setItem("user_id", userData.id);
+      
+      login(data.access, sessionUser);
+
+      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
     } catch (error) {
-      alert("Google login error");
+      console.error("Google login error:", error);
+      alert("Google sign-in error");
     }
-
-    setLoading(false);
   };
 
-  // ==========================
-  // UI
-  // ==========================
   return (
     <div className="auth-container">
-      <img
-        src={Logo_on_Light}
-        alt="Company Logo"
-        className="company-logo"
-      />
+      <img src={logo} alt="Company Logo" className="company-logo" />
 
       <div className="left-side">
         <div className="auth-box">
           <h2 className="title">Sign in</h2>
-          <h4 className="caption">
-            Please login to continue to your account.
-          </h4>
+          <h4 className="caption">Welcome back to Revolutie</h4>
 
-          <form className="form" onSubmit={handleLogin}>
+          <form className="form" onSubmit={handleSubmit}>
             <input
+              name="email"
+              value={form.email}
+              onChange={onChange}
               type="email"
               placeholder="Email"
               className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
             />
 
             <input
+              name="password"
+              value={form.password}
+              onChange={onChange}
               type="password"
               placeholder="Password"
               className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               required
             />
 
-            <div className="remember-area">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                className="checkbox"
-                checked={rememberMe}
-                onChange={() =>
-                  setRememberMe(!rememberMe)
-                }
-              />
-              <label
-                htmlFor="rememberMe"
-                className="checkbox-label"
-              >
-                Keep me logged in
-              </label>
-            </div>
+            {error && <div style={{ color: "salmon", marginBottom: 10 }}>{error}</div>}
 
-            <button
-              className="btn"
-              type="submit"
-              disabled={loading}
-            >
+            <button className="btn" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
-          <p className="or">
-            ___________________________or_____________________________
-          </p>
+          <p className="or">___________________________or_____________________________</p>
 
-          {/* GOOGLE BUTTON */}
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => alert("Google Login Failed")}
-            render={(renderProps) => (
-              <button
-                className="social-btn"
-                onClick={renderProps.onClick}
-                disabled={renderProps.disabled || loading}
-              >
-                Continue with Google
-                <FcGoogle
-                  size={20}
-                  className="social-logo"
-                />
-              </button>
-            )}
-          />
+          <div className="social">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google Login Failed")}
+            />
+          </div>
 
           <p className="footer-text">
-            Don’t have an account?{" "}
-            <Link to="/register">
-              Create account
-            </Link>
+            Don't have an account? <Link to="/register">Sign up</Link>
           </p>
 
           <div className="footer-links">
@@ -219,10 +154,7 @@ function Login() {
         </div>
 
         <div className="right-side">
-          <img
-            src={Maskgroup}
-            alt="Side Visual"
-          />
+          <img src={myImage} alt="Side visual" />
         </div>
       </div>
     </div>

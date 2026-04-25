@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
@@ -28,22 +28,15 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar({ isDashboard = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, username, login, logout } = useAuth();
+  const { user, isAuthenticated, username, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  const showDashboardView = isAuthenticated || isDashboard;
+
+  const showDashboardView = isAuthenticated && isDashboard; // Only show dashboard view if it's an actual dashboard page AND authenticated
   
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
-
-  // User data - would come from auth context in real app
-  const userData = {
-    name: "Natasha Avory",
-    email: "natasha@example.com",
-    avatar: null
-  };
 
   // Mock notifications data
   const [notifications, setNotifications] = useState([
@@ -104,11 +97,6 @@ export default function Navbar({ isDashboard = false }) {
   }, []);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
-
-const handleLogin = () => {
-  login("dummy-token", "Natasha Avory"); // replace with real login response
-  setMenuOpen(false);
-};
 
 const handleLogout = () => {
   logout();
@@ -361,15 +349,15 @@ const handleLogout = () => {
                   aria-haspopup="true"
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
-                    {userData.avatar ? (
-                      <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={username} className="w-full h-full object-cover" />
                     ) : (
                       <User size={24} className="text-orange-500" />
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-white text-sm font-semibold">{username || userData.name}</div>
-                    <div className="text-gray-400 text-xs">{userData.email}</div>
+                    <div className="text-white text-sm font-semibold">{username || "User"}</div>
+                    <div className="text-gray-400 text-xs">{user?.email || ""}</div>
                   </div>
                   <ChevronDown 
                     size={16} 

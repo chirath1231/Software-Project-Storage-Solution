@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Camera, User } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
+import api from '../api/axios';
 
 const AdminSettings = () => {
-  // Mock Data - Read Only
-  const adminData = {
-    name: "System Administrator",
-    email: "admin@storage-solution.com",
-    role: "Admin"
-  };
+  const { user } = useAuth();
+
+  // Use user data from AuthContext, fallback to mock if not available (e.g., for development)
+  const adminName = user?.username || "System Administrator";
+  const adminEmail = user?.email || "admin@storage-solution.com";
+  const adminRole = user?.role || "Admin";
 
   const [profilePic, setProfilePic] = useState(null);
   const [showCurrent, setShowCurrent] = useState(false);
@@ -21,20 +23,52 @@ const AdminSettings = () => {
   });
 
   const [successMessage, setSuccessMessage] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
+    setError(null);
+
     if (passwords.new !== passwords.confirm) {
-      alert("New passwords do not match!");
+      setError("New passwords do not match!");
       return;
     }
     
-    // Action: Change Password
-    setSuccessMessage(true);
-    setPasswords({ current: '', new: '', confirm: '' });
+    if (passwords.new.length < 8) { // Basic client-side validation for length
+        setError("New password must be at least 8 characters long.");
+        return;
+    }
+    // Add more client-side password strength validation here if desired
     
-    // Hide success popup after 4 seconds
-    setTimeout(() => setSuccessMessage(false), 4000);
+    try {
+      // API call to update the password in the database
+      const response = await api.post('/api/admin/change-password/', {
+        email: adminEmail,
+        current_password: passwords.current,
+        new_password: passwords.new
+      });
+
+      setSuccessMessage(true);
+      setPasswords({ current: '', new: '', confirm: '' });
+      setTimeout(() => setSuccessMessage(false), 4000);
+    } catch (err) {
+      console.error("Password update failed:", err.response || err);
+      let msg = "Failed to update password. Please check your current password and try again.";
+
+      if (err.response) {
+        // Specific error messages from the backend
+        if (err.response.status === 401) {
+          msg = "Authentication failed. Your session might have expired. Please log in again.";
+          // Optionally, force logout and redirect
+          // logout();
+        } else if (err.response.data && err.response.data.error) {
+          msg = err.response.data.error;
+        } else if (err.response.data && err.response.data.detail) {
+          msg = err.response.data.detail; // e.g., "Given token not valid for any token type"
+        }
+      }
+      setError(msg);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -87,7 +121,7 @@ const AdminSettings = () => {
               <label className="text-sm font-bold text-gray-600 ml-1">Full Name</label>
               <input 
                 type="text" 
-                value={adminData.name} 
+                value={adminName} 
                 readOnly 
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-500 font-medium cursor-not-allowed outline-none shadow-inner"
               />
@@ -96,7 +130,7 @@ const AdminSettings = () => {
               <label className="text-sm font-bold text-gray-600 ml-1">User Role</label>
               <input 
                 type="text" 
-                value={adminData.role} 
+                value={adminRole} 
                 readOnly 
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-500 font-medium cursor-not-allowed outline-none shadow-inner"
               />
@@ -105,8 +139,9 @@ const AdminSettings = () => {
               <label className="text-sm font-bold text-gray-600 ml-1">Email Address</label>
               <input 
                 type="email" 
-                value={adminData.email} 
+                value={adminEmail} 
                 readOnly 
+                autoComplete="username" // Added for accessibility warning
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-500 font-medium cursor-not-allowed outline-none shadow-inner"
               />
             </div>
@@ -126,6 +161,7 @@ const AdminSettings = () => {
                 type={showCurrent ? "text" : "password"} 
                 className="w-full p-4 pr-14 border-2 border-gray-100 rounded-2xl bg-white focus:border-orange-500 outline-none transition-all font-mono"
                 value={passwords.current}
+                autoComplete="current-password"
                 onChange={(e) => setPasswords({...passwords, current: e.target.value})}
                 required
               />
@@ -140,6 +176,7 @@ const AdminSettings = () => {
                 type={showNew ? "text" : "password"} 
                 className="w-full p-4 pr-14 border-2 border-gray-100 rounded-2xl bg-white focus:border-orange-500 outline-none transition-all font-mono"
                 value={passwords.new}
+                autoComplete="new-password"
                 onChange={(e) => setPasswords({...passwords, new: e.target.value})}
                 required
               />
@@ -154,6 +191,7 @@ const AdminSettings = () => {
                 type={showConfirm ? "text" : "password"} 
                 className="w-full p-4 pr-14 border-2 border-gray-100 rounded-2xl bg-white focus:border-orange-500 outline-none transition-all font-mono"
                 value={passwords.confirm}
+                autoComplete="new-password"
                 onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
                 required
               />
@@ -161,6 +199,12 @@ const AdminSettings = () => {
                 {showConfirm ? <EyeOff size={22} /> : <Eye size={22} />}
               </button>
             </div>
+
+            {error && (
+              <div className="md:col-span-2 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-bold">
+                ⚠️ {error}
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <p className="text-xs text-gray-400 mt-1 ml-1 italic leading-relaxed">

@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     # YOUR APPS
     "accounts",  # your authentication app
     "storages",
-    "storage"
+    "storage",
+    "admin_management",
 ]
 
 

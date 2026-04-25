@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
+import { useAuth } from "../auth/AuthContext"; // ✅ ADD
 import "../auth.css";
 import myImage from "../assets/tech.png";
 import googleLogo from "../assets/plus.png";
@@ -9,6 +10,7 @@ import logo from "../assets/logo.png";
 
 function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ ADD
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -50,7 +52,10 @@ function Register() {
 
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("username", data.user.email || data.user.username);
+      localStorage.setItem("user_id", data.user.id);
+
+      login({ ...data.user, role: data.user.is_staff ? "admin" : "user" });
 
       setLoading(false);
       navigate("/dashboard");
@@ -80,9 +85,15 @@ function Register() {
 
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data));
+      
+      const userData = data.user || data;
+      localStorage.setItem("username", userData.email || userData.username);
+      localStorage.setItem("user_id", userData.id);
 
-      navigate("/dashboard");
+      const role = userData.is_staff ? "admin" : "user";
+      login({ ...userData, role });
+
+      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
     } catch (error) {
       alert("Google signup error");
     }

@@ -1,52 +1,52 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
-  const [username, setUsername] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load session on page refresh ONLY (not after close)
   useEffect(() => {
-    const savedToken = sessionStorage.getItem("token");
-    const savedUsername = sessionStorage.getItem("username");
-
-    if (savedToken) {
-      setToken(savedToken);
-      setUsername(savedUsername);
+    // Check for user in localStorage on mount
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-
     setLoading(false);
   }, []);
 
-  const login = (token, username) => {
-    sessionStorage.setItem("token", token);
-    sessionStorage.setItem("username", username);
-    setToken(token);
-    setUsername(username);
+  const login = (token, userData) => {
+    const userWithRole = {
+      ...userData,
+      role: userData.role || (userData.is_staff ? "admin" : "user")
+    };
+    setUser(userWithRole);
+    localStorage.setItem("user", JSON.stringify(userWithRole));
+    localStorage.setItem("access", token);
   };
 
   const logout = () => {
-    sessionStorage.clear();
-    setToken(null);
-    setUsername(null);
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("username");
+    localStorage.removeItem("user_id");
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        token,
-        username,
-        isAuthenticated: !!token,
-        login,
-        logout,
-        loading,
-      }}
-    >
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated: !!user,
+      username: user?.username || user?.email,
+      login, 
+      logout, 
+      loading, 
+      isAdmin: user?.role === "admin" 
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

@@ -88,12 +88,8 @@ export default function MyFiles() {
       setLoading(false);
     } catch (err) {
       console.error(err);
-      if (err.response?.status === 401) {
-        localStorage.clear();
-        navigate("/login");
-      } else {
-        alert("Failed to fetch files.");
-      }
+      alert("Failed to fetch files. Please check your connection.");
+      setLoading(false);
     }
   };
 
@@ -164,10 +160,7 @@ export default function MyFiles() {
       await fetchFiles(planGB);
     } catch (err) {
       console.error(err);
-      if (err.response?.status === 401) {
-        localStorage.clear();
-        navigate("/login");
-      } else {
+      if (err.response?.status !== 401) {
         const serverMsg =
           err.response?.data?.detail || err.response?.data?.error;
         if (
@@ -197,10 +190,7 @@ export default function MyFiles() {
       await fetchFiles(planGB);
     } catch (err) {
       console.error(err);
-      if (err.response?.status === 401) {
-        localStorage.clear();
-        navigate("/login");
-      } else {
+      if (err.response?.status !== 401) {
         alert("Delete failed.");
       }
     }
