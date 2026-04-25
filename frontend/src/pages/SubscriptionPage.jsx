@@ -1,5 +1,6 @@
 // SubscriptionPage.jsx
 import React, { useEffect, useState } from "react";
+import api from "../api/axios";
 import buynow from "../assets/buy_now.png";
 
 export default function SubscriptionPage() {
@@ -9,16 +10,12 @@ export default function SubscriptionPage() {
   const userEmail = localStorage.getItem("username");
 
   useEffect(() => {
-    const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(
-      (res) => res.json()
-    );
+    const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data);
 
     const fetchUserActive = userEmail
-      ? fetch(
-          `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
-            userEmail
-          )}/`
-        ).then((res) => (res.ok ? res.json() : []))
+      ? api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
+          .then((res) => res.data)
+          .catch(() => [])
       : Promise.resolve([]);
 
     Promise.all([fetchPlans, fetchUserActive])
@@ -48,21 +45,14 @@ export default function SubscriptionPage() {
     }
 
     try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/subscriptions/create-payment/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subscription_id: sub.id,
-            email: userEmail,
-            amount: Number(sub.price).toFixed(2),
-            first_name: userEmail.split("@")[0],
-          }),
-        }
-      );
+      const res = await api.post("/api/subscriptions/create-payment/", {
+        subscription_id: sub.id,
+        email: userEmail,
+        amount: Number(sub.price).toFixed(2),
+        first_name: userEmail.split("@")[0],
+      });
 
-      const data = await res.json();
+      const data = res.data;
       if (!data.success) return alert("Payment failed");
 
       const form = document.createElement("form");

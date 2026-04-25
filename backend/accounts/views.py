@@ -90,6 +90,7 @@ class GoogleLoginAPIView(APIView):
                 "refresh": str(refresh),
                 "username": user.username,
                 "email": user.email,
+                "is_staff": user.is_staff,
                 "is_new_user": created
             })
 

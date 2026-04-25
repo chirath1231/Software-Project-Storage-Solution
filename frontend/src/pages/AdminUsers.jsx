@@ -1,44 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../api/axios';
 import { Search, Filter, X, User, Globe, Mail, Calendar, HardDrive, CreditCard, Clock, Phone, DollarSign, ChevronDown } from 'lucide-react';
 
 const AdminUsers = () => {
-  // Hardcoded Mock Data
-  const [users] = useState([
-    { 
-      id: 1, firstName: 'Rashmi', lastName: 'Perera', username: 'rashmi23', email: 'rashmi@gmail.com', 
-      createdDate: '2026-01-02', package: 'Ultra', country: 'Sri Lanka', usage: 65, status: 'Online',
-      phone: '+94 77 123 4567', lastLogin: '10 mins ago', payment: 120.00, platform: 'Web',
-      history: ['Upgraded to Premium (2026-01-02)', 'Joined (2025-12-15)']
-    },
-    { 
-      id: 2, firstName: 'John', lastName: 'Doe', username: 'johndoe', email: 'john@example.com', 
-      createdDate: '2025-11-20', package: 'Standard', country: 'USA', usage: 30, status: 'Offline',
-      phone: '+1 555 0199', lastLogin: '2 days ago', payment: 45.00, platform: 'Mobile',
-      history: ['Joined (2025-11-20)']
-    },
-    { 
-      id: 3, firstName: 'Jane', lastName: 'Smith', username: 'jsmith', email: 'jane@service.com', 
-      createdDate: '2025-05-10', package: 'Pro', country: 'UK', usage: 88, status: 'Online',
-      phone: '+44 20 7946 0958', lastLogin: 'Just now', payment: 85.00, platform: 'Web',
-      history: ['Upgraded to Pro (2025-08-01)', 'Joined (2025-05-10)']
-    }
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All'); // All, Web, Mobile, Active
   const [packageFilter, setPackageFilter] = useState('All'); // All, Standard, Pro, Ultra
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setApiError(null);
+    try {
+      const response = await api.get('/api/admin/users/');
+      setUsers(response.data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setApiError(err.response?.data?.detail || "Failed to load users from server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.username.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Safe string checks to prevent crashes on null/undefined values
+    const username = u.username || "";
+    const email = u.email || "";
+    const matchesSearch = username.toLowerCase().includes(searchTerm.toLowerCase()) || email.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesType = true;
-    if (filterType === 'Web') matchesType = u.platform === 'Web';
-    if (filterType === 'Mobile') matchesType = u.platform === 'Mobile';
-    if (filterType === 'Active') matchesType = u.status === 'Online';
+    // Temporarily disabling platform filters as they aren't in the DB yet
+    if (filterType === 'Web' || filterType === 'Mobile') matchesType = false; 
+    if (filterType === 'Active') matchesType = u.is_active;
 
-    const matchesPackage = packageFilter === 'All' || u.package === packageFilter;
+    // Since real packages aren't in the DB yet, we treat everyone as 'Standard' for now
+    const matchesPackage = packageFilter === 'All' || packageFilter === "Standard";
 
     return matchesSearch && matchesType && matchesPackage;
   });
@@ -122,7 +125,20 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
-              {filteredUsers.map((u) => (
+              {loading ? (
+                <tr><td colSpan="7" className="py-10 text-center text-gray-400">Loading system users...</td></tr>
+              ) : apiError ? (
+                <tr>
+                  <td colSpan="7" className="py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-red-500 font-bold">⚠️ {apiError}</span>
+                      <button onClick={fetchUsers} className="text-orange-500 text-xs underline font-bold">Try again</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr><td colSpan="7" className="py-10 text-center text-gray-400">No users found.</td></tr>
+              ) : filteredUsers.map((u) => (
                 <tr 
                   key={u.id} 
                   onClick={() => setSelectedUser(u)}
@@ -130,28 +146,25 @@ const AdminUsers = () => {
                 >
                   <td className="py-5 px-6 font-black text-gray-800">@{u.username}</td>
                   <td className="py-5 px-6 font-medium text-gray-600">{u.email}</td>
-                  <td className="py-5 px-6 text-gray-500">{u.createdDate}</td>
+                  <td className="py-5 px-6 text-gray-500">{u.date_joined}</td>
                   <td className="py-5 px-6">
                     <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase">
-                      {u.package}
+                      Free
                     </span>
                   </td>
-                  <td className="py-5 px-6 font-bold text-gray-700">{u.country}</td>
+                  <td className="py-5 px-6 font-bold text-gray-700">N/A</td>
                   <td className="py-5 px-6">
                     <div className="flex flex-col gap-1 items-center">
-                      <span className="font-black text-gray-800">{u.usage}%</span>
+                      <span className="font-black text-gray-800">0%</span>
                       <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${u.usage > 80 ? 'bg-red-500' : 'bg-orange-500'}`} 
-                          style={{ width: `${u.usage}%` }}
-                        ></div>
+                        <div className="h-full rounded-full bg-orange-500" style={{ width: `0%` }}></div>
                       </div>
                     </div>
                   </td>
                   <td className="py-5 px-6">
                     <div className="flex justify-center items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${u.status === 'Online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
-                      <span className={`font-bold ${u.status === 'Online' ? 'text-green-600' : 'text-gray-400'}`}>{u.status}</span>
+                      <div className={`w-2.5 h-2.5 rounded-full ${u.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
+                      <span className={`font-bold ${u.is_active ? 'text-green-600' : 'text-gray-400'}`}>{u.is_active ? 'Active' : 'Offline'}</span>
                     </div>
                   </td>
                 </tr>
@@ -184,33 +197,26 @@ const AdminUsers = () => {
                 <div className="w-24 h-24 rounded-3xl bg-orange-500 flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200">
                   <User size={48} />
                 </div>
-                <h3 className="text-2xl font-black text-gray-800">{selectedUser.firstName} {selectedUser.lastName}</h3>
+                <h3 className="text-2xl font-black text-gray-800">{selectedUser.first_name || 'New'} {selectedUser.last_name || 'User'}</h3>
                 <p className="text-orange-500 font-bold tracking-widest uppercase text-xs">@{selectedUser.username}</p>
               </div>
 
               {/* Information Grid */}
               <div className="grid grid-cols-1 gap-6">
                 <DetailItem icon={<Mail size={18} />} label="Email Address" value={selectedUser.email} />
-                <DetailItem icon={<Phone size={18} />} label="Phone Number" value={selectedUser.phone} />
-                <DetailItem icon={<Globe size={18} />} label="Country" value={selectedUser.country} />
-                <DetailItem icon={<Calendar size={18} />} label="Account Created" value={selectedUser.createdDate} />
-                <DetailItem icon={<CreditCard size={18} />} label="Current Package" value={selectedUser.package} badge />
-                <DetailItem icon={<DollarSign size={18} />} label="Payment Amount" value={`$${selectedUser.payment.toFixed(2)}`} />
-                <DetailItem icon={<HardDrive size={18} />} label="Storage Used" value={`${selectedUser.usage}% of limit`} />
-                <DetailItem icon={<Clock size={18} />} label="Last Login" value={selectedUser.lastLogin} />
+                <DetailItem icon={<Phone size={18} />} label="Phone Number" value="Not Provided" />
+                <DetailItem icon={<Globe size={18} />} label="Country" value="N/A" />
+                <DetailItem icon={<Calendar size={18} />} label="Account Created" value={selectedUser.date_joined} />
+                <DetailItem icon={<CreditCard size={18} />} label="Current Package" value="Free" badge />
+                <DetailItem icon={<DollarSign size={18} />} label="Payment Amount" value="$0.00" />
+                <DetailItem icon={<HardDrive size={18} />} label="Storage Used" value="0% of limit" />
+                <DetailItem icon={<Clock size={18} />} label="Last Login" value={selectedUser.last_login} />
               </div>
 
               {/* Upgrade History */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2">Upgrade History</h4>
-                <div className="space-y-3">
-                  {selectedUser.history.map((item, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <div className="mt-1 w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                      <span className="text-sm font-medium text-gray-600 leading-tight">{item}</span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xs text-gray-400 italic">No upgrade history found for this user.</p>
               </div>
             </div>
 

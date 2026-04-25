@@ -1,8 +1,8 @@
 // src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
-import { useAuth } from "../auth/AuthContext"; // ✅ ADD
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../auth/AuthContext";
 import "../auth.css";
 import myImage from "../assets/tech.png";
 import googleLogo from "../assets/plus.png";
@@ -10,7 +10,7 @@ import logo from "../assets/logo.png";
 
 function Register() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ ADD
+  const { login } = useAuth();
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -50,12 +50,14 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("username", data.user.email || data.user.username);
-      localStorage.setItem("user_id", data.user.id);
-
-      login({ ...data.user, role: data.user.is_staff ? "admin" : "user" });
+      // Use the login function from AuthContext to store token and user data
+      login(data.access, { // Pass access token
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        is_staff: data.user.is_staff,
+        role: data.user.is_staff ? "admin" : "user"
+      }, true); // Assuming registration implies "remember me"
 
       setLoading(false);
       navigate("/dashboard");
@@ -83,15 +85,14 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      
+      // Determine role and update context
       const userData = data.user || data;
-      localStorage.setItem("username", userData.email || userData.username);
-      localStorage.setItem("user_id", userData.id);
-
       const role = userData.is_staff ? "admin" : "user";
-      login({ ...userData, role });
+      login(data.access, { // Pass access token
+        ...userData,
+        role
+      }, true); // Google login usually implies "remember me"
+
 
       navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
     } catch (error) {

@@ -42,14 +42,20 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.detail || "Invalid credentials");
+        setError(data.detail || data.error || "Invalid email or password");
         setLoading(false);
         return;
       }
 
-      // Detect if user is staff via backend response
-      const role = data.user.is_staff ? "admin" : "user";
-      login(data.access, { ...data.user, role });
+     // Standardize user data structure (handles both normal and admin login responses)
+      const userBase = data.user || { 
+        username: data.username, 
+        email: data.email, 
+        is_staff: false 
+      };
+      
+      const role = userBase.is_staff ? "admin" : "user";
+      login(data.access, { ...userBase, role });
 
       setLoading(false);
       navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
@@ -76,16 +82,12 @@ function Login() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
       
-      // Determine role and update context
       const userData = data.user || data; // Handle different backend structures
       const role = userData.is_staff ? "admin" : "user";
-      const sessionUser = { ...userData, role };
+      
 
-      localStorage.setItem("username", userData.email || userData.username);
-      localStorage.setItem("user_id", userData.id);
+   const sessionUser = { ...userData, role };
       
       login(data.access, sessionUser);
 
