@@ -7,29 +7,48 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // const handleLogin = async () => {
+  //   try {
+  //     const res = await fetch("http://172.20.10.6:8000/api/accounts/login/", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ email, password }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (res.ok) {
+  //       Alert.alert("Login Successful!");
+  //       await AsyncStorage.setItem("token", data.token);
+  //       await AsyncStorage.setItem("email", data.email);
+  //       await AsyncStorage.setItem("username", data.username);
+  //       navigation.navigate("Subscription");
+  //     } else {
+  //       Alert.alert("Login Failed", data.detail || "Invalid credentials");
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Error", "Failed to connect to server.");
+  //   }
+  // };
+
+  //this function is just to test other UIs, above function is the correct one
   const handleLogin = async () => {
-    try {
-      const res = await fetch("http://172.20.10.6:8000/api/accounts/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    console.log("LOGIN BUTTON CLICKED");
+  if (!email || !password) {
+    Alert.alert("Error", "Please enter email and password");
+    return;
+  }
 
-      const data = await res.json();
+  await AsyncStorage.setItem("token", "dummy-token");
+  await AsyncStorage.setItem("email", email);
+  await AsyncStorage.setItem("username", "DemoUser");
 
-      if (res.ok) {
-        Alert.alert("Login Successful!");
-        await AsyncStorage.setItem("token", data.token);
-        await AsyncStorage.setItem("email", data.email);
-        await AsyncStorage.setItem("username", data.username);
-        navigation.navigate("Subscription");
-      } else {
-        Alert.alert("Login Failed", data.detail || "Invalid credentials");
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to connect to server.");
-    }
-  };
+  // Alert.alert("Login Successful!");
+  navigation.navigate("Home"); 
+  navigation.navigate("Settings");
+  navigation.navigate("EditProfile"); 
+
+};
 
   return (
     <View style={styles.container}>
