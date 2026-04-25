@@ -106,5 +106,5 @@ node_modules/
 *.key
 *.cpython
 *.pyc
-
+package-lock.json
 __init__.py
