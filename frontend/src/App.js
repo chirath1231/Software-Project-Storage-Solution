@@ -15,6 +15,8 @@ import DashboardHome from "./pages/DashboardHome";
 import MyFiles from "./pages/MyFiles";
 import Notifications from './pages/Notifications';
 import MyProfile from './pages/MyProfile';
+import DashboardSettings from "./pages/DashboardSettings.jsx";
+import TicketSubmission from "./pages/TicketSubmission.jsx";
 
 
 function App() {
@@ -35,7 +37,7 @@ function App() {
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/clientchatsystem" element={<ClientChatSystem />} />
-
+            <Route path="/ticket-submission" element={<TicketSubmission />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="files" element={<MyFiles />} />
               <Route index element={<DashboardHome />} />
@@ -43,6 +45,8 @@ function App() {
               <Route path="payment-success" element={<PaymentSuccess />} />
               <Route path="/dashboard/notifications" element={<Notifications />} />
               <Route path="profile" element={<MyProfile />} />
+              <Route path="settings" element={<DashboardSettings />} />
+
             </Route>
 
           </Route>
