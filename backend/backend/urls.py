@@ -17,6 +17,8 @@ urlpatterns = [
 
     path("api/", include("storage.urls")),
 
+    path('api/', include('tickets.urls')),
+
 
 ]
 
