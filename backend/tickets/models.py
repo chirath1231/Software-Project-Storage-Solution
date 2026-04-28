@@ -1,5 +1,9 @@
 from django.db import models
-from django.conf import settings
+
+
+from django.contrib.auth.models import User
+
+
 
 class Ticket(models.Model):
     # Using 'choices' prevents data entry errors
@@ -13,7 +17,7 @@ class Ticket(models.Model):
         MEDIUM = 'MEDIUM', 'Medium'
         HIGH = 'HIGH', 'High'
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     
     # Fields made optional (blank=True) to avoid migration errors
     name = models.CharField(max_length=100, blank=True, null=True)

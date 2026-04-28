@@ -4,13 +4,12 @@ from .serializers import TicketSerializer
 
 class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
-    permission_classes = [permissions.AllowAny]
+    # Change from AllowAny to IsAuthenticated
+    permission_classes = [permissions.IsAuthenticated] 
 
     def get_queryset(self):
         return Ticket.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-
         

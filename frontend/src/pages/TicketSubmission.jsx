@@ -1,13 +1,19 @@
 import { useState } from "react";
 import axios from "axios";
 
-// Setup axios to include cookies (needed for Django session auth)
-axios.defaults.withCredentials = true;
-// You may need to set your CSRF header if Django complains
-axios.defaults.xsrfHeaderName = "X-CSRFToken";
-axios.defaults.xsrfCookieName = "csrftoken";
 
-const API_BASE = "http://127.0.0.1:8000/api/tickets/";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8000/api",
+});
+
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 const categories = ["Bug / Error", "Feature Request", "Account / Access", "Performance", "Content Issue", "Other"];
 const priorities = ["LOW", "MEDIUM", "HIGH"];
@@ -42,36 +48,47 @@ export default function TicketSubmission() {
     return e;
   };
 
-   const set = (field) => (e) => {
+  const set = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
     if (errors[field]) setErrors((er) => ({ ...er, [field]: undefined }));
   };
 
-   const handleSubmit = async () => {
+  const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     
+    // Retrieve the token saved during your login process
+    const token = localStorage.getItem("access_token");
+
     setLoading(true);
     try {
-      // Sending data to Django
-      const response = await axios.post(API_BASE, {
+      const response = await api.post("/tickets/", {
         name: form.name,
         email: form.email,
         category: form.category,
         priority: form.priority,
-        title: form.subject, // Map subject to title
+        title: form.subject,
         description: form.description
+      }, {
+        headers: {
+          // Send the token in the format "Bearer <token>"
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       setTicketId(`TKT-${response.data.id}`);
       setSubmitted(true);
     } catch (err) {
-      console.error("Submission failed:", err);
-      alert("Failed to submit ticket. Please ensure you are logged in.");
+      if (err.response?.status === 401) {
+        alert("Your session has expired. Please log in again.");
+      } else {
+        console.error("Submission failed:", err);
+        alert("Failed to submit ticket.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+};
 
 
   // ... [Keep your priorityColor and baseCls functions exactly as they were]
@@ -131,16 +148,16 @@ export default function TicketSubmission() {
           <div className="space-y-4 sm:space-y-5">
             {/* ... Your original fields (Name/Email/Category/Priority/Subject/Description) remain exactly as they were ... */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div><Label text="Full Name" error={errors.name} /><input type="text" placeholder="Jane Smith" value={form.name} onChange={set("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused("")} className={baseCls("name")} />{errors.name && <Err msg={errors.name} />}</div>
-               <div><Label text="Email Address" error={errors.email} /><input type="email" placeholder="jane@company.com" value={form.email} onChange={set("email")} onFocus={() => setFocused("email")} onBlur={() => setFocused("")} className={baseCls("email")} />{errors.email && <Err msg={errors.email} />}</div>
+              <div><Label text="Full Name" error={errors.name} /><input type="text" placeholder="Jane Smith" value={form.name} onChange={set("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused("")} className={baseCls("name")} />{errors.name && <Err msg={errors.name} />}</div>
+              <div><Label text="Email Address" error={errors.email} /><input type="email" placeholder="jane@company.com" value={form.email} onChange={set("email")} onFocus={() => setFocused("email")} onBlur={() => setFocused("")} className={baseCls("email")} />{errors.email && <Err msg={errors.email} />}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div><Label text="Category" error={errors.category} /><div className="relative"><select value={form.category} onChange={set("category")} onFocus={() => setFocused("category")} onBlur={() => setFocused("")} className={`${baseCls("category")} appearance-none pr-10 cursor-pointer ${!form.category ? "text-gray-400" : "text-gray-900"}`}><option value="" disabled>Select…</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><ChevronIcon /></div>{errors.category && <Err msg={errors.category} />}</div>
-               <div><Label text="Priority" error={errors.priority} /><div className="relative"><select value={form.priority} onChange={set("priority")} onFocus={() => setFocused("priority")} onBlur={() => setFocused("")} className={`${baseCls("priority")} appearance-none pr-10 cursor-pointer ${!form.priority ? "text-gray-400" : "text-gray-900"}`}><option value="" disabled>Select…</option>{priorities.map((p) => <option key={p} value={p}>{p}</option>)}</select><ChevronIcon /></div>{errors.priority && <Err msg={errors.priority} />}</div>
+              <div><Label text="Category" error={errors.category} /><div className="relative"><select value={form.category} onChange={set("category")} onFocus={() => setFocused("category")} onBlur={() => setFocused("")} className={`${baseCls("category")} appearance-none pr-10 cursor-pointer ${!form.category ? "text-gray-400" : "text-gray-900"}`}><option value="" disabled>Select…</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><ChevronIcon /></div>{errors.category && <Err msg={errors.category} />}</div>
+              <div><Label text="Priority" error={errors.priority} /><div className="relative"><select value={form.priority} onChange={set("priority")} onFocus={() => setFocused("priority")} onBlur={() => setFocused("")} className={`${baseCls("priority")} appearance-none pr-10 cursor-pointer ${!form.priority ? "text-gray-400" : "text-gray-900"}`}><option value="" disabled>Select…</option>{priorities.map((p) => <option key={p} value={p}>{p}</option>)}</select><ChevronIcon /></div>{errors.priority && <Err msg={errors.priority} />}</div>
             </div>
             <div><Label text="Subject" error={errors.subject} /><input type="text" placeholder="Brief summary" value={form.subject} onChange={set("subject")} onFocus={() => setFocused("subject")} onBlur={() => setFocused("")} className={baseCls("subject")} />{errors.subject && <Err msg={errors.subject} />}</div>
             <div><Label text="Description" error={errors.description} /><textarea placeholder="Describe the issue..." value={form.description} onChange={set("description")} onFocus={() => setFocused("description")} onBlur={() => setFocused("")} rows={5} className={`${baseCls("description")} resize-none leading-relaxed`} /></div>
-            
+
             <button onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-[#f5a623] to-[#e09610] hover:from-[#e09610] hover:to-[#cc8800] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#f5a623]/30 hover:shadow-[#f5a623]/40 flex items-center justify-center gap-2">
               {loading ? "Submitting..." : "Submit Ticket"}
             </button>
