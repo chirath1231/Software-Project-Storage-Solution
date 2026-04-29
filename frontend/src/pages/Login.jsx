@@ -50,13 +50,15 @@ function Login() {
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
         localStorage.setItem("username", data.username);
+        localStorage.setItem("email", data.email);
       } else {
         sessionStorage.setItem("access_token", data.access);
         sessionStorage.setItem("refresh_token", data.refresh);
         sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("email", data.email);
       }
 
-      login(data.access, data.username);
+      login(data.access, data.username, data.email);
       navigate("/dashboard");
     } catch (error) {
       alert("Server error. Please try again.");
@@ -94,8 +96,8 @@ function Login() {
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
       localStorage.setItem("username", data.username);
-
-      login(data.access, data.username);
+      localStorage.setItem("email", data.email);
+      login(data.access, data.username, data.email);
       navigate("/dashboard");
     } catch (error) {
       alert("Google login error");

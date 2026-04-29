@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
     const savedToken = sessionStorage.getItem("token");
     const savedUsername = sessionStorage.getItem("username");
     const savedEmail = sessionStorage.getItem("email");
-
     if (savedToken) {
       setToken(savedToken);
       setUsername(savedUsername);
@@ -23,7 +22,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (token, username) => {
+  const login = (token, username, email) => {
     sessionStorage.setItem("token", token);
     sessionStorage.setItem("username", username);
     sessionStorage.setItem("email", email);
