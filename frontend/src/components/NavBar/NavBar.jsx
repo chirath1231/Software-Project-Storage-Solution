@@ -29,7 +29,7 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, username, login, logout } = useAuth();
+  const { isAuthenticated, username,email,login, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,7 +42,7 @@ export default function Navbar() {
   // User data - would come from auth context in real app
   const userData = {
     name: "Natasha Avory",
-    email: "natasha@example.com",
+    email: email || "natasha@example.com",
     avatar: null
   };
 
