@@ -88,11 +88,20 @@ export default function SubscriptionPage() {
   if (loading) return <h2 className="text-center mt-20 text-xl">Loading...</h2>;
 
   return (
-    <div className="px-6 py-10 bg-gray-50 min-h-screen">
-      <h2 className="text-4xl font-bold mb-4 text-gray-800 text-center">Subscription Plans</h2>
-      <p className="text-center text-gray-500 mb-10">
-        Choose the plan that fits your needs
-      </p>
+    <div className="px-6 py-10 min-h-screen">
+      {/* HEADER */}
+      <div className="flex items-stretch gap-5 mb-10">
+        <div className="w-2 bg-orange-500 rounded-md"></div>
+
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Subscription
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Manage your plan, storage and billing preferences
+          </p>
+        </div>
+      </div>
 
       <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
         {subscriptions.map((sub) => {
@@ -102,19 +111,24 @@ export default function SubscriptionPage() {
           return (
             <div
               key={sub.id}
-              className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border ${
-                isBest ? "border-orange-400" : "border-gray-200"
-              } hover:scale-105 transition-transform`}
+              className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border transition-all duration-300 cursor-pointer
+                hover:border-orange-400 hover:shadow-[0_8px_30px_rgba(249,115,22,0.35)] hover:scale-105 hover:z-10 relative
+              `}
             >
               <div className="flex justify-between items-center mb-4">
-                <span
+                {/* <span
                   className={`px-3 py-1 rounded-full text-sm font-semibold ${
                     sub.name === "Standard"
                       ? "bg-gray-200 text-gray-800"
                       : sub.name === "Plus"
                       ? "bg-orange-100 text-orange-600"
-                      : "bg-indigo-100 text-indigo-600"
+                      : "bg-indigo-100 text-orange-600"
                   }`}
+                >
+                  {sub.name}
+                </span> */}
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-500"
                 >
                   {sub.name}
                 </span>
@@ -131,7 +145,7 @@ export default function SubscriptionPage() {
               <ul className="mb-6 space-y-2 text-gray-600 text-sm">
                 {sub.features.map((feat, i) => (
                   <li key={i} className="flex items-center">
-                    <span className="mr-2 text-green-500">✔</span> {feat}
+                    <span className="mr-2 text-orange-500">✔</span> {feat}
                   </li>
                 ))}
               </ul>
@@ -142,7 +156,7 @@ export default function SubscriptionPage() {
                     ? "bg-gray-400 cursor-not-allowed opacity-60"
                     : isBest
                     ? "bg-orange-500 hover:bg-orange-600"
-                    : "bg-blue-500 hover:bg-blue-600"
+                    : "bg-orange-500 hover:bg-orange-600"
                 } transition-colors`}
                 onClick={() => handleSubscribe(sub)}
                 disabled={isPaid}

@@ -68,14 +68,14 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <div className="flex">
+      <div className="flex pl-7">
         <div
           className={`
             w-[280px] min-h-screen
             bg-gradient-to-b from-white via-orange-50 to-orange-200
-            flex flex-col py-6
+            flex flex-col py-6 px-4
             transition-transform duration-300 ease-in-out
-            z-40 mt-5 ml-5 rounded-2xl mb-5
+            z-40 rounded-2xl 
             
             ${isOpen ? "fixed inset-y-0 left-0 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full"}
             md:relative md:translate-x-0 md:w-[260px]
