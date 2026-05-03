@@ -131,7 +131,7 @@ export default function SecuritySettings() {
             Download Mobile App
           </button>
 
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             {devices.map((device) => (
               <div
                 key={device.id}
@@ -154,7 +154,7 @@ export default function SecuritySettings() {
                 </button>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
