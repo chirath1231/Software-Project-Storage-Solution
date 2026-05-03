@@ -101,7 +101,7 @@ export default function ProfileSettings() {
   };
 
   return (
-    <div className="w-full pr-12 "> {/* More space on right-hand side */}
+    <div className="min-h-screen p-12"> 
       {/* Profile Title + Avatar Row */}
       <div className="flex items-center mb-6 -ml-2 justify-between">
         <div className="flex items-center mb-6 ml-4"> {/* shift the whole row a bit right */}
@@ -162,7 +162,7 @@ export default function ProfileSettings() {
     </div>
 
     {/* Form Card */}
-    <div className="bg-white p-8 rounded-2xl shadow-md grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-2 gap-6">
       <div>
         <label className="text-gray-700 font-semibold text-base">First Name</label>
         <input

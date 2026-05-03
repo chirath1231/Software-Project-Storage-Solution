@@ -1,86 +1,119 @@
 import React from "react";
-import "./Footer.css";
 import { FaFacebook, FaTwitter, FaInstagram, FaYoutube, FaAngleRight } from "react-icons/fa";
 import serversalad from "../../assets/server_salad.png";
 
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-container">
+    <footer style={{ background: "var(--secondary-color)", padding: "40px 0" }}>
 
-        <div className="footer-col">
-          <div className="footer-logo">
-            <img src={serversalad} alt="ServerSalad Logo" />
+      {/* Grid Container */}
+      <div className="grid gap-5 px-[5%]"
+        style={{ gridTemplateColumns: "repeat(4, 1fr)", justifyItems: "center" }}>
+
+        {/* Col 1 - Logo + About */}
+        <div style={{ lineHeight: "1.3" }}>
+          <div className="mb-3">
+            <img src={serversalad} alt="ServerSalad Logo" className="w-20 object-contain" />
           </div>
-          <p>
-            <strong>ServerSalad</strong> is a smart, secure, and scalable cloud storage platform designed for creators, 
+          <p style={{ color: "var(--primary-color)", lineHeight: "1.6" }}>
+            <strong>ServerSalad</strong> is a smart, secure, and scalable cloud storage platform designed for creators,
             professionals, and teams. We make storing, sharing, and managing your files simple — without limits or complexity
           </p>
 
-          <div className="social-icons">
-            <a href="https://facebook.com" target="_blank" rel="noreferrer">
-              <FaFacebook />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer">
-              <FaTwitter />
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer">
-              <FaInstagram />
-            </a>
-            <a href="https://youtube.com" target="_blank" rel="noreferrer">
-              <FaYoutube />
-            </a>
+          {/* Social Icons */}
+          <div className="flex gap-4 mt-4">
+            {[
+              { href: "https://facebook.com", icon: <FaFacebook /> },
+              { href: "https://twitter.com",  icon: <FaTwitter /> },
+              { href: "https://instagram.com",icon: <FaInstagram /> },
+              { href: "https://youtube.com",  icon: <FaYoutube /> },
+            ].map(({ href, icon }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-transform duration-300 hover:scale-110"
+                style={{
+                  color: "var(--primary-color)",
+                  background: "var(--primary-gradient-start)",
+                }}
+              >
+                {icon}
+              </a>
+            ))}
           </div>
         </div>
 
-        <div className="footer-col">
-          <p>Quick Links</p>
-          <ul>
-            <li>
-                <FaAngleRight />
-                <a href="/">Home
-                </a></li>
-            <li>
-                <FaAngleRight />
-                <a href="/about">About Us
-                </a></li>
-            <li>
-                <FaAngleRight />
-                <a href="/pricing">Pricing
-                </a></li>
-            <li>
-                <FaAngleRight />
-                <a href="/features">Features
-                </a></li>
+        {/* Col 2 - Quick Links */}
+        <div style={{ lineHeight: "1.3" }}>
+          <p style={{ color: "var(--primary-color)" }}>Quick Links</p>
+          <ul className="list-none m-0 p-0 mt-2">
+            {[
+              { href: "/",         label: "Home" },
+              { href: "/about",    label: "About Us" },
+              { href: "/pricing",  label: "Pricing" },
+              { href: "/features", label: "Features" },
+            ].map(({ href, label }) => (
+              <li key={label} className="flex items-center mb-2.5"
+                style={{ color: "var(--primary-color)" }}>
+                <FaAngleRight style={{ color: "var(--primary-gradient-start)", marginRight: "8px" }} />
+                <a
+                  href={href}
+                  className="no-underline transition-colors duration-300"
+                  style={{ color: "var(--primary-color)" }}
+                  onMouseEnter={(e) => (e.target.style.color = "var(--text-color-2)")}
+                  onMouseLeave={(e) => (e.target.style.color = "var(--primary-color)")}
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
 
-        <div className="footer-col">
-          <p>Blogs</p>
-          <ul>
-            <li><FaAngleRight /><a href="/">People saying about footer.</a></li>
-            <li><FaAngleRight /><a href="/">People saying about footer.</a></li>
+        {/* Col 3 - Blogs */}
+        <div style={{ lineHeight: "1.3" }}>
+          <p style={{ color: "var(--primary-color)" }}>Blogs</p>
+          <ul className="list-none m-0 p-0 mt-2">
+            {["People saying about footer.", "People saying about footer."].map((text, i) => (
+              <li key={i} className="flex items-center mb-2.5"
+                style={{ color: "var(--primary-color)" }}>
+                <FaAngleRight style={{ color: "var(--primary-gradient-start)", marginRight: "8px" }} />
+                <a
+                  href="/"
+                  className="no-underline transition-colors duration-300"
+                  style={{ color: "var(--primary-color)" }}
+                  onMouseEnter={(e) => (e.target.style.color = "var(--text-color-2)")}
+                  onMouseLeave={(e) => (e.target.style.color = "var(--primary-color)")}
+                >
+                  {text}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
 
-        <div className="footer-col">
-          <p>Contact Us</p>
-          <form>
-            <input type="email" placeholder="Enter your email " />
-            <button className="gradient-btn">Submit</button>
-          </form>
-          <ul className="contacts-ul">
-            <li>+94 77 123 4567</li>
-            <li>support@serversalad.com</li>
-            <li>www.serversalad.com</li>
-            <li>ServerSalad Technologies (Pvt) Ltd 
-                No.42, Innovation Street, Colombo, Sri Lanka</li>
+        {/* Col 4 - Contact */}
+        <div style={{ lineHeight: "1.3" }}>
+          <p className="mb-5" style={{ color: "var(--primary-color)" }}>Contact Us</p>
+          <ul className="list-none m-0 p-0 w-full max-w-[300px]">
+            {[
+              "+94 77 123 4567",
+              "support@serversalad.com",
+              "www.serversalad.com",
+              "ServerSalad Technologies (Pvt) Ltd No.42, Innovation Street, Colombo, Sri Lanka",
+            ].map((item, i) => (
+              <li key={i} className="mb-2.5" style={{ color: "var(--primary-color)" }}>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
-
       </div>
 
-      <div className="footer-bottom">
+      {/* Bottom Bar */}
+      <div className="text-center text-sm mt-6" style={{ color: "var(--primary-color)" }}>
         <p>© 2025 All Rights Reserved</p>
       </div>
     </footer>

@@ -28,6 +28,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="payment-success" element={<PaymentSuccess />} />
+
 
           {/* Forgot/Reset password */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -43,7 +45,7 @@ function App() {
               <Route path="files" element={<MyFiles />} />
               <Route index element={<DashboardHome />} />
               <Route path="subscription" element={<SubscriptionPage />} />
-              <Route path="payment-success" element={<PaymentSuccess />} />
+              {/* <Route path="payment-success" element={<PaymentSuccess />} /> */}
               <Route path="settings" element={<DashboardSettings />} /> 
               <Route path="delete-account" element={<DeleteAccount />} /> 
               <Route path="security" element={<SecuritySettings />} />      
