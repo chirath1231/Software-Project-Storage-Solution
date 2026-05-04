@@ -19,7 +19,7 @@ from django.utils.timezone import now
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import update_session_auth_hash
 
-GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com" 
+GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
 # GOOGLE_CLIENT_ID = "24543519606-c5f9nj651gt4rqjhh2k9ntl06it1fl7m.apps.googleusercontent.com" 
 
 @method_decorator(csrf_exempt, name='dispatch')
