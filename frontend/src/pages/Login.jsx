@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../auth.css";
 import Maskgroup from "../assets/Maskgroup.png";
 import Logo_on_Light from "../assets/Logo_on_Light.png";
 import { FcGoogle } from "react-icons/fc";
@@ -201,112 +200,115 @@ function Login() {
   // UI
   // ==========================
   return (
-    <div className="auth-container">
+    <div className="relative flex">
+      
+      {/* Company Logo */}
       <img
         src={Logo_on_Light}
         alt="Company Logo"
-        className="company-logo"
+        className="absolute top-5 left-5 w-[120px] h-auto z-10"
       />
 
-      <div className="left-side">
-        <div className="auth-box">
-          <h2 className="title">Sign in</h2>
-          <h4 className="caption">
+      {/* Left Side */}
+      <div className="flex flex-1 p-20 h-screen">
+        <div className="w-full max-w-[400px] bg-white p-5 ml-[120px] rounded-[8px] box-border">
+
+          <h2 className="text-[32px] font-bold mb-5 text-left text-black">Sign in</h2>
+          <h4 className="text-[15px] font-normal mb-5 text-left text-black">
             Please login to continue to your account.
           </h4>
 
-          <form className="form" onSubmit={handleLogin}>
+          <form className="flex flex-col" onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email"
-              className="input"
+              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] bg-[#fcfafa] text-[#060606]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-
             <input
               type="password"
               placeholder="Password"
-              className="input"
+              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] bg-[#fcfafa] text-[#060606]"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
             <button
-              className="btn"
               type="submit"
               disabled={loading}
+              className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white text-[16px] font-bold rounded-[8px] cursor-pointer border-none transition-colors"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
-          
+          {/* Divider */}
           <div className="flex items-center my-4">
             <div className="flex-grow h-px bg-gray-300"></div>
             <span className="px-3 text-gray-400 font-medium">or</span>
             <div className="flex-grow h-px bg-gray-300"></div>
           </div>
-          
 
-          {/* GOOGLE BUTTON */}
+          {/* Google Login */}
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => alert("Google Login Failed")}
             render={(renderProps) => (
               <button
-                className="social-btn"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-white text-black font-bold rounded-[8px] border border-[#ccc] cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={renderProps.onClick}
                 disabled={renderProps.disabled || loading}
               >
                 Continue with Google
-                <FcGoogle
-                  size={20}
-                  className="social-logo"
-                />
+                <FcGoogle size={20} />
               </button>
             )}
           />
 
-          <p className="footer-text">
-            Don’t have an account?{" "}
+          {/* Footer Text */}
+          <p className="text-center mt-[18px]">
+            Don't have an account?{" "}
             <Link to="/register" className="hover:underline">
               Create account
             </Link>
           </p>
 
-          <div className="footer-text flex flex-col gap-2">
+          <div className="text-center mt-[18px] flex flex-col gap-2">
             <button
               className="hover:underline"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot Password?
             </button>
-
             <button
-              className="hover:underline "
+              className="hover:underline"
               onClick={() => navigate("/restore-account")}
             >
               Restore your account
             </button>
           </div>
 
-          <div className="footer-links">
-            <a href="#">Terms</a>
-            <a href="#">Support</a>
-            <a href="#">Customer Care</a>
+          {/* Footer Links */}
+          <div className="flex justify-between mt-3 text-[12px] opacity-80">
+            <a href="#" className="text-white no-underline">Terms</a>
+            <a href="#" className="text-white no-underline">Support</a>
+            <a href="#" className="text-white no-underline">Customer Care</a>
           </div>
-        </div>
 
-        <div className="right-side">
-          <img
-            src={Maskgroup}
-            alt="Side Visual"
-          />
         </div>
       </div>
+
+      {/* Right Side */}
+      <div className="flex flex-1 justify-end overflow-hidden h-screen">
+        <img
+          src={Maskgroup}
+          alt="Side Visual"
+          className="w-[100%] h-full object-cover"
+        />
+      </div>
+
     </div>
   );
 }
