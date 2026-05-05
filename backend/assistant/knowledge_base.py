@@ -15,7 +15,10 @@ KNOWLEDGE_BASE = {
     "update_profile_picture": "Go to Profile → Click avatar → Upload new image.",
 
     # Storage & subscriptions
-    "storage_limit": "Free users get 5GB storage. Upgrade for more.",
+    "free plan": "Free users get 5GB storage. Upgrade for more.",
+    "standard plan": "The Standard Plan offers 10GB storage.",
+    "pro plan": "The Pro Plan offers 50GB storage.",
+    "ultra plan": "The Ultra Plan offers 100GB storage.",
     "upgrade_plan": "Go to Subscriptions → Choose a plan → Confirm payment.",
     "check_storage": "Go to Dashboard → Storage section to see usage.",
 
@@ -55,7 +58,7 @@ INTENTS = {
     "delete_account": ["delete account", "remove account"],
     "update_profile_picture": ["change photo", "profile picture", "avatar", "pic"],
 
-    "storage_limit": ["storage", "limit", "space", "gb"],
+    "storage_limit": ["storage", "limit", "space"],
     "upgrade_plan": ["upgrade", "premium", "buy plan"],
     "check_storage": ["check storage", "how much space", "GB", "gb"],
 
