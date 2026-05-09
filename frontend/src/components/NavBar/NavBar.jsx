@@ -20,7 +20,7 @@ const LogoDark = () => (
 const GradientButton = ({ title, onClick, ariaLabel }) => (
   <button
     onClick={onClick}
-    aria-label={ariaLabel || title}
+    ariaLabel={ariaLabel || title}
     className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-800"
   >
     {title}
@@ -38,6 +38,7 @@ export default function Navbar({ isDashboard = false }) {
   const { notifications, unreadCount, fetchGlobalNotifications, setNotifications } = useNotifications();
 
   const showDashboardView = isAuthenticated || isDashboard;
+  
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -145,7 +146,22 @@ export default function Navbar({ isDashboard = false }) {
         `}>
           {!showDashboardView ? (
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
-              {/* Public Links */}
+              {[
+                { href: "#home", label: "Home" },
+                { href: "#features", label: "Features" },
+                { href: "#pricing", label: "Pricing" },
+                { href: "#aboutus", label: "About Us" }
+              ].map((item) => (
+                <li key={item.href} className="m-0 before:content-none">
+                  <a
+                    href={item.href}
+                    className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
+                    onClick={() => handleNavClick(item.href)}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           ) : (
             <div className="relative w-full max-w-xl">
@@ -157,6 +173,22 @@ export default function Navbar({ isDashboard = false }) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 className="w-full py-3 pl-12 pr-4 rounded-full bg-gray-700 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
+              />
+            </div>
+          )}
+
+          {/* Mobile auth buttons (only when logged out) */}
+          {!showDashboardView && (
+            <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
+              <GradientButton 
+                title="Register" 
+                onClick={() => window.location.href = "/register"}
+                ariaLabel="Register for an account"
+              />
+              <GradientButton 
+                title="Login" 
+                onClick={() => window.location.href = "/login"}
+                ariaLabel="Login to your account"
               />
             </div>
           )}
@@ -214,7 +246,6 @@ export default function Navbar({ isDashboard = false }) {
                                   {!notification.is_read && <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></span>}
                                 </div>
                                 <p className="text-gray-600 text-xs mt-1">{notification.message}</p>
-                                {/* Formatted Django Timestamp */}
                                 <p className="text-gray-400 text-[10px] mt-1 font-medium">
                                   {new Date(notification.created_at).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
                                 </p>

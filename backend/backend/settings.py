@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     "anymail",          # For Email services
     "channels",         # For WebSockets
     "django_extensions",
+    "storages",
+    "storage",
+    'anymail',
+    'tickets',
 
     # YOUR LOCAL APPS
     "accounts",         # Your authentication app

@@ -14,4 +14,6 @@ urlpatterns = [
     path('events/<int:pk>/', EventDetailView.as_view(), name='event-detail'),
     path('notifications/', NotificationListView.as_view(), name='notifications-list'),
     path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
+    # path('notifications/', NotificationListView.as_view(), name='notifications-list'),
+    # path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
 ]
