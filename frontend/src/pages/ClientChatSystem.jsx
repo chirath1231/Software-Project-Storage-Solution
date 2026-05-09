@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Search, Paperclip, Send, X } from "lucide-react";
+import { Search, Paperclip, Send, X, MoreVertical } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
@@ -36,6 +36,8 @@ const ClientChatSystem = () => {
   const [messages, setMessages] = useState([]); // middle chat messages
   const [messageInput, setMessageInput] = useState("");
 
+  const [activeMenuId, setActiveMenuId] = useState(null);// for right sidebar menu (delete)
+
   // ✅ New Chat state
   const [showNewChat, setShowNewChat] = useState(false);
   const [users, setUsers] = useState([]);
@@ -68,7 +70,17 @@ const ClientChatSystem = () => {
   };
 
   useEffect(() => {
-    scrollToBottom();
+  const handleGlobalClick = () => setActiveMenuId(null);
+  
+  if (activeMenuId) {
+    window.addEventListener("click", handleGlobalClick);
+  }
+  
+  return () => window.removeEventListener("click", handleGlobalClick);
+}, [activeMenuId]);
+
+  useEffect(() => {
+        scrollToBottom();
   }, [messages]);
 
   // ----------------- Derived -----------------
@@ -199,19 +211,25 @@ const ClientChatSystem = () => {
       try {
         const data = JSON.parse(event.data);
 
+        // Handle message deletion
+        if (data.action === "delete") {
+          setMessages((prev) => prev.filter((m) => m.id !== data.message_id));
+          return;
+        }
+
         // --- NEW EDIT: Handle Status Updates ---
         if (data.type === "status_update") {
           setConversations((prev) =>
             prev.map((c) =>
               c.other_user?.id === data.user_id
                 ? {
-                    ...c,
-                    other_user: {
-                      ...c.other_user,
-                      is_online: data.is_online,
-                      last_active: data.is_online ? "Active now" : "Just now",
-                    },
-                  }
+                  ...c,
+                  other_user: {
+                    ...c.other_user,
+                    is_online: data.is_online,
+                    last_active: data.is_online ? "Active now" : "Just now",
+                  },
+                }
                 : c
             )
           );
@@ -335,6 +353,29 @@ const ClientChatSystem = () => {
     if (!q) return [];
     return users.filter((u) => u.username.toLowerCase().includes(q));
   }, [users, search]);
+
+  // ----------------- Delete Message  -----------------
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      // 1. API Call to delete from DB
+      await api.delete(`/messages/${messageId}/delete/`);
+
+      // 2. WebSocket broadcast (so other users see it's gone)
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          action: "delete_message",
+          message_id: messageId
+        }));
+      }
+
+      // 3. Update local state immediately
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      setActiveMenuId(null);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Could not delete message.");
+    }
+  };
 
   // ----------------- Render -----------------
   return (
@@ -503,13 +544,39 @@ const ClientChatSystem = () => {
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4" >
 
+              {/* delete button only shows on hover of the message and only for messages sent by the current user */}
               {messages.map((m) => {
-                const isMine =
-                  m.is_mine === true ||
-                  (m.sender_username && m.sender_username === currentUsername);
+                const isMine = m.is_mine === true || (m.sender_username && m.sender_username === currentUsername);
 
                 return (
-                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`} >
+                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group relative`}>
+
+                    {/* Three Dots Menu - Only for Owner */}
+                    {isMine && (
+                      <div className="relative flex items-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // 👈 This stops the global click listener from firing immediately
+                            setActiveMenuId(activeMenuId === m.id ? null : m.id);
+                          }}
+                          className="..."
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+
+                        {/* Delete Popup */}
+                        {activeMenuId === m.id && (
+                          <div className="absolute right-full bottom-0 mb-2 mr-2 z-50 bg-white shadow-xl border border-gray-200 rounded-lg py-1 w-24">
+                            <button
+                              onClick={() => handleDeleteMessage(m.id)}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div
                       className={`max-w-md rounded-2xl p-4 ${isMine
@@ -521,9 +588,7 @@ const ClientChatSystem = () => {
                       <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
                         {formatTime(m.timestamp)}
                       </p>
-
                     </div>
-
                   </div>
                 );
               })}
