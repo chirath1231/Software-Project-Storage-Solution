@@ -11,7 +11,7 @@ import logging
 
 # --- 1. IMPORT USER MODEL AND OUR NOTIFICATION HELPER ---
 from django.contrib.auth.models import User
-from accounts.views import create_system_notification 
+from notifications.utils import create_system_notification
 
 # Setup logger
 logger = logging.getLogger(__name__)

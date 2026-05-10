@@ -10,6 +10,8 @@ import os
 
 load_dotenv()
 
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # -----------------------------------------------------
@@ -51,7 +53,8 @@ INSTALLED_APPS = [
     "storage",          # Your local storage logic app
     "chat",             # Your chat app
     "tickets",  
-    "notifications",        # Your ticket logic app
+    "notifications",
+    "events",        
 ]
 
 # -----------------------------------------------------

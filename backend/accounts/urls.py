@@ -4,8 +4,7 @@ from .views import (
     RegisterView, 
     LoginAPIView, 
     GoogleLoginAPIView, 
-    EventListCreateView, 
-    EventDetailView
+   
 )
 
 urlpatterns = [
@@ -16,7 +15,5 @@ urlpatterns = [
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     
-    # Events
-    path('events/', EventListCreateView.as_view(), name='event-list-create'),
-    path('events/<int:pk>/', EventDetailView.as_view(), name='event-detail'),
+    
 ]

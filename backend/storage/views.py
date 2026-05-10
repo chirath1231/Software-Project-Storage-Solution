@@ -10,7 +10,7 @@ from .models import File, ShareLink
 import uuid
 
 # --- 1. IMPORT OUR GLOBAL NOTIFICATION HELPER ---
-from accounts.views import create_system_notification 
+from notifications.utils import create_system_notification
 
 from .models import File, ShareLink
 import uuid

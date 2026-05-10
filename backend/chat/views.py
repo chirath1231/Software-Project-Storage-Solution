@@ -6,8 +6,8 @@ from django.db.models import Count
 from .models import Conversation, ConversationParticipant, Message
 from .serializers import UserSerializer, MessageSerializer
 
-# --- 1. IMPORT OUR GLOBAL NOTIFICATION HELPER ---
-from accounts.views import create_system_notification 
+# --- OUR GLOBAL NOTIFICATION HELPER ---
+from notifications.utils import create_system_notification
 
 class UserListView(APIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -10,9 +10,11 @@ urlpatterns = [
     # Accounts & Authentication
     path('api/accounts/', include('accounts.urls')),
     
-    # 🔔 NEW: Notifications App
-    # We mount it here so your React frontend doesn't have to change any API URLs!
+    # Notifications App
     path('api/accounts/notifications/', include('notifications.urls')),
+
+    # Calendar Events App
+    path('api/accounts/events/', include('events.urls')),
     
     # Subscriptions
     path('api/subscriptions/', include('subscriptions.urls')),
