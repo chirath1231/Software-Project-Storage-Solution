@@ -1,10 +1,8 @@
-# accounts/serializers.py
-
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import Event, Notification
+from .models import Event
 
 
 # -------------------------
@@ -63,13 +61,16 @@ class LoginSerializer(serializers.Serializer):
 
         data["user"] = user
         return data
-    
-from rest_framework import serializers
 
+# -------------------------
+# Google Auth Serializer
+# -------------------------
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
 
-
+# -------------------------
+# Event Serializer
+# -------------------------
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
@@ -81,8 +82,3 @@ class EventSerializer(serializers.ModelSerializer):
         if data['start_time'] >= data['end_time']:
             raise serializers.ValidationError({"end_time": "End time must be after the start time."})
         return data
-
-class NotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ['id', 'title', 'message', 'is_read', 'created_at']

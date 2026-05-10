@@ -20,7 +20,6 @@ SECRET_KEY = "django-insecure-niq()9d-nh7fjeg^_3*5r98u!1!suywhiz7-&x=8%r9imlnja(
 DEBUG = True
 
 ALLOWED_HOSTS = ["*", "192.168.8.101"]
-  # allow all during development
 
 # -----------------------------------------------------
 # INSTALLED APPS
@@ -45,38 +44,24 @@ INSTALLED_APPS = [
     "anymail",          # For Email services
     "channels",         # For WebSockets
     "django_extensions",
-    "storages",
-    "storage",
-    'anymail',
-    'tickets',
 
     # YOUR LOCAL APPS
     "accounts",         # Your authentication app
     "subscriptions",    # Subscription management
     "storage",          # Your local storage logic app
     "chat",             # Your chat app
+    "tickets",  
+    "notifications",        # Your ticket logic app
 ]
-
 
 # -----------------------------------------------------
 # MIDDLEWARE
 # -----------------------------------------------------
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SAMESITE = "None"
-CSRF_USE_SESSIONS = False
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True
-
-
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
     # CORS (MUST appear before CommonMiddleware)
     "corsheaders.middleware.CorsMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -86,10 +71,11 @@ MIDDLEWARE = [
 ]
 
 # -----------------------------------------------------
-# CORS SETTINGS
+# CORS & CSRF SETTINGS
 # -----------------------------------------------------
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -97,18 +83,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8081"
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-
-
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_USE_SESSIONS = False
 
 # -----------------------------------------------------
-# URL CONFIG
+# URL CONFIG & TEMPLATES
 # -----------------------------------------------------
 
 ROOT_URLCONF = "backend.urls"
@@ -129,7 +116,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
-
 ASGI_APPLICATION = 'backend.asgi.application'
 
 CHANNEL_LAYERS = {
@@ -156,9 +142,8 @@ DATABASES = {
     }
 }
 
-
 # -----------------------------------------------------
-# PASSWORD VALIDATION
+# PASSWORD VALIDATION & AUTHENTICATION
 # -----------------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -168,14 +153,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# -----------------------------------------------------
-# INTERNATIONALIZATION
-# -----------------------------------------------------
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-
+# -----------------------------------------------------
+# INTERNATIONALIZATION
+# -----------------------------------------------------
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -194,10 +178,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # -----------------------------------------------------
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -----------------------------------------------------
+# PAYMENTS (PAYHERE)
+# -----------------------------------------------------
+
 PAYHERE_MERCHANT_ID = "1233030"  # Your Merchant ID
 PAYHERE_MERCHANT_SECRET = "MTI2ODEyMjAxMzM4NDgyNjQ1NTUyNjI1NTk0MjY1MTQ0MzE3OTY0MA=="
 PAYHERE_SANDBOX = True 
-
 
 # -----------------------------------------------------
 # REST FRAMEWORK + JWT SETTINGS
@@ -210,7 +198,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-        "DEFAULT_RENDERER_CLASSES": [
+    "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ]
 }
@@ -223,7 +211,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-
+# -----------------------------------------------------
+# CLOUD STORAGE (AWS S3 / DIGITALOCEAN)
+# -----------------------------------------------------
 
 AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
 AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
@@ -231,7 +221,6 @@ AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
 AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
 AWS_S3_REGION_NAME = "sfo3"
 AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
-
 
 AWS_DEFAULT_ACL = "public-read"
 AWS_QUERYSTRING_AUTH = False
@@ -250,14 +239,6 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
-
-
-
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
 
 # Local media fallback for development
 if DEBUG:
