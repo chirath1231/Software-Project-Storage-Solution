@@ -7,7 +7,6 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     
-    // --- NEW: Pagination States ---
     const [nextPageUrl, setNextPageUrl] = useState(null);
     const [prevPageUrl, setPrevPageUrl] = useState(null);
 
@@ -16,14 +15,14 @@ export const NotificationProvider = ({ children }) => {
             const token = localStorage.getItem("access_token");
             if (!token) return;
             
-            // If we click "Next Page", use that URL. Otherwise, build the default one with our sort rule!
-            const targetUrl = pageUrl || `/api/auth/notifications/?sort=${sortBy}`;
+            
+            const targetUrl = pageUrl || `/api/accounts/notifications/?sort=${sortBy}`;
             
             const res = await api.get(targetUrl);
             
-            // --- NEW: Extract data from Django's Paginator ---
+            // Extract data from Django's PageNumberPagination response
             setNotifications(res.data.results); 
-            setUnreadCount(res.data.unread_count); // Perfectly accurate bell count!
+            setUnreadCount(res.data.unread_count); 
             setNextPageUrl(res.data.next);
             setPrevPageUrl(res.data.previous);
             
@@ -33,7 +32,10 @@ export const NotificationProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        fetchGlobalNotifications();
+        // Only fetch if a token exists to avoid unnecessary 401s on mount
+        if (localStorage.getItem("access_token")) {
+            fetchGlobalNotifications();
+        }
     }, []);
 
     return (
