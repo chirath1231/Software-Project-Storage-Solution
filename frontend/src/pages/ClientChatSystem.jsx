@@ -382,14 +382,14 @@ const ClientChatSystem = () => {
     <div>
       <Navbar />
 
-      <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+      {/* <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
             Clients
           </h1>
           <p className="text-gray-500 mt-1">Manage your clients, share files, and track activity </p>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex h-screen bg-white">
         <Sidebar />
