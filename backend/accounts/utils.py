@@ -10,16 +10,16 @@ def delete_expired_accounts():
     for deletion in expired_users:
         user = deletion.user
 
-        # 🔥 STEP 1: DELETE CLOUD FILES (ask teammate)
+        # STEP 1: DELETE CLOUD FILES (ask teammate)
         # Example:
         # delete_user_files(user)
 
-        # 🔥 STEP 2: DELETE DB RELATED DATA
+        # STEP 2: DELETE DB RELATED DATA
         # Example:
         # user.files.all().delete()
 
-        # 🔥 STEP 3: DELETE USER
+        # DELETE USER
         user.delete()
 
-        # 🔥 STEP 4: DELETE TRACKING RECORD
+        # DELETE TRACKING RECORD
         deletion.delete()

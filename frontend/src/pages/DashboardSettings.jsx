@@ -8,7 +8,6 @@ export default function DashboardSettings() {
     { name: "Profile Settings", path: "/dashboard/profile-settings" },
     { name: "Security", path: "/dashboard/security" },
     { name: "Notifications", path: "/dashboard/settings/notifications" },
-    { name: "Privacy", path: "/dashboard/privacy" },
     { name: "Ticket Submission", path: "/dashboard/ticket-submission" },
     { name: "Delete Account", path: "/dashboard/delete-account" },
   ];

@@ -57,7 +57,7 @@ class LoginAPIView(APIView):
             # BLOCK if marked for deletion
             if AccountDeletion.objects.filter(user=user, is_deleted=True).exists():
                 return Response(
-                    {"error": "Account is scheduled for deletion (You have tried to delete your account). Contact support to restore."},
+                    {"error": "Account is scheduled for deletion (Maybe you've tried to delete your account). Click 'Ok' to restore."},
                     status=403
                 )
             
@@ -114,7 +114,7 @@ class GoogleLoginAPIView(APIView):
             # BLOCK if marked for deletion
             if AccountDeletion.objects.filter(user=user, is_deleted=True).exists():
                 return Response(
-                    {"error": "Account is scheduled for deletion (You have tried to delete your account). Contact support to restore."},
+                    {"Account is scheduled for deletion (Maybe you've tried to delete your account). Click to restore."},
                     status=403
                 )
             

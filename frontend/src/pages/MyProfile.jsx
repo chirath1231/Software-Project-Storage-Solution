@@ -8,20 +8,49 @@ export default function ProfilePage() {
   const { logout } = useAuth();
   const [profilePicURL, setProfilePicURL] = useState(null);
   const [user, setUser] = useState(null);
+  const [storage, setStorage] = useState({
+    used: 0,
+    total: 100,
+  });
 
-  useEffect(() => {
-    // Fetch data from backend
-    api.get("/api/accounts/profile/")
-      .then((res) => {
-        setUser(res.data);
-        if (res.data.profile_picture) {
-          setProfilePicURL(res.data.profile_picture);
+
+useEffect(() => {
+  // Fetch profile
+  api.get("/api/accounts/profile/")
+    .then((res) => {
+      setUser(res.data);
+      if (res.data.profile_picture) {
+        setProfilePicURL(res.data.profile_picture);
       }
-      })
-      .catch((err) => {
-        console.error("Error fetching profile:", err);
-      });
-  }, []);
+    })
+    .catch((err) => console.error("Error fetching profile:", err));
+
+  // Fetch actual files to calculate real storage 
+  const userEmail = localStorage.getItem("username");
+
+  Promise.all([
+    api.get("/api/files/").then(res => res.data).catch(() => []),
+    userEmail
+      ? fetch(`http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
+          .then(res => res.ok ? res.json() : [])
+      : Promise.resolve([])
+  ]).then(([files, userActive]) => {
+    // Calculate used GB from files
+    const totalBytes = (files || []).reduce((sum, file) => sum + (file.size || 0), 0);
+    const usedGB = totalBytes / 1024 / 1024 / 1024;
+
+    // Get total GB from highest active plan
+    const highestPlan = (userActive || []).reduce((max, plan) => {
+      return (plan.storage > (max?.storage || 0)) ? plan : max;
+    }, null);
+    const totalGB = highestPlan?.storage || 5;
+
+    setStorage({ used: usedGB, total: totalGB });
+  });
+}, []);
+
+const percentage = Math.min((storage.used / storage.total) * 100, 100);
+const safePercentage = percentage; 
 
   if (!user) return <p>Loading...</p>;
   return (
@@ -76,18 +105,38 @@ export default function ProfilePage() {
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-12 border-l-4 mb-6 border-orange-500">
-            {/* Bottom Section - Storage */}
+  
             <div>
-              <h3 className="font-semibold text-gray-700 text-xl mb-2">Storage Usage</h3>
+              <h3 className="font-semibold text-gray-700 text-xl mb-2">
+                Storage Usage
+              </h3>
 
-              <div className="w-full bg-gray-200 rounded-full h-4">
-                <div className="bg-orange-500 h-4 rounded-full" style={{ width: "75%" }}></div>
+              {/* BAR */}
+              <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div
+                  className="h-4 rounded-full transition-all duration-700"
+                  style={{
+                    width: `${safePercentage}%`,
+                    background: "linear-gradient(to right, #f97316, #fb923c)",
+                  }}
+                />
               </div>
 
-              <p className=" text-gray-500 mt-2">75% used</p>
+              {/* TEXT */}
+              <div className="flex justify-between mt-2">
+                <p className="text-gray-500">
+                  {safePercentage.toFixed(0)}% used
+                </p>
 
-              <button className="mt-4 px-4 py-2 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white"
-              onClick={() => navigate("/dashboard/subscription")}>
+                <p className="text-gray-500">
+                  {storage.used.toFixed(2)}GB / {storage.total}GB
+                </p>
+              </div>
+
+              <button
+                className="mt-4 px-4 py-2 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white"
+                onClick={() => navigate("/dashboard/subscription")}
+              >
                 Upgrade Plan
               </button>
             </div>
