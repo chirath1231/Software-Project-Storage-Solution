@@ -1,3 +1,4 @@
+import os
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,9 +19,6 @@ from rest_framework.generics import UpdateAPIView
 from django.utils.timezone import now
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import update_session_auth_hash
-
-GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
-# GOOGLE_CLIENT_ID = "24543519606-c5f9nj651gt4rqjhh2k9ntl06it1fl7m.apps.googleusercontent.com" 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
@@ -97,7 +95,7 @@ class GoogleLoginAPIView(APIView):
             idinfo = id_token.verify_oauth2_token(
                 token,
                 requests.Request(),
-                GOOGLE_CLIENT_ID
+                os.getenv("GOOGLE_CLIENT_ID")
             )
 
             email = idinfo['email']

@@ -18,7 +18,7 @@ function Login() {
   const { login } = useAuth();
 
   // ==========================
-  // 🔐 NORMAL LOGIN
+  //  NORMAL LOGIN
   // ==========================
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -87,49 +87,8 @@ function Login() {
   };
 
   // ==========================
-  // 🔵 GOOGLE LOGIN
+  //  GOOGLE LOGIN
   // ==========================
-  // const handleGoogleSuccess = async (credentialResponse) => {
-  //   setLoading(true);
-
-  //   try {
-  //     const res = await fetch(
-  //       "http://localhost:8000/api/accounts/google/",
-  //       {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({
-  //           token: credentialResponse.credential,
-  //         }),
-  //       }
-  //     );
-
-  //     const data = await res.json();
-  //     // localStorage.setItem("user_id", data.user.id);
-
-  //     if (!res.ok) {
-  //       alert("Google login failed");
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     localStorage.setItem("access_token", data.access);
-  //     localStorage.setItem("refresh_token", data.refresh);
-  //     localStorage.setItem("username", data.username);
-
-  //    login(data.access, {
-        //   username: data.username,
-        //   email: data.email
-        // }, true);
-  //     navigate("/dashboard");
-  //   } catch (error) {
-  //     alert("Google login error");
-  //   }
-
-  //   setLoading(false);
-  // };
-
-
   const handleGoogleSuccess = async (credentialResponse) => {
   setLoading(true);
 
@@ -183,10 +142,13 @@ function Login() {
     localStorage.setItem("access_token", data.access);
     localStorage.setItem("refresh_token", data.refresh);
     localStorage.setItem("username", data.username);
-    localStorage.setItem("user_id", data.user.id);
+    // localStorage.setItem("user_id", data.user.id);
 
-    login(data.access, data.username, true);
-    navigate("/dashboard");
+  login(data.access, {
+    username: data.username,
+    email: data.email
+  }, true);
+  navigate("/dashboard");
   } catch (error) {
     console.error("Google login error:", error);
     alert("Google login error. See console.");

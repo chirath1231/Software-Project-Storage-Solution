@@ -275,6 +275,8 @@ def ask_gemini(user_message: str):
             print("CALLING GEMINI API")
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
+                # model = "gemini-3.1-flash-lite",
+                # model = "gemini-3-flash",
                 contents=[full_prompt]  # single assembled string
             )
             answer = response.text
