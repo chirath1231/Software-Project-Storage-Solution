@@ -1,4 +1,5 @@
-import requests
+import os
+import resend
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Event
@@ -26,37 +27,40 @@ class EventListCreateView(generics.ListCreateAPIView):
             message=f"You successfully scheduled '{event.title}' for {event.start_time.strftime('%b %d at %I:%M %p')}."
         )
 
-        # 3. Mailgun Email Automation
+        # 3. Resend Email Automation
         attendee_email = self.request.data.get('attendee_email')
         
         if attendee_email:
-            # IMPORTANT: Put your real Mailgun Sandbox Domain and API Key here!
-            mailgun_domain = "YOUR_MAILGUN_SANDBOX_DOMAIN" 
-            mailgun_api_key = "YOUR_MAILGUN_API_KEY"
+            # Securely get API Key from environment variables
+            resend.api_key = os.environ.get('RESEND_API_KEY')
 
             subject = f"Meeting Invitation: {event.title} (CEYNOA)"
-            body = (
-                f"Hello!\n\n"
-                f"You have been invited to a meeting by {event.user.username}.\n\n"
-                f"📌 Title: {event.title}\n"
-                f"🕒 Start: {event.start_time.strftime('%b %d, %Y at %H:%M')}\n"
-                f"🔗 Link: {event.meeting_link or 'No link provided'}\n\n"
-                f"Description: {event.description}\n\n"
-                f"Sent securely via CEYNOA Workspace."
-            )
+            
+            # HTML Body for a professional look
+            html_content = f"""
+                <div style="font-family: sans-serif; color: #333;">
+                    <h2>Hello!</h2>
+                    <p>You have been invited to a meeting by <strong>{event.user.username}</strong>.</p>
+                    <hr />
+                    <p>📌 <strong>Title:</strong> {event.title}</p>
+                    <p>🕒 <strong>Start:</strong> {event.start_time.strftime('%b %d, %Y at %H:%M')}</p>
+                    <p>🔗 <strong>Link:</strong> <a href="{event.meeting_link or '#'}">{event.meeting_link or 'No link provided'}</a></p>
+                    <p><strong>Description:</strong> {event.description}</p>
+                    <hr />
+                    <p style="font-size: 12px; color: #777;">Sent securely via CEYNOA Workspace.</p>
+                </div>
+            """
 
             try:
-                requests.post(
-                    f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
-                    auth=("api", mailgun_api_key),
-                    data={"from": f"CEYNOA Scheduler <mailgun@{mailgun_domain}>",
-                          "to": [attendee_email],
-                          "subject": subject,
-                          "text": body}
-                )
-                print(f"✅ Invite sent successfully to {attendee_email}")
+                resend.Emails.send({
+                    "from": "onboarding@resend.dev", # Resend Sandbox Default
+                    "to": [attendee_email],
+                    "subject": subject,
+                    "html": html_content
+                })
+                print(f"✅ Invite sent successfully to {attendee_email} via Resend")
             except Exception as e:
-                print(f"❌ Mailgun error: {e}")
+                print(f"❌ Resend error: {e}")
 
 
 class EventDetailView(generics.RetrieveUpdateDestroyAPIView):
