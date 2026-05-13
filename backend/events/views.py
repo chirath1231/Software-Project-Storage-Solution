@@ -53,7 +53,7 @@ class EventListCreateView(generics.ListCreateAPIView):
 
             try:
                 resend.Emails.send({
-                    "from": "onboarding@resend.dev", # Resend Sandbox Default
+                    "from": "onboarding@resend.dev", 
                     "to": [attendee_email],
                     "subject": subject,
                     "html": html_content
