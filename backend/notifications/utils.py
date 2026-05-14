@@ -2,8 +2,10 @@ from django.utils import timezone
 from datetime import timedelta
 from events.models import Event
 from .models import Notification
+from datetime import date
 
 def create_system_notification(user, title, message, notification_type='INFO'):
+    print(f"DEBUG: Creating {notification_type} notification for {user.email}")
     return Notification.objects.create(
         user=user,
         title=title,
@@ -33,7 +35,7 @@ def process_meeting_reminders():
             notification_type='REMINDER'
         )
 
-    # 2. Process Live "Join Now" Alerts
+    
     live_start = now - timedelta(minutes=2)
     live_end = now + timedelta(minutes=5)
 
@@ -48,4 +50,45 @@ def process_meeting_reminders():
             title="Join Now!",
             message=f"'{event.title}' is starting now. Ready to jump in?",
             notification_type='LIVE'
+        )
+
+
+def send_subscription_welcome(user, plan_name):
+    # 1. Create System Notification
+    create_system_notification(
+        user=user,
+        title="Subscription Activated",
+        message=f"Success! You are now subscribed to the {plan_name} plan. Enjoy your new features!",
+        notification_type='SUBSCRIPTION'
+    )
+    
+    # 2. Send Email via Resend
+    import resend
+    import os
+    resend.api_key = os.environ.get('RESEND_API_KEY')
+    
+    try:
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": [user.email],
+            "subject": f"Welcome to CEYNOA {plan_name}!",
+            "html": f"<h1>Upgrade Successful!</h1><p>Hi {user.username}, your account has been upgraded to <strong>{plan_name}</strong>.</p>"
+        })
+    except Exception as e:
+        print(f"Resend Email Error: {e}")
+
+
+def check_subscription_expirations():
+    today = date.today()
+    reminder_date = today + timedelta(days=3) # 3-day warning
+    
+    
+    expiring_soon = Subscription.objects.filter(end_date=reminder_date, is_active=True)
+    
+    for sub in expiring_soon:
+        Notification.objects.get_or_create(
+            user=sub.user,
+            title="Subscription Expiring",
+            message="Your plan expires in 3 days. Renew now to keep your files safe!",
+            notification_type='SUBSCRIPTION'
         )

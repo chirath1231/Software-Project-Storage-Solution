@@ -55,7 +55,7 @@ function App() {
                 <Route path="settings" element={<DashboardSettings />} />
                 <Route path="settings/profile" element={<ProfileSettings />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
-                <Route path="payment-success" element={<PaymentSuccess />} />
+                <Route path="payment-success/*" element={<PaymentSuccess />} />
                 <Route path="ticket-submission" element={<TicketSubmission />} />
               </Route>
             </Route>

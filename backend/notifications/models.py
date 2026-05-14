@@ -6,6 +6,7 @@ class Notification(models.Model):
         ('INFO', 'Information'),
         ('REMINDER', 'Reminder'),
         ('LIVE', 'Join Now'),
+        ('SUBSCRIPTION', 'Subscription'),
     ]
 
     
@@ -18,7 +19,7 @@ class Notification(models.Model):
     title = models.CharField(max_length=255)
     message = models.TextField()
     notification_type = models.CharField(
-        max_length=10, 
+        max_length=15, 
         choices=NOTIFICATION_TYPES, 
         default='INFO'
     )
