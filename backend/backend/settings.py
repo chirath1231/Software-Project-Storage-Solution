@@ -247,3 +247,9 @@ STORAGES = {
 if DEBUG:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==============================================================================
+# EXTERNAL INTEGRATIONS CONFIGURATION
+# ==============================================================================
+import os
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")

@@ -7,6 +7,7 @@ import traceback
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -123,6 +124,7 @@ def payhere_notify(request):
     received_md5 = data.get("md5sig")
 
     # Hash Verification
+    # Note: Ensure MERCHANT_SECRET_MD5 is defined globally at the top of your views file
     verify_string = f"{merchant_id}{order_id}{pay_amount}{pay_currency}{status_code}{MERCHANT_SECRET_MD5}"
     computed_md5 = hashlib.md5(verify_string.encode()).hexdigest().upper()
 
@@ -142,7 +144,7 @@ def payhere_notify(request):
         try:
             payment = Payment.objects.select_related('subscription').get(order_id=order_id)
             
-            # Create SubscriptionPayment record
+            # Create or fetch SubscriptionPayment record safely
             sub_payment, created = SubscriptionPayment.objects.get_or_create(
                 order_id=order_id,
                 defaults={
@@ -157,14 +159,13 @@ def payhere_notify(request):
             # --- IMPROVED USER LOOKUP ---
             target_email = payment.payer_email.strip().lower()
             
-            # Try to find by exact email, or find a user whose email STARTS with this string
+            # Try to find by exact email, or fallback to username matching
             user = User.objects.filter(email__iexact=target_email).first()
-            
             if not user and "@" not in target_email:
-                # If PayHere sent a username instead of email, try searching by username
                 user = User.objects.filter(username__iexact=target_email).first()
 
             if user:
+                # 1. Create Internal Dashboard Notification
                 create_system_notification(
                     user=user,
                     title="Subscription Upgraded! 🎉",
@@ -172,16 +173,54 @@ def payhere_notify(request):
                     notification_type='SUBSCRIPTION'
                 )
                 print(f"✅ Notification created for user: {user.username}")
+
+                # 2. Resend Email System Integration
+                resend.api_key = getattr(settings, "RESEND_API_KEY", None)
+                
+                if resend.api_key:
+                    try:
+                        resend.Emails.send({
+                            "from": "CEYNOA Billing <onboarding@resend.dev>",
+                            "to": [user.email],
+                            "subject": f"Welcome to CEYNOA {payment.subscription.name}!",
+                            "html": f"""
+                                <div style="font-family: sans-serif; border: 1px solid #eee; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto;">
+                                    <h2 style="color: #f97316; border-bottom: 1px solid #eee; padding-bottom: 10px;">Payment Successful</h2>
+                                    <p>Hi {user.username},</p>
+                                    <p>Your workspace account has been successfully upgraded to the <strong>{payment.subscription.name}</strong> plan.</p>
+                                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                        <p style="margin: 5px 0;"><strong>Order ID:</strong> {order_id}</p>
+                                        <p style="margin: 5px 0;"><strong>Amount Paid:</strong> LKR {payment.amount}</p>
+                                        <p style="margin: 5px 0;"><strong>Status:</strong> Activated</p>
+                                    </div>
+                                    <p>Your expanded limits and storage adjustments are now active.</p>
+                                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                                    <p style="font-size: 12px; color: #666;">Thank you for choosing CEYNOA.</p>
+                                </div>
+                            """
+                        })
+                        print(f"📧 Resend: Transaction receipt sent to {user.email}")
+                    except Exception as resend_err:
+                        print("=" * 40)
+                        print("🚨 RESEND API DISPATCH ERROR DETECTED")
+                        print(f"Error Message: {str(resend_err)}")
+                        if hasattr(resend_err, 'body'):
+                            print(f"Error Body: {resend_err.body}")
+                        print("=" * 40)
+                else:
+                    print("❌ CRITICAL: RESEND_API_KEY could not be read out of your configuration settings.")
             else:
                 print(f"⚠️ Webhook warning: Could not link payment '{target_email}' to a User account.")
 
-        except Exception as e:
-            print(f"❌ Webhook Logic Error: {str(e)}")
-            # We still want to return a 200 OK so PayHere stops retrying
-            return Response({"message": "Error processed"}, status=200)
+        except Exception as general_err:
+            print(f"❌ Webhook Exception occurred: {str(general_err)}")
 
     return Response({"message": "OK"}, status=200)
 
+
+# --------------------------------------------------------
+# FRONTEND CHECK STATUS ENDPOINT
+# --------------------------------------------------------
 @api_view(["GET"])
 def check_payment_status(request, order_id):
     try:
