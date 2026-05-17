@@ -215,12 +215,11 @@ SIMPLE_JWT = {
 }
 
 # -----------------------------------------------------
-# CLOUD STORAGE (AWS S3 / DIGITALOCEAN)
+# FILE STORAGE INFRASTRUCTURE (LOCAL VS PRODUCTION DIGITALOCEAN SPACES)
 # -----------------------------------------------------
 
 AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
 AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
-
 AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
 AWS_S3_REGION_NAME = "sfo3"
 AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
@@ -233,23 +232,33 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 AWS_LOCATION = "uploads"
 
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-# Local media fallback for development
+# --- DYNAMIC STORAGE STRATEGY BASED ON DEVELOPMENT ENVIRONMENT ---
 if DEBUG:
+    # Local Storage Engine Configuration (Wipes dependencies on third-party cloud SDKs)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    # Production Infrastructure (DigitalOcean Spaces / AWS S3 backend bindings)
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 # ==============================================================================
 # EXTERNAL INTEGRATIONS CONFIGURATION
 # ==============================================================================
-import os
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")

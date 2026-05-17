@@ -1,19 +1,17 @@
-# backend/storage/views.py
+import uuid
+import logging
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import redirect
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
-from django.db.models import Sum # --- NEW: Needed to calculate total storage ---
-from .models import File, ShareLink
-import uuid
+from django.db.models import Sum
 
-# --- 1. IMPORT OUR GLOBAL NOTIFICATION HELPER ---
+from .models import File, ShareLink
 from notifications.utils import create_system_notification
 
-from .models import File, ShareLink
-import uuid
+logger = logging.getLogger(__name__)
 
 # ---------------- UPLOAD FILE ----------------
 @api_view(["POST"])
@@ -24,7 +22,7 @@ def upload_file(request):
     if not uploaded_file:
         return Response({"error": "No file uploaded"}, status=400)
 
-    # Save file
+    # 1. Save file to the database
     file_obj = File.objects.create(
         user=request.user,
         name=uploaded_file.name,
@@ -32,19 +30,18 @@ def upload_file(request):
         size=uploaded_file.size
     )
 
-    # --- NEW: Trigger Upload Success Notification ---
+    # 2. Trigger Upload Success Notification (Added type='INFO')
     create_system_notification(
         user=request.user,
-        title="Upload Complete",
-        message=f"'{file_obj.name}' was successfully uploaded and securely stored."
+        title="Upload Complete 🚀",
+        message=f"'{file_obj.name}' was successfully uploaded and securely stored.",
+        notification_type='INFO'
     )
 
-    # --- NEW: Storage Capacity Warning Logic ---
-    # Calculate total bytes used by the user
+    # 3. Storage Capacity Warning Logic
     total_used = File.objects.filter(user=request.user).aggregate(Sum('size'))['size__sum'] or 0
     
-    # Let's assume a default 15GB limit for now (15 * 1024 * 1024 * 1024 bytes)
-    # If you have a Subscription model, you can replace this hardcoded limit later!
+    # Default 15GB limit (15 * 1024 * 1024 * 1024 bytes)
     storage_limit = 15 * 1024 * 1024 * 1024 
     warning_threshold = storage_limit * 0.90 # 90%
 
@@ -52,11 +49,11 @@ def upload_file(request):
         create_system_notification(
             user=request.user,
             title="⚠️ Storage Warning",
-            message="You have used over 90% of your total storage capacity. Please consider upgrading your plan."
+            message="You have used over 90% of your total storage capacity. Please consider upgrading your plan.",
+            notification_type='WARNING'
         )
-    # -------------------------------------------
 
-    # Get expiry date from frontend (ISO format: YYYY-MM-DDTHH:MM)
+    # 4. Process share link data
     expiry_str = request.data.get("expiry_date")
     if not expiry_str:
         return Response({"error": "Expiry date required"}, status=400)
@@ -65,14 +62,13 @@ def upload_file(request):
     if not expiry_date:
         return Response({"error": "Invalid expiry date format"}, status=400)
 
-    # Create share link
+    # Create initial share link required by view
     share = ShareLink.objects.create(
         file=file_obj,
         token=uuid.uuid4(),
         expiry=expiry_date
     )
 
-    # Build the shareable URL
     shareable_link = request.build_absolute_uri(f"/api/share/{share.token}/")
 
     return Response({
@@ -113,15 +109,16 @@ def list_files(request):
 def delete_file(request, id):
     try:
         file = File.objects.get(id=id, user=request.user)
-        file_name = file.name # Save name before deleting
+        file_name = file.name 
         file.file.delete()
         file.delete()
 
-        # --- NEW: Trigger Delete Notification ---
+        # Trigger Delete Notification (Added type='WARNING')
         create_system_notification(
             user=request.user,
-            title="File Deleted",
-            message=f"'{file_name}' has been permanently removed from your storage."
+            title="File Deleted 🗑️",
+            message=f"'{file_name}' has been permanently removed from your storage.",
+            notification_type='WARNING'
         )
 
         return Response({"message": "Deleted"})
@@ -152,11 +149,12 @@ def generate_share_link(request, file_id):
         expiry=expiry_date
     )
 
-    # --- NEW: Trigger Share Link Notification ---
+    # Trigger Share Link Notification (Added type='INFO')
     create_system_notification(
         user=request.user,
-        title="Secure Link Generated",
-        message=f"A new sharing link was created for '{file.name}'."
+        title="Secure Link Generated 🔗",
+        message=f"A new sharing link was created for '{file.name}'.",
+        notification_type='INFO'
     )
 
     shareable_link = request.build_absolute_uri(f"/api/share/{share.token}/")
