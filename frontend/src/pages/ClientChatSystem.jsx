@@ -5,9 +5,6 @@ import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
 
-// --- 1. IMPORT GLOBAL NOTIFICATIONS ---
-import { useNotifications } from '../context/NotificationContext';
-
 // ✅ one axios client (avoid URL mistakes)
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
@@ -31,9 +28,6 @@ const formatTime = (isoOrDate) => {
 };
 
 const ClientChatSystem = () => {
-  // --- 2. HOOK INTO THE GLOBAL BRAIN ---
-  const { fetchGlobalNotifications } = useNotifications();
-
   // ----------------- State -----------------
   const [search, setSearch] = useState("");
   const [conversations, setConversations] = useState([]); // left list
@@ -147,12 +141,6 @@ const ClientChatSystem = () => {
     try {
       const res = await api.post("/conversations/start/", { other_user_id: otherUserId });
       await loadConversations();
-      setSelectedConversationId(newConversationId);
-      setShowNewChat(false);
-      
-      // --- 3. REFRESH NOTIFICATIONS ON NEW CHAT ---
-      fetchGlobalNotifications();
-      
       setSelectedConversationId(res.data?.conversation_id);
       setSearch(""); // Reset search after starting
     } catch (err) {
@@ -312,9 +300,6 @@ const ClientChatSystem = () => {
     // WebSocket send
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
-      
-      // --- 4. REFRESH NOTIFICATIONS (WS PATH) ---
-      fetchGlobalNotifications();
       return;
     }
 
@@ -325,10 +310,6 @@ const ClientChatSystem = () => {
         text,
       });
       setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
-      
-      // --- 5. REFRESH NOTIFICATIONS (HTTP PATH) ---
-      fetchGlobalNotifications();
-      
     } catch (err) {
       console.error("Send message failed:", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -369,6 +350,7 @@ const ClientChatSystem = () => {
       </div>
 
       <div className="flex h-screen bg-white">
+
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
 
           {/* Sidebar (Clients List) */}
