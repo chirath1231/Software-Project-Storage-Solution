@@ -27,7 +27,7 @@ class EventListCreateView(generics.ListCreateAPIView):
             attendee_email=attendee_email 
         )
 
-        # 3. Generate a system notification in the Command Center (Added notification_type)
+        # 3. Generate a system notification in the Command Center 
         create_system_notification(
             user=self.request.user,
             title="Meeting Scheduled 📅",

@@ -8,7 +8,7 @@ class EventSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
     def validate(self, data):
-        """Make sure the user doesn't schedule an event that ends before it starts!"""
+       
         if data['start_time'] >= data['end_time']:
             raise serializers.ValidationError({"end_time": "End time must be after the start time."})
         return data

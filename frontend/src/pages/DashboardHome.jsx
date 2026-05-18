@@ -454,7 +454,7 @@ export default function DashboardHome() {
             )}
           </div>
 
-          {/* Upcoming Meetings Widget (NEW) */}
+          {/* Upcoming Meetings Widget */}
           <div className="flex-1 min-h-[300px]">
             <UpcomingMeetingsWidget />
           </div>

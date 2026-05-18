@@ -50,7 +50,7 @@ export default function UpcomingMeetingsWidget() {
   return (
     <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500 flex flex-col h-full min-h-[300px]">
       
-      {/* Header - Now perfectly matches the Recent Files card */}
+      
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">Upcoming Meetings</h2>
@@ -60,7 +60,7 @@ export default function UpcomingMeetingsWidget() {
             </span>
           )}
         </div>
-        {/* Make sure the 'to' path matches wherever your Command Center/Calendar is located! */}
+        
         <Link to="/dashboard/notifications" className="text-sm font-medium text-orange-500 hover:text-orange-600 transition">
           View Calendar →
         </Link>
