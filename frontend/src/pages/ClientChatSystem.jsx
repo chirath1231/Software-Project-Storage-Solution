@@ -556,7 +556,7 @@ const ClientChatSystem = () => {
                       <div className="relative flex items-center">
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // 👈 This stops the global click listener from firing immediately
+                            e.stopPropagation(); //  This stops the global click listener from firing immediately
                             setActiveMenuId(activeMenuId === m.id ? null : m.id);
                           }}
                           className="..."
