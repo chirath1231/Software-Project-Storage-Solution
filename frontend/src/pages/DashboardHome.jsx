@@ -325,7 +325,7 @@ export default function DashboardHome() {
           <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500 flex flex-col flex-1">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Recent Files</h2>
-              <Link to="/dashboard/files" className="text-sm font-medium text-orange-500 hover:text-orange-600 transition">
+              <Link to="/dashboard/files" className="text-sm font-medium text-red-500 hover:text-orange-600 transition">
                 View all →
               </Link>
             </div>
