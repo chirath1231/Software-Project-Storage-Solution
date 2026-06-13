@@ -1,13 +1,12 @@
 // src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
 import myImage from "../assets/tech.png";
-import googleLogo from "../assets/plus.png";
 import logo from "../assets/logo.png";
 
 function Register() {
   const navigate = useNavigate();
+  // Components state
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -23,9 +22,9 @@ function Register() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  // 🔹 NORMAL REGISTER
+  // NORMAL REGISTER Input Handler
   async function onSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); // Prevent form from refreshing page
     setErrors(null);
 
     if (form.password !== form.password2) {
@@ -34,7 +33,8 @@ function Register() {
     }
 
     setLoading(true);
-    try {
+    try { 
+      // Send registration data to backend
       const res = await fetch("http://localhost:8000/api/accounts/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,7 +48,7 @@ function Register() {
         setLoading(false);
         return;
       }
-
+      // Tokens stored in localStorage
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
       localStorage.setItem("user", JSON.stringify(data.user));
@@ -60,34 +60,7 @@ function Register() {
       setLoading(false);
     }
   }
-
-  // 🔵 GOOGLE REGISTER / LOGIN
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await fetch("http://localhost:8000/api/accounts/google/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: credentialResponse.credential,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert("Google signup failed");
-        return;
-      }
-
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data));
-
-      navigate("/dashboard");
-    } catch (error) {
-      alert("Google signup error");
-    }
-  };
+ 
 
   return (
     <div className="relative flex">
@@ -184,12 +157,6 @@ function Register() {
             Already have an account?{" "}
             <Link to="/login" className="hover:underline">Sign in</Link>
           </p>
-
-          <div className="flex justify-between mt-3 text-[12px] opacity-80">
-            <a href="#" className="text-white no-underline">Terms</a>
-            <a href="#" className="text-white no-underline">Support</a>
-            <a href="#" className="text-white no-underline">Customer Care</a>
-          </div>
 
         </div>
       </div>

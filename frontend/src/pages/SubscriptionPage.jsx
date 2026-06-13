@@ -3,15 +3,15 @@ import buynow from "../assets/buy_now.png";
 import api from "../api/axios";
 
 export default function SubscriptionPage() {
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [paidSubs, setPaidSubs] = useState(new Set());
-  const [loading, setLoading] = useState(true);
+  const [subscriptions, setSubscriptions] = useState([]); //Stores all available plans
+  const [paidSubs, setPaidSubs] = useState(new Set()); // Stores already purchased subscription IDs
+  const [loading, setLoading] = useState(true); // Controls loading screen
   const [currentPlan, setCurrentPlan] = useState(null);
   const [usedGB, setUsedGB] = useState(0);
   const userEmail = localStorage.getItem("username");
   const userId = localStorage.getItem("user_id");
 
- useEffect(() => {
+ useEffect(() => { // frontend sends 3 requests simultaneously to get all plans, user's active plans, and used storage. 
   setLoading(true);
 
   const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(

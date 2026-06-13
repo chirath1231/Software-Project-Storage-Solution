@@ -16,8 +16,8 @@ export default function ChatAssistant() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // auto-scroll chat to latest message.
+  }, [messages]); // Run effect whenever messages state changes.
 
   
 
@@ -27,12 +27,12 @@ export default function ChatAssistant() {
   let response = await fetch(
     "http://localhost:8000/api/assistant/chat/",
     {
-      method: "POST",
+      method: "POST", // POST because we're sending data to the server.
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }) // Converts JavaScript object into JSON string because the server expects JSON format.
     }
   );
 
@@ -46,13 +46,13 @@ const handleSend = async () => {
 
   const userText = input;
 
-  // show user message
+  // show user message in chat immediately
   setMessages(prev => [
     ...prev,
     { sender: "user", text: userText }
   ]);
 
-  setInput("");
+  setInput(""); 
 
   setLoading(true); 
   const aiReply = await sendMessage(userText);

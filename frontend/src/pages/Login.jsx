@@ -24,6 +24,7 @@ function Login() {
     e.preventDefault();
     setLoading(true);
 
+    // Send credentials to backend
     try {
       const res = await fetch(
         "http://localhost:8000/api/accounts/login/",
@@ -43,7 +44,7 @@ function Login() {
           localStorage.setItem("userEmail", email); // save email for restore
           alert(data.error);
 
-          navigate("/restore-account"); // 👉 redirect
+          navigate("/restore-account"); // redirect
           setLoading(false);
           return;
         }
@@ -93,8 +94,6 @@ function Login() {
   setLoading(true);
 
   try {
-    console.log("Google credentialResponse:", credentialResponse);
-
     if (!credentialResponse?.credential) {
       alert("Google did not return a credential. Try again.");
       setLoading(false);
@@ -103,7 +102,6 @@ function Login() {
 
      // Decode the JWT token to inspect it
     const decoded = jwtDecode(credentialResponse.credential);
-    console.log("Decoded Google token:", decoded);
 
     /**
      * Important fields:
@@ -113,7 +111,7 @@ function Login() {
      * decoded.iss          → issuer (should be accounts.google.com)
      */
 
-    // OPTIONAL: quick check if token matches your frontend client ID
+    // Security Step: quick check if token matches your frontend client ID
     if (decoded.aud !== process.env.REACT_APP_GOOGLE_CLIENT_ID) {
       alert(
         `Token client ID mismatch!\nToken is for: ${decoded.aud}\nExpected: ${process.env.REACT_APP_GOOGLE_CLIENT_ID}`
@@ -131,7 +129,6 @@ function Login() {
     });
  
     const data = await res.json();
-    console.log("Backend response:", data);
 
     if (!res.ok) {
       alert("Google login failed: " + (data?.detail || JSON.stringify(data)));
@@ -184,7 +181,7 @@ function Login() {
             <input
               type="email"
               placeholder="Email"
-              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] bg-[#fcfafa] text-[#060606]"
+              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] text-[#060606]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -192,7 +189,7 @@ function Login() {
             <input
               type="password"
               placeholder="Password"
-              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] bg-[#fcfafa] text-[#060606]"
+              className="w-full px-3 py-3 mb-3 rounded-[8px] border border-[#666] text-[#060606]"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

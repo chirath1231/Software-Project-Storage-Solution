@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext.jsx";
 import {
   LayoutDashboard,
   Folder,
@@ -19,6 +20,7 @@ import {
 export default function Sidebar({ isAdmin = false }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("dashboard");
@@ -32,7 +34,7 @@ export default function Sidebar({ isAdmin = false }) {
     { id: "subscription", label: "Subscription", icon: <CreditCard />, path: "/dashboard/subscription" },
     { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
-    { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" }
+    // { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" }
   ];
 
   const adminMenuItems = [
@@ -135,7 +137,7 @@ export default function Sidebar({ isAdmin = false }) {
             ))}
           </nav>
 
-          {/* Switch Account Button */}
+          {/* Logout Button */}
           <div className="px-4 pt-4 mt-2 border-t border-orange-200/50">
             <button
               className="
@@ -149,8 +151,12 @@ export default function Sidebar({ isAdmin = false }) {
                 active:scale-100
                 rounded-3xl
               "
+                onClick={() => {
+                  logout();          // logout function
+                  navigate("/login"); // redirect to login page
+                }}
             >
-              Switch Account
+              Log Out
             </button>
           </div>
         </div>

@@ -163,7 +163,7 @@ const handleLogout = () => {
           md:relative absolute top-full left-0 right-0 bg-gray-800 md:bg-transparent
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
-          {!isAuthenticated ? (
+          {!isAuthenticated && (
             // Navigation links (before login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
               {[
@@ -178,29 +178,11 @@ const handleLogout = () => {
                     className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
                     onClick={() => handleNavClick(item.href)}
                   >
-                    {item.label}
+                    {item.label} 
                   </a>
                 </li>
               ))}
             </ul>
-          ) : (
-            // Search bar (after login)
-            <div className="relative w-full max-w-xl">
-              <Search 
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-                size={18} 
-                aria-hidden="true"
-              />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                aria-label="Search"
-                className="w-full py-3 pl-12 pr-4 rounded-full bg-gray-700 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
-              />
-            </div>
           )}
 
           {/* Mobile auth buttons (only when logged out) */}

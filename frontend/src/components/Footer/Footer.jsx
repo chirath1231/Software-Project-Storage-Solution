@@ -50,10 +50,10 @@ export default function Footer() {
           <p style={{ color: "var(--primary-color)" }}>Quick Links</p>
           <ul className="list-none m-0 p-0 mt-2">
             {[
-              { href: "/",label: "Home" },
-              { href: "/",label: "About Us" },
-              { href: "/",label: "Pricing" },
-              { href: "/",label: "Features" },
+              { href: "#home",label: "Home" },
+              { href: "#about",label: "About Us" },
+              { href: "#pricing",label: "Pricing" },
+              { href: "#features",label: "Features" },
             ].map(({ href, label }) => (
               <li key={label} className="flex items-center mb-2.5"
                 style={{ color: "var(--primary-color)" }}>
