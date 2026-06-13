@@ -211,7 +211,7 @@ def handle_greetings(prompt):
 def check_intent(prompt):
     text = prompt.lower().strip()
     
-    # Use word-boundary safe tokenization
+    # Use to lookup faster than list lookup, word-boundary safe tokenization
     text_words = set(re.findall(r'\b\w+\b', text))
 
     best_intent = None
@@ -235,7 +235,7 @@ def check_intent(prompt):
 
     # Raise threshold — require at least a 2-word match OR a very specific single word
     # Single-word keywords score 2, so threshold of 3 requires multi-word match
-    # Lower to 2 only if you want single-word matches (be careful)
+    
     if best_score >= 2 and best_intent:
         return KNOWLEDGE_BASE.get(best_intent)
 
