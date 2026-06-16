@@ -1,0 +1,95 @@
+# ================================
+# Python — never commit bytecode/cache (avoid merge noise)
+# ================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+$py.class
+*.pyc
+*.pyo
+*.pyd
+*.py.class
+
+# ================================
+# Virtual Environment
+# ================================
+
+.env/
+venv/
+.venv/
+ENV/
+
+# ================================
+# Django
+# ================================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Migrations (optional – keep if team prefers)
+# **/migrations/
+# !**/migrations/__init__.py
+
+# ================================
+# Environment Variables
+# ================================
+.env
+.env.*
+*.env
+
+# ================================
+# IDE / Editor
+# ================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ================================
+# OS
+# ================================
+.DS_Store
+Thumbs.db
+
+# ================================
+# Testing / Coverage
+# ================================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ================================
+# Python tooling / local artifacts
+# ================================
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.tox/
+req-venv/
+
+# ================================
+# Build / Distribution
+# ================================
+build/
+dist/
+*.egg-info/
+
+# ================================
+# Logs & Temp
+# ================================
+*.log
+*.tmp
+
+# ================================
+# Node (if frontend exists)
+# ================================
+node_modules/
+
+# ================================
+# Secrets / Keys
+# ================================
+*.pem
+*.key

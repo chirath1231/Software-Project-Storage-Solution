@@ -1,0 +1,117 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# ================================
+# Python — never commit bytecode/cache (avoid merge noise)
+# ================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+$py.class
+*.pyc
+*.pyo
+*.pyd
+*.py.class
+
+# ================================
+# Virtual Environment
+# ================================
+
+.env/
+venv/
+.venv/
+ENV/
+
+# ================================
+# Django
+# ================================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Migrations (optional – keep if team prefers)
+# **/migrations/
+# !**/migrations/__init__.py
+
+# ================================
+# Environment Variables
+# ================================
+.env
+.env.*
+*.env
+
+# ================================
+# IDE / Editor
+# ================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ================================
+# OS
+# ================================
+Thumbs.db
+
+# ================================
+# Testing / Coverage
+# ================================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ================================
+# Python tooling / local artifacts
+# ================================
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.tox/
+req-venv/
+
+# ================================
+# Build / Distribution
+# ================================
+build/
+dist/
+*.egg-info/
+
+# ================================
+# Logs & Temp
+# ================================
+*.log
+*.tmp
+
+# ================================
+# Node (if frontend exists)
+# ================================
+node_modules/
+
+# ================================
+# Secrets / Keys
+# ================================
+*.pem
+*.key
