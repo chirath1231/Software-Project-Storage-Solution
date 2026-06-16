@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../auth/AuthContext";
 import {
   FileText,
   Image as ImageIcon,
@@ -13,31 +14,38 @@ import {
 } from "lucide-react";
 
 export default function MyFiles() {
+  const { email: userEmail, userId, isAuthenticated, loading } = useAuth();
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [totalStorageGB, setTotalStorageGB] = useState(5);
-  const [storageUsed, setStorageUsed] = useState(0); // percentage
-  const [totalUsedGB, setTotalUsedGB] = useState(0); // number in GB
+  const [storageUsed, setStorageUsed] = useState(0);
+  const [totalUsedGB, setTotalUsedGB] = useState(0);
   const [isStorageFull, setIsStorageFull] = useState(false);
-
-  const [openMenuId, setOpenMenuId] = useState(null); // NEW: tracks which file's menu is open
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [shareExpiry, setShareExpiry] = useState("");
 
   const navigate = useNavigate();
-  const userEmail = localStorage.getItem("username");
-  const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
+    if (loading) return;
     initPage();
-  }, []);
+  }, [isAuthenticated, userEmail, loading]);
 
   // ==========================
   // INIT
   // ==========================
   const initPage = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    if (!userEmail) {
+      console.warn("User email missing, cannot fetch data");
+      return;
+    }
     const planGB = await fetchSubscription();
     await fetchFiles(planGB);
   };
@@ -70,7 +78,7 @@ export default function MyFiles() {
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
-      const res = await api.get(`/api/files/?user_id=${userId}`);
+      const res = await api.get(`/api/files/`);
       const data = res.data;
       setFiles(data);
 
@@ -85,11 +93,13 @@ export default function MyFiles() {
       );
       setStorageUsed(percentage);
       setIsStorageFull(usedGB >= storageGB * 0.99);
-      setLoading(false);
+      setPageLoading(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch files. Please check your connection.");
-      setLoading(false);
+      if (err.response?.status !== 401) {
+        alert("Failed to fetch files. Please check your connection.");
+      }
+      setPageLoading(false);
     }
   };
 
@@ -149,8 +159,10 @@ export default function MyFiles() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
+      // Do NOT set Content-Type header — axios sets multipart/form-data automatically
 
-      await api.post("/api/files/upload/", formData);
+      const res = await api.post("/api/files/upload/", formData);
+      console.log("Upload response:", res.data);
 
       setSelectedFile(null);
       const input = document.getElementById("file-input");
@@ -159,7 +171,7 @@ export default function MyFiles() {
       const planGB = await fetchSubscription();
       await fetchFiles(planGB);
     } catch (err) {
-      console.error(err);
+       console.error("Upload error detail:", JSON.stringify(err.response?.data));
       if (err.response?.status !== 401) {
         const serverMsg =
           err.response?.data?.detail || err.response?.data?.error;
@@ -322,18 +334,16 @@ export default function MyFiles() {
       )}
 
       {/* LOADING */}
-      {loading && <p className="text-gray-400">Loading files...</p>}
+      {pageLoading && <p className="text-gray-400">Loading files...</p>}
 
       {/* FILE GRID */}
-      {!loading && (
+      {!pageLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {files.length === 0 && (
             <p className="text-gray-400 col-span-full">No files uploaded yet</p>
           )}
 
-          {files.map((file) => {
-  console.log(file);
-  return (
+          {files.map((file) => (
             <div
               key={file.id}
               className="bg-white p-5 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative"
@@ -381,65 +391,57 @@ export default function MyFiles() {
                 </button>
 
                 {/* 3 Dots Menu */}
-                
-{/* 3 Dots Menu */}
-<div className="relative">
-  <button
-    onClick={() =>
-      setOpenMenuId(openMenuId === file.id ? null : file.id)
-    }
-    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-lg font-bold"
-  >
-    ⋮
-  </button>
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setOpenMenuId(openMenuId === file.id ? null : file.id)
+                    }
+                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-lg font-bold"
+                  >
+                    ⋮
+                  </button>
 
-  {openMenuId === file.id && (
-    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-10 p-2">
-      {/* Expiry Input */}
-      <label className="text-xs text-gray-500 mb-1 block">Expiry Date:</label>
-      <input
-        type="datetime-local"
-        className="w-full border border-gray-300 rounded px-2 py-1 mb-2 text-sm"
-        value={shareExpiry}
-        onChange={(e) => setShareExpiry(e.target.value)}
-      />
-      <button
-  onClick={async () => {
-    if (!shareExpiry) {
-      alert("Please select expiry date");
-      return;
-    }
-
-    try {
-      const res = await api.post(`/api/files/${file.id}/share/`, {
-        expiry_date: shareExpiry,
-      });
-
-      navigator.clipboard.writeText(res.data.url);
-      alert(
-        "Sharable URL copied! It will expire at " +
-          new Date(res.data.expiry).toLocaleString()
-      );
-
-      setOpenMenuId(null);
-      setShareExpiry("");
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || "Failed to generate link");
-    }
-  }}
-  className="block w-full text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded"
->
-  Generate & Copy Link
-</button>
-    </div>
-  )}
-</div>
-                
+                  {openMenuId === file.id && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-10 p-2">
+                      <label className="text-xs text-gray-500 mb-1 block">Expiry Date:</label>
+                      <input
+                        type="datetime-local"
+                        className="w-full border border-gray-300 rounded px-2 py-1 mb-2 text-sm"
+                        value={shareExpiry}
+                        onChange={(e) => setShareExpiry(e.target.value)}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!shareExpiry) {
+                            alert("Please select expiry date");
+                            return;
+                          }
+                          try {
+                            const res = await api.post(`/api/files/${file.id}/share/`, {
+                              expiry_date: shareExpiry,
+                            });
+                            navigator.clipboard.writeText(res.data.url);
+                            alert(
+                              "Sharable URL copied! It will expire at " +
+                                new Date(res.data.expiry).toLocaleString()
+                            );
+                            setOpenMenuId(null);
+                            setShareExpiry("");
+                          } catch (err) {
+                            console.error(err);
+                            alert(err.response?.data?.error || "Failed to generate link");
+                          }
+                        }}
+                        className="block w-full text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded"
+                      >
+                        Generate & Copy Link
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-                    );
-        })}
+          ))}
         </div>
       )}
     </div>
