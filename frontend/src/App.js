@@ -19,7 +19,7 @@ import AdminSubscriptionAnalytics from "./pages/AdminSubscriptionAnalytics";
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
-
+import AdminOverview from "./pages/AdminOverview.jsx";
 import MyFiles from "./pages/MyFiles";
 
 function App() {
@@ -43,6 +43,7 @@ function App() {
             <Route path="/admin/subscription-analytics" element={<AdminSubscriptionAnalytics />} />
             <Route path="/admin/tickets" element={<AdminTickets />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/overview" element={<AdminOverview />} />
           </Route>
 
           {/* PROTECTED */}
