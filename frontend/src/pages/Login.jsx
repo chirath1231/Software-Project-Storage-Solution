@@ -4,104 +4,105 @@ import { useAuth } from "../auth/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import "../auth.css";
 import myImage from "../assets/tech.png";
-import googleLogo from "../assets/plus.png";
 import logo from "../assets/logo.png";
+import { Eye, EyeOff } from "lucide-react";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function onChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
+  // ✅ FIX: handleGoogleSuccess was referenced but never defined
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/accounts/google-login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch { data = {}; }
+
+      if (!res.ok) {
+        setError(data.detail || data.error || "Google login failed");
+        return;
+      }
+
+      const userBase = data.user || { username: data.username, email: data.email, is_staff: false };
+      const role = userBase.is_staff ? "admin" : "user";
+      login(data.access, { ...userBase, role });
+      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
+    } catch (err) {
+      console.error("GOOGLE LOGIN ERROR:", err);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Outer try/catch handles network-level errors (e.g. server down, CORS, no internet).
+ // Inner try/catch silently guards against non-JSON responses to prevent a parse crash.
+// HTTP errors (4xx/5xx) are handled separately via `res.ok` since fetch() doesn't throw on them.
+// `finally` ensures the loading state is always cleared regardless of outcome.
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
-    // 2. Normal User Login Flow
     setLoading(true);
+
     try {
-      // Determine which endpoint to hit based on the email
-      const endpoint = form.email === "support@ceynoa.com" 
-        ? "http://localhost:8000/api/admin/login/" 
+      const checkAdminRes = await fetch("http://localhost:8000/api/check-admin/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
+      });
+      const checkAdminData = await checkAdminRes.json();
+
+      const endpoint = checkAdminData.is_admin
+        ? "http://localhost:8000/api/admin/login/"
         : "http://localhost:8000/api/accounts/login/";
 
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.detail || data.error || "Invalid email or password");
-        setLoading(false);
-        return;
-      }
-
-     // Standardize user data structure (handles both normal and admin login responses)
-      const userBase = data.user || { 
-        username: data.username, 
-        email: data.email, 
-        is_staff: false 
-      };
-      
-      const role = userBase.is_staff ? "admin" : "user";
-      login(data.access, { ...userBase, role });
-
-      setLoading(false);
-      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
-    } catch (err) {
-      setError("Network error. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await fetch("http://localhost:8000/api/accounts/google/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token: credentialResponse.credential,
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try { data = await res.json(); } catch { data = {}; }console.log("ACCESS TOKEN:", data.access);
 
       if (!res.ok) {
-        alert("Google sign-in failed");
+        setError(data.detail || data.error || "Invalid email or password");
         return;
       }
 
-      
-      const userData = data.user || data; // Handle different backend structures
-      const role = userData.is_staff ? "admin" : "user";
-      
-
-   const sessionUser = { ...userData, role };
-      
-      login(data.access, sessionUser);
-
+      const userBase = data.user || { username: data.username, email: data.email, is_staff: false };
+      const role = userBase.is_staff ? "admin" : "user";
+      login(data.access, { ...userBase, role });
       navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
-    } catch (error) {
-      console.error("Google login error:", error);
-      alert("Google sign-in error");
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
       <img src={logo} alt="Company Logo" className="company-logo" />
-
       <div className="left-side">
         <div className="auth-box">
           <h2 className="title">Sign in</h2>
@@ -117,19 +118,36 @@ function Login() {
               className="input"
               required
             />
+           <div style={{ position: "relative", width: "100%" }}>
+              <input
+                name="password"
+                value={form.password}
+                onChange={onChange}
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className="input"
+                required
+                style={{ paddingRight: "45px" }}
+              />
 
-            <input
-              name="password"
-              value={form.password}
-              onChange={onChange}
-              type="password"
-              placeholder="Password"
-              className="input"
-              required
-            />
-
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  color: "#666"
+                }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {error && <div style={{ color: "salmon", marginBottom: 10 }}>{error}</div>}
-
             <button className="btn" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -140,7 +158,7 @@ function Login() {
           <div className="social">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google Login Failed")}
+              onError={() => setError("Google login failed. Please try again.")}
             />
           </div>
 
