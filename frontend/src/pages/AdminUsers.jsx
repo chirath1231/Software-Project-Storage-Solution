@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Search, Filter, X, User, Globe, Mail, Calendar, HardDrive, CreditCard, Clock, Phone, DollarSign, ChevronDown } from 'lucide-react';
+import { Search, X, User, Globe, Mail, Calendar, HardDrive, CreditCard, Clock, Phone, DollarSign } from 'lucide-react';
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]); //Stores all users from database.
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All'); // All, Web, Mobile, Active
   const [packageFilter, setPackageFilter] = useState('All'); // All, Standard, Pro, Ultra
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async () => { //Fetches user data from backend API and handles loading/error states; also ensures any previous errors are cleared before new request
     setApiError(null);
     try {
       const response = await api.get('/api/admin/users/');
-      setUsers(response.data);
+      setUsers(response.data); //Save data
     } catch (err) {
       console.error("Failed to fetch users:", err);
       setApiError(err.response?.data?.detail || "Failed to load users from server.");
@@ -29,22 +27,26 @@ const AdminUsers = () => {
     }
   };
 
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = users.filter(u => { //search and filter logic for user list; checks if username or email contains search term, and if user's package matches selected filter (currently all users treated as 'Standard' since real package data isn't in DB yet)
     // Safe string checks to prevent crashes on null/undefined values
     const username = u.username || "";
     const email = u.email || "";
-    const matchesSearch = username.toLowerCase().includes(searchTerm.toLowerCase()) || email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = username.toLowerCase().includes(searchTerm.toLowerCase()) || email.toLowerCase().includes(searchTerm.toLowerCase()); // Checks if search term is in username or email (case-insensitive)
     
-    let matchesType = true;
-    // Temporarily disabling platform filters as they aren't in the DB yet
-    if (filterType === 'Web' || filterType === 'Mobile') matchesType = false; 
-    if (filterType === 'Active') matchesType = u.is_active;
-
     // Since real packages aren't in the DB yet, we treat everyone as 'Standard' for now
-    const matchesPackage = packageFilter === 'All' || packageFilter === "Standard";
+    const matchesPackage = packageFilter === 'All' || packageFilter === "Standard"; //currently dummy filter; in future, would check u.package_name against packageFilter
 
-    return matchesSearch && matchesType && matchesPackage;
+    return matchesSearch && matchesPackage;
   });
+
+  const formatFileSize = (bytes) => {
+    const b = parseFloat(bytes);
+    if (isNaN(b) || b <= 0) return "0 B";
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(b) / Math.log(k));
+    return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen relative overflow-hidden">
@@ -71,31 +73,6 @@ const AdminUsers = () => {
         </div>
 
         <div className="flex gap-4">
-          <div className="relative">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-6 py-3 bg-white rounded-2xl shadow-sm font-bold text-gray-600 hover:bg-gray-50 transition-all border border-transparent active:scale-95"
-            >
-              <Filter size={18} className={filterType !== 'All' ? 'text-orange-500' : ''} />
-              {filterType === 'All' ? 'Filter Users' : `${filterType} Users`}
-              <ChevronDown size={16} />
-            </button>
-            
-            {showFilters && (
-              <div className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 z-20">
-                {['All', 'Web', 'Mobile', 'Active'].map(type => (
-                  <button
-                    key={type}
-                    onClick={() => { setFilterType(type); setShowFilters(false); }}
-                    className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-colors ${filterType === type ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    {type === 'All' ? 'All Users' : type === 'Active' ? 'Active Users' : `${type} Users`}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           <select 
             value={packageFilter}
             onChange={(e) => setPackageFilter(e.target.value)}
@@ -121,24 +98,27 @@ const AdminUsers = () => {
                 <th className="py-5 px-6">Package</th>
                 <th className="py-5 px-6">Country</th>
                 <th className="py-5 px-6 text-center">Storage Usage (%)</th>
-                <th className="py-5 px-6 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
               {loading ? (
-                <tr><td colSpan="7" className="py-10 text-center text-gray-400">Loading system users...</td></tr>
+                <tr><td colSpan="6" className="py-10 text-center text-gray-400">Loading system users...</td></tr>
               ) : apiError ? (
                 <tr>
-                  <td colSpan="7" className="py-10 text-center">
+                  <td colSpan="6" className="py-10 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-red-500 font-bold">⚠️ {apiError}</span>
-                      <button onClick={fetchUsers} className="text-orange-500 text-xs underline font-bold">Try again</button>
+                      {apiError.toLowerCase().includes("token") || apiError.toLowerCase().includes("credential") ? (
+                        <a href="/login" className="bg-orange-500 text-white px-4 py-1 rounded-lg text-xs font-bold">Please Login</a>
+                      ) : (
+                        <button onClick={fetchUsers} className="text-orange-500 text-xs underline font-bold">Try again</button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan="7" className="py-10 text-center text-gray-400">No users found.</td></tr>
-              ) : filteredUsers.map((u) => (
+                <tr><td colSpan="6" className="py-10 text-center text-gray-400">No users found.</td></tr>
+              ) : filteredUsers.map((u) => ( //loops through users and displays table rows
                 <tr 
                   key={u.id} 
                   onClick={() => setSelectedUser(u)}
@@ -148,23 +128,24 @@ const AdminUsers = () => {
                   <td className="py-5 px-6 font-medium text-gray-600">{u.email}</td>
                   <td className="py-5 px-6 text-gray-500">{u.date_joined}</td>
                   <td className="py-5 px-6">
-                    <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase">
-                      Free
+                    <span className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase ${
+                      u.package_name === 'Free' ? 'bg-gray-100 text-gray-500' : 'bg-orange-100 text-orange-600'
+                    }`}>
+                      {u.package_name || "Free"}
                     </span>
                   </td>
-                  <td className="py-5 px-6 font-bold text-gray-700">N/A</td>
+                  <td className="py-5 px-6 font-bold text-gray-700">{u.country || "N/A"}</td>
                   <td className="py-5 px-6">
                     <div className="flex flex-col gap-1 items-center">
-                      <span className="font-black text-gray-800">0%</span>
+                      <span className="font-black text-gray-800 text-[10px]">
+                        {formatFileSize(u.storage_used_bytes)} ({(u.storage_usage_pct ?? 0).toFixed(u.storage_usage_pct > 0 && u.storage_usage_pct < 1 ? 2 : 1)}%)
+                      </span>
                       <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full bg-orange-500" style={{ width: `0%` }}></div>
+                        <div 
+                          className="h-full rounded-full bg-orange-500 transition-all duration-500" 
+                          style={{ width: `${Math.min(u.storage_usage_pct || 0, 100)}%` }}
+                        ></div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-5 px-6">
-                    <div className="flex justify-center items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${u.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
-                      <span className={`font-bold ${u.is_active ? 'text-green-600' : 'text-gray-400'}`}>{u.is_active ? 'Active' : 'Offline'}</span>
                     </div>
                   </td>
                 </tr>
@@ -205,11 +186,11 @@ const AdminUsers = () => {
               <div className="grid grid-cols-1 gap-6">
                 <DetailItem icon={<Mail size={18} />} label="Email Address" value={selectedUser.email} />
                 <DetailItem icon={<Phone size={18} />} label="Phone Number" value="Not Provided" />
-                <DetailItem icon={<Globe size={18} />} label="Country" value="N/A" />
+                <DetailItem icon={<Globe size={18} />} label="Country" value={selectedUser.country || "N/A"} />
                 <DetailItem icon={<Calendar size={18} />} label="Account Created" value={selectedUser.date_joined} />
-                <DetailItem icon={<CreditCard size={18} />} label="Current Package" value="Free" badge />
-                <DetailItem icon={<DollarSign size={18} />} label="Payment Amount" value="$0.00" />
-                <DetailItem icon={<HardDrive size={18} />} label="Storage Used" value="0% of limit" />
+                <DetailItem icon={<CreditCard size={18} />} label="Current Package" value={selectedUser.package_name || "Free"} badge />
+                <DetailItem icon={<DollarSign size={18} />} label="Payment Amount" value={selectedUser.package_name === 'Free' ? 'Rs. 0.00' : 'Subscription Active'} />
+                <DetailItem icon={<HardDrive size={18} />} label="Storage Used" value={`${formatFileSize(selectedUser.storage_used_bytes)} of ${selectedUser.total_storage_gb || 5}GB (${selectedUser.storage_usage_pct}%)`} />
                 <DetailItem icon={<Clock size={18} />} label="Last Login" value={selectedUser.last_login} />
               </div>
 
@@ -237,22 +218,27 @@ const AdminUsers = () => {
 };
 
 // Helper component for Detail Panel items
-const DetailItem = ({ icon, label, value, badge }) => (
-  <div className="flex gap-4 items-start group">
+const DetailItem = ({ icon, label, value, badge }) => {
+  const displayValue = typeof value === 'number' ? value.toFixed(2) : value; // Ensure value is not null or undefined before calling toFixed
+  return (
+    <div className="flex gap-4 items-start group">
     <div className="p-2.5 bg-gray-100 text-gray-400 rounded-xl group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
       {icon}
     </div>
     <div className="flex-1">
       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
       {badge ? (
-        <span className="bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-black uppercase tracking-tighter">
-          {value}
+        <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${
+          value === 'Free' ? 'bg-gray-100 text-gray-500' : 'bg-orange-100 text-orange-600'
+        }`}>
+          {displayValue}
         </span>
       ) : (
-        <p className="font-bold text-gray-800 break-all">{value}</p>
+        <p className="font-bold text-gray-800 break-all">{displayValue}</p>
       )}
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default AdminUsers;

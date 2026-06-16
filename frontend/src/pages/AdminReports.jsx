@@ -1,63 +1,230 @@
-import React, { useState } from 'react';
-import { FileText, Download, TrendingUp, TrendingDown, Monitor, Smartphone, Calendar, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, Monitor, Smartphone, Calendar, Info, Loader2 } from 'lucide-react';
+import api from '../api/axios';
+
+// Helper for Weekly Bar Charts - Moved outside to prevent re-mounting
+// const WeeklyBarChart = ({ title, data, unit, colorClass, shadowClass, maxVal, chartLabels }) => {
+//   return (
+//     <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex-1 transition-hover hover:shadow-md">
+//       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">{title}</h3>
+//       <div className="flex items-end justify-between h-40 gap-2">
+//         {chartLabels.map((day, i) => {
+//           const val = data[i] || 0;
+//           const barHeight = maxVal > 0 ? (val / maxVal) * 100 : 0;
+//           return (
+//             <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+//               <div
+//                 style={{ height: `${barHeight}%` }}
+//                 className={`w-full ${colorClass} rounded-t-lg transition-all group-hover:opacity-80 relative cursor-help ${shadowClass} min-h-[2px]`}
+//               >
+//                 <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-100 whitespace-nowrap z-10 shadow-xl transition-all">
+//                   {unit === 'Rs.' ? 'Rs. ' : ''}
+//                   {val.toLocaleString()}
+//                 </span>
+//               </div>
+//               <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{day}</span>
+//             </div>
+//           );
+//         })}
+//       </div>
+//     </div>
+//   );
+// };
+
+// Helper for Weekly Bar Charts - UPDATED VERSION
+const WeeklyBarChart = ({
+  title,
+  data,
+  unit,
+  colorClass,
+  shadowClass,
+  maxVal,
+  chartLabels
+}) => {
+  // Create visible scale values
+  const scaleSteps = 5; //Chart divided into 5 sections.
+
+  //Creates the Y-axis numbers dynamically.
+  const yAxisValues = Array.from(
+    { length: scaleSteps + 1 },
+    (_, i) =>
+      Math.round((maxVal / scaleSteps) * (scaleSteps - i))
+  );
+
+  return (
+    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex-1 transition-hover hover:shadow-md">
+      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">
+        {title}
+      </h3>
+
+      
+      <div className="flex h-56">
+        {/* Y AXIS */}
+        <div className="flex flex-col justify-between pr-3 text-[10px] font-bold text-gray-400 min-w-[30px]">
+          {yAxisValues.map((val, idx) => (
+            <span key={idx}>
+              {unit === "Rs."
+                ? Math.round(val).toLocaleString()
+                : val}
+            </span>
+          ))}
+        </div>
+
+        {/* GRAPH AREA */}
+        <div className="relative flex-1 border-l border-b border-gray-200">
+          {/* GRID LINES */}
+          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+            {Array.from({ length: scaleSteps + 1 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="border-t border-dashed border-gray-200 w-full"
+              />
+            ))}
+          </div>
+
+          {/* BARS */}
+          <div className="relative z-10 flex items-end justify-between h-full gap-2 px-2">
+            {chartLabels.map((day, i) => {
+              const val = data[i] || 0;
+
+              // Keep small values visible
+              const barHeight =
+                val > 0
+                  ? Math.max((val / maxVal) * 100, 12)
+                  : 0;
+
+              return (
+                <div
+                  key={i}
+                  className="flex-1 flex flex-col items-center justify-end h-full group"
+                >
+                  {/* VALUE LABEL */}
+                  <span className="text-[10px] font-black text-gray-700 mb-2">
+                    {unit === "Rs." ? "Rs. " : ""}
+                    {val.toLocaleString()}
+                  </span>
+
+                  {/* BAR */}
+                  <div
+                    style={{
+                      height: `${barHeight}%`,
+                    }}
+                    className={`w-full rounded-t-xl transition-all duration-300 hover:opacity-80 ${colorClass} ${shadowClass}`}
+                  />
+
+                  {/* DAY LABEL */}
+                  <span className="text-[10px] font-black text-gray-400 uppercase mt-2 tracking-tighter">
+                    {day}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function AdminReports() {
-  // Hardcoded Weekly Data (Mon-Sun)
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const weeklyNewUsers = [30, 45, 35, 55, 60, 50, 35]; // Total: 310
-  const weeklyIncome = [600, 750, 680, 890, 1100, 700, 490]; // Total: 5210
-  const weeklyStorage = [40, 42, 45, 48, 55, 60, 62]; // in GB
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Comparison Data
-  const comparison = {
-    users: { current: 310, last: 230, diff: 80, weekLabel: 'Week 11' },
-    income: { current: 5210, last: 4800, diff: 410, weekLabel: 'Week 11' },
-    storage: { current: 62, last: 58, diff: 4 },
-  };
+  // Data States
+  const [weeklyNewUsers, setWeeklyNewUsers] = useState([0, 0, 0, 0, 0, 0, 0]);
+  const [weeklyIncome, setWeeklyIncome] = useState([0, 0, 0, 0, 0, 0, 0]);
+  const [weeklyStorage, setWeeklyStorage] = useState([0, 0, 0, 0, 0, 0, 0]);
+  const [chartLabels, setChartLabels] = useState(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
 
-  // Yearly Data for Line Chart
-  const yearlyData = [
-    { month: 'Jan', web: 400, mobile: 200, income: 12000 },
-    { month: 'Feb', web: 450, mobile: 250, income: 13500 },
-    { month: 'Mar', web: 520, mobile: 310, income: 15000 },
-    { month: 'Apr', web: 480, mobile: 400, income: 14200 },
-    { month: 'May', web: 600, mobile: 450, income: 18000 },
-    { month: 'Jun', web: 750, mobile: 520, income: 21000 },
-    { month: 'Jul', web: 820, mobile: 600, income: 24000 },
-    { month: 'Aug', web: 800, mobile: 680, income: 23500 },
-    { month: 'Sep', web: 900, mobile: 720, income: 26000 },
-    { month: 'Oct', web: 950, mobile: 800, income: 28000 },
-    { month: 'Nov', web: 1100, mobile: 950, income: 32000 },
-    { month: 'Dec', web: 1245, mobile: 1100, income: 35000 },
-  ];
+  //Stores comparison between weeks.
+  const [comparison, setComparison] = useState({
+    users: { current: 0, last: 0, diff: 0, weekLabel: 'This Week' },
+    income: { current: 0, last: 0, diff: 0, weekLabel: 'This Week' },
+    storage: { current: 0, last: 0, diff: 0 },
+  });
+
+  //Stores yearly chart info.
+  const [yearlyData, setYearlyData] = useState([
+    { month: 'Jan', web: 0, mobile: 0, income: 0 },
+    { month: 'Feb', web: 0, mobile: 0, income: 0 },
+    { month: 'Mar', web: 0, mobile: 0, income: 0 },
+    { month: 'Apr', web: 0, mobile: 0, income: 0 },
+    { month: 'May', web: 0, mobile: 0, income: 0 },
+    { month: 'Jun', web: 0, mobile: 0, income: 0 },
+    { month: 'Jul', web: 0, mobile: 0, income: 0 },
+    { month: 'Aug', web: 0, mobile: 0, income: 0 },
+    { month: 'Sep', web: 0, mobile: 0, income: 0 },
+    { month: 'Oct', web: 0, mobile: 0, income: 0 },
+    { month: 'Nov', web: 0, mobile: 0, income: 0 },
+    { month: 'Dec', web: 0, mobile: 0, income: 0 },
+  ]);
 
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
-  // Helper for Weekly Bar Charts
-  const WeeklyBarChart = ({ title, data, unit, colorClass, shadowClass }) => {
-    const maxVal = Math.max(...data);
+  //Runs once when page loads, fetches all report data from backend and populates states.
+  useEffect(() => {
+    const fetchReportData = async () => {
+      try {
+        const response = await api.get('/api/subscriptions/reports/');
+        const data = response.data;
+
+        //Stores data in React state.
+        setWeeklyNewUsers(data.weekly_new_users || []);
+        setWeeklyIncome(data.weekly_income || []);
+        setWeeklyStorage(data.weekly_storage || []);
+        setComparison(data.comparison || comparison);
+        if (data.labels) setChartLabels(data.labels);
+        
+        if (data.yearly_data) {
+          setYearlyData(prev => prev.map(m => {
+            const dbMonth = data.yearly_data.find(d => d.month === m.month);
+            return dbMonth ? { ...m, ...dbMonth } : m;
+          }));
+        }
+      } catch (err) {
+        const msg = err.response?.data?.detail || err.response?.data?.error || err.message;
+        console.error("Failed to fetch report data:", msg);
+        setError(msg || "Unable to load reports from database.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportData();
+  }, []);
+
+  if (loading) {
     return (
-      <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex-1 transition-hover hover:shadow-md">
-        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">{title}</h3>
-        <div className="flex items-end justify-between h-36 gap-2">
-          {data.map((val, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-              <div
-                style={{ height: `${(val / maxVal) * 100}%` }}
-                className={`w-full ${colorClass} rounded-t-lg transition-all group-hover:opacity-80 relative cursor-help ${shadowClass}`}
-              >
-                <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 shadow-xl transition-all">
-                  {unit === '$' ? '$' : ''}
-                  {val.toLocaleString()}
-                </span>
-              </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{days[i]}</span>
-            </div>
-          ))}
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
+        <p className="text-gray-600 font-black uppercase tracking-widest text-xs">Synchronizing Intelligence...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="bg-white p-10 rounded-3xl shadow-xl text-center">
+          <Info className="mx-auto text-red-500 mb-4" size={48} />
+          <h2 className="text-2xl font-black text-gray-800 mb-2">System Error</h2>
+          <p className="text-gray-500 font-medium mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
     );
-  };
+  }
+
+  // Dynamic max values ensure graphs stay clean regardless of data volume
+  const maxWeeklyIncome = Math.max(...weeklyIncome) || 1;
+  const maxWeeklyUsers = Math.max(...weeklyNewUsers) || 1;
+  const maxWeeklyStorage = Math.max(...weeklyStorage) || 1;
+  const maxYearlyValue = Math.max(...yearlyData.map(d => Math.max(d.web, d.mobile)), 1);
 
   return (
     <div className="p-10 bg-gray-50 min-h-screen">
@@ -72,10 +239,6 @@ export default function AdminReports() {
             <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-1">System intelligence center</p>
           </div>
         </div>
-        <button className="flex items-center gap-3 px-8 py-4 bg-gray-900 text-white rounded-[20px] font-black text-xs uppercase tracking-widest hover:bg-orange-500 transition-all active:scale-95 shadow-2xl shadow-gray-200">
-          <Download size={16} />
-          Export Full Report (PDF)
-        </button>
       </div>
 
       {/* Section 1: Weekly Breakdown */}
@@ -98,10 +261,10 @@ export default function AdminReports() {
             current={comparison.income.current}
             last={comparison.income.last}
             diff={comparison.income.diff}
-            unit="$"
+            unit="Rs."
           />
           <ComparisonCard
-            label="Week 11 Storage"
+            label={`${comparison.income.weekLabel} Storage`}
             current={comparison.storage.current}
             last={comparison.storage.last}
             diff={comparison.storage.diff}
@@ -109,10 +272,37 @@ export default function AdminReports() {
           />
         </div>
 
+        {/* Weekly Bar Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <WeeklyBarChart title="New Users This Week" data={weeklyNewUsers} unit="" colorClass="bg-orange-500" shadowClass="shadow-orange-200 shadow-lg" />
-          <WeeklyBarChart title="Daily Income ($)" data={weeklyIncome} unit="$" colorClass="bg-emerald-500" shadowClass="shadow-emerald-200 shadow-lg" />
-          <WeeklyBarChart title="Storage Utilization (GB)" data={weeklyStorage} unit="" colorClass="bg-blue-500" shadowClass="shadow-blue-200 shadow-lg" />
+          <WeeklyBarChart 
+            title="New Users This Week" 
+            data={weeklyNewUsers} 
+            unit="Users" 
+            colorClass="bg-orange-500" 
+            shadowClass="shadow-orange-200 shadow-lg" 
+            maxVal={maxWeeklyUsers} 
+            chartLabels={chartLabels}
+            
+          />
+
+          <WeeklyBarChart 
+            title="Daily Income (Rs.)" 
+            data={weeklyIncome} 
+            unit="Rs." 
+            colorClass="bg-emerald-500" 
+            shadowClass="shadow-emerald-200 shadow-lg" 
+            maxVal={maxWeeklyIncome} 
+            chartLabels={chartLabels}
+          />
+          <WeeklyBarChart 
+            title="Storage Utilization (GB)" 
+            data={weeklyStorage} 
+            unit="GB" 
+            colorClass="bg-blue-500" 
+            shadowClass="shadow-blue-200 shadow-lg" 
+            maxVal={maxWeeklyStorage} 
+            chartLabels={chartLabels}
+          />
         </div>
       </div>
 
@@ -144,7 +334,7 @@ export default function AdminReports() {
               strokeWidth="4"
               strokeLinecap="round"
               strokeLinejoin="round"
-              points={yearlyData.map((d, i) => `${(i * 1000) / 11},${200 - (d.web / 1300) * 200}`).join(' ')}
+              points={yearlyData.map((d, i) => `${(i * 1000) / 11},${200 - (d.web / (maxYearlyValue * 1.2)) * 200}`).join(' ')}
               className="drop-shadow-xl transition-all duration-700"
             />
             <polyline
@@ -153,7 +343,7 @@ export default function AdminReports() {
               strokeWidth="4"
               strokeLinecap="round"
               strokeLinejoin="round"
-              points={yearlyData.map((d, i) => `${(i * 1000) / 11},${200 - (d.mobile / 1300) * 200}`).join(' ')}
+              points={yearlyData.map((d, i) => `${(i * 1000) / 11},${200 - (d.mobile / (maxYearlyValue * 1.2)) * 200}`).join(' ')}
               className="drop-shadow-xl transition-all duration-700"
             />
             {yearlyData.map((d, i) => (
@@ -204,7 +394,7 @@ export default function AdminReports() {
                 </div>
                 <div className="pt-3 border-t border-gray-800 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Income</span>
-                  <span className="font-black text-emerald-400 text-sm">${hoveredMonth.income.toLocaleString()}</span>
+                  <span className="font-black text-emerald-400 text-sm">Rs. {hoveredMonth.income.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -220,9 +410,9 @@ const ComparisonCard = ({ label, current, last, diff, unit }) => (
     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{label}</p>
     <div className="flex items-baseline gap-2 mb-2">
       <h4 className="text-4xl font-black text-gray-800 tracking-tighter">
-        {unit === '$' && '$'}
+        {unit === 'Rs.' && 'Rs. '}
         {current.toLocaleString()}
-        {unit !== '$' && unit !== 'Users' && ` ${unit}`}
+        {unit !== 'Rs.' && unit !== 'Users' && ` ${unit}`}
       </h4>
     </div>
     <div className="flex items-center gap-2">

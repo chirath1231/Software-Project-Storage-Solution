@@ -1,31 +1,61 @@
-import React from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, Users, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, Users, Award, Loader2 } from 'lucide-react';
+import api from '../api/axios';
 
 const AdminSubscriptionAnalytics = () => {
-  // Hardcoded Data for Frontend Development
-  const packageStats = [
-    { name: 'Standard', web: 450, mobile: 320, total: 770, revenue: 3850, growth: 10, color: '#f97316' },
-    { name: 'Pro', web: 300, mobile: 280, total: 580, revenue: 8700, growth: 5, color: '#3b82f6' },
-    { name: 'Ultra', web: 120, mobile: 90, total: 210, revenue: 6300, growth: -5, color: '#8b5cf6' },
-  ];
+  const [data, setData] = useState(null); //stores API response
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const topUsers = [
-    { username: 'mehrabbozorgi', package: 'Ultra', spent: 1250, initial: 'M' },
-    { username: 'janesmith', package: 'Pro', spent: 980, initial: 'J' },
-    { username: 'johndoe', package: 'Ultra', spent: 840, initial: 'J' },
-    { username: 'alicejohnson', package: 'Standard', spent: 450, initial: 'A' },
-  ];
+ //fetch data
+  useEffect(() => {
+    //Creates asynchronous function.
+    const fetchAnalytics = async () => {
+      try {
+        const response = await api.get('/api/subscriptions/analytics/');
+        setData(response.data); //aves API response into React state
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+        setError("Failed to load analytics data.");
+      } finally {
+        setLoading(false); //Stop loading
+      }
+    };
 
-  // Total revenue for percentage calculation in Pie Chart
-  const totalRevenue = 18850;
+    fetchAnalytics();
+  }, []);
 
-  // Percentage Calculations for Custom Pie
-  const standardPct = Math.round((3850 / totalRevenue) * 100);
-  const proPct = Math.round((8700 / totalRevenue) * 100);
-  const ultraPct = Math.round((6300 / totalRevenue) * 100);
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
+        <p className="text-gray-600 font-bold uppercase tracking-widest text-xs">Fetching Database Statistics...</p>
+      </div>
+    );
+  }
 
-  // Conic gradient for the CSS Pie Chart
-  const pieGradient = `conic-gradient(#f97316 0% ${standardPct}%, #3b82f6 ${standardPct}% ${standardPct + proPct}%, #8b5cf6 ${standardPct + proPct}% 100%)`;
+  if (error) {
+    return <div className="p-10 text-red-500 font-bold">{error}</div>;
+  }
+
+  const packageStats = data.package_overview;
+  const topUsers = data.top_users;
+  
+  // Calculate total revenue from current data
+  const totalRevenue = data.revenue_distribution.reduce((acc, curr) => acc + curr.value, 0); //sums up revenue from all packages to get total revenue
+  const activeSubscribers = data.popularity.web; //gets number of web users
+
+  // Pie Chart Logic (Colors for the segments)
+  const colors = ['#f97316', '#3b82f6', '#8b5cf6', '#10b981', '#6366f1'];
+  let cumulativePct = 0;
+  const pieGradientParts = data.revenue_distribution.map((item, index) => { //calculates the percentage of total revenue for each package to determine size of pie segment; (item.value / totalRevenue) * 100
+    const pct = totalRevenue > 0 ? (item.value / totalRevenue) * 100 : 0;
+    const start = cumulativePct;
+    cumulativePct += pct;
+    return `${colors[index % colors.length]} ${start}% ${cumulativePct}%`;
+  });
+
+  const pieGradient = `conic-gradient(${pieGradientParts.join(', ')})`;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -74,7 +104,7 @@ const AdminSubscriptionAnalytics = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total Revenue</p>
-              <h3 className="text-3xl font-black text-gray-800 mt-1">${totalRevenue.toLocaleString()}</h3>
+              <h3 className="text-3xl font-black text-gray-800 mt-1">LKR {totalRevenue.toLocaleString()}</h3>
             </div>
             <DollarSign className="text-orange-500 mt-2" size={32} />
           </div>
@@ -84,7 +114,7 @@ const AdminSubscriptionAnalytics = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Active Subscribers</p>
-              <h3 className="text-3xl font-black text-gray-800 mt-1">1,560</h3>
+              <h3 className="text-3xl font-black text-gray-800 mt-1">{activeSubscribers}</h3>
             </div>
             <Users className="text-blue-500 mt-2" size={32} />
           </div>
@@ -109,16 +139,16 @@ const AdminSubscriptionAnalytics = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {packageStats.map((pkg) => (
-                <tr key={pkg.name} className="hover:bg-orange-50/50 transition-all group">
-                  <td className="py-6 px-6 font-black text-gray-800 text-lg">{pkg.name}</td>
-                  <td className="py-6 px-6 font-bold text-gray-600">{pkg.web}</td>
-                  <td className="py-6 px-6 font-bold text-gray-600">{pkg.mobile}</td>
-                  <td className="py-6 px-6 font-black text-gray-900">{pkg.total}</td>
-                  <td className="py-6 px-6 font-black text-orange-600 tracking-tighter text-xl">${pkg.revenue}</td>
+              {packageStats.map((pkg) => ( //Iterates over package statistics from API response to create a table row for each package, displaying its name, user counts, revenue, and growth percentage
+                <tr key={pkg.subscription__id} className="hover:bg-orange-50/50 transition-all group">
+                  <td className="py-6 px-6 font-black text-gray-800 text-lg">{pkg.subscription__name}</td>
+                  <td className="py-6 px-6 font-bold text-gray-600">{pkg.user_count}</td>
+                  <td className="py-6 px-6 font-bold text-gray-600">0</td>
+                  <td className="py-6 px-6 font-black text-gray-900">{pkg.user_count}</td>
+                  <td className="py-6 px-6 font-black text-orange-600 tracking-tighter text-xl">LKR {pkg.total_revenue}</td>
                   <td className="py-6 px-6">
-                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase w-fit ${pkg.growth > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                      {pkg.growth > 0 ? `🔼 +${pkg.growth}%` : `🔽 ${pkg.growth}%`}
+                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase w-fit bg-gray-100 text-gray-400`}>
+                      New
                     </span>
                   </td>
                 </tr>
@@ -134,22 +164,23 @@ const AdminSubscriptionAnalytics = () => {
           <h2 className="text-xl font-black text-gray-800 mb-8 uppercase tracking-tighter">Web vs Mobile Popularity</h2>
           <div className="flex items-end justify-around h-64 border-b border-l border-gray-100 px-4 pt-10 relative">
              {packageStats.map(pkg => (
-               <div key={pkg.name} className="flex flex-col items-center gap-2 w-1/4">
+               <div key={pkg.subscription__id} className="flex flex-col items-center gap-2 w-1/4">
                  <div className="flex gap-1 items-end h-48 w-full justify-center">
                    <div 
-                    style={{ height: `${(pkg.web / 500) * 100}%` }} 
+                   //Converts users into percentage height.
+                    style={{ height: `${activeSubscribers > 0 ? (pkg.user_count / activeSubscribers) * 100 : 0}%` }} 
                     className="w-4 bg-orange-500 rounded-t-sm hover:opacity-80 transition-all cursor-help relative group"
                    >
-                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Web:{pkg.web}</span>
+                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Web: {pkg.user_count}</span>
                    </div>
                    <div 
-                    style={{ height: `${(pkg.mobile / 500) * 100}%` }} 
+                    style={{ height: `0%` }} 
                     className="w-4 bg-blue-500 rounded-t-sm hover:opacity-80 transition-all cursor-help relative group"
                    >
-                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Mob:{pkg.mobile}</span>
+                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Mob: 0</span>
                    </div>
                  </div>
-                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{pkg.name}</span>
+                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate w-full text-center">{pkg.subscription__name}</span>
                </div>
              ))}
              <div className="absolute bottom-[-30px] right-0 flex gap-4 text-[10px] font-bold">
@@ -169,33 +200,23 @@ const AdminSubscriptionAnalytics = () => {
               </div>
             </div>
             <div className="flex-1 w-full space-y-4">
-               <div className="flex justify-between items-center pb-2 border-b border-gray-50">
-                 <div className="flex items-center gap-2">
-                   <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                   <span className="text-sm font-bold text-gray-500 uppercase">Standard</span>
-                 </div>
-                 <span className="font-black text-gray-800">{standardPct}%</span>
-               </div>
-               <div className="flex justify-between items-center pb-2 border-b border-gray-50">
-                 <div className="flex items-center gap-2">
-                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                   <span className="text-sm font-bold text-gray-500 uppercase">Pro</span>
-                 </div>
-                 <span className="font-black text-gray-800">{proPct}%</span>
-               </div>
-               <div className="flex justify-between items-center pb-2 border-b border-gray-50">
-                 <div className="flex items-center gap-2">
-                   <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                   <span className="text-sm font-bold text-gray-500 uppercase">Ultra</span>
-                 </div>
-                 <span className="font-black text-gray-800">{ultraPct}%</span>
-               </div>
+              {data.revenue_distribution.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center pb-2 border-b border-gray-50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[idx % colors.length] }}></div>
+                    <span className="text-sm font-bold text-gray-500 uppercase">{item.name}</span>
+                  </div>
+                  <span className="font-black text-gray-800">
+                    {totalRevenue > 0 ? ((item.value / totalRevenue) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* TOP PAYING USERS TABLE (Bulletproof Version) */}
+      {/* TOP PAYING USERS TABLE */}
       <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
         <h2 className="text-2xl font-black text-gray-800 mb-8 flex items-center gap-3">
           <Users size={24} className="text-orange-500" /> Top Paying Users
@@ -210,18 +231,18 @@ const AdminSubscriptionAnalytics = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {topUsers.map((user, idx) => (
+              {topUsers.map((user, idx) => (  //displays highest paying users based on API response, showing their email, package, and total amount spent
                 <tr key={idx} className="hover:bg-orange-50/50 transition-all group">
                   <td className="py-5 px-6 font-bold text-gray-800 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-black group-hover:bg-orange-500 group-hover:text-white transition-all">{user.initial}</div>
-                    @{user.username}
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-black group-hover:bg-orange-500 group-hover:text-white transition-all">{user.user_email[0].toUpperCase()}</div>
+                    {user.user_email}
                   </td>
                   <td className="py-5 px-6">
-                    <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-black uppercase">
-                      {user.package}
+                    <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                      Customer
                     </span>
                   </td>
-                  <td className="py-5 px-6 text-right font-black text-gray-900 text-lg">${user.spent}</td>
+                  <td className="py-5 px-6 text-right font-black text-gray-900 text-lg">LKR {user.total_spent}</td>
                 </tr>
               ))}
             </tbody>

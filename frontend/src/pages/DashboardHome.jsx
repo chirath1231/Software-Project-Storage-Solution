@@ -2,9 +2,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../auth/AuthContext";
 import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
 
 export default function DashboardHome() {
+  const { email: userEmail, userId } = useAuth();
   const [files, setFiles] = useState([]);
   const [storageUsed, setStorageUsed] = useState(0);
   const [totalUsedGB, setTotalUsedGB] = useState(0);
@@ -17,12 +19,9 @@ export default function DashboardHome() {
   const [uploadMessage, setUploadMessage] = useState("");
   const fileInputRef = useRef(null);
 
-  const userEmail = localStorage.getItem("username");
-  const userId = localStorage.getItem("user_id");
-
   useEffect(() => {
     initDashboard();
-  }, []);
+  }, [userId, userEmail]);
 
   const initDashboard = async () => {
     setLoading(true);
