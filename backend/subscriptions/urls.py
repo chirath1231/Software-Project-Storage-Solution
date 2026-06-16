@@ -5,6 +5,9 @@ from .views import (
     payhere_notify,
     check_payment_status,
     user_subscriptions,
+    subscription_analytics,
+    admin_reports,
+    update_subscription,
 )
 
 urlpatterns = [
@@ -12,6 +15,12 @@ urlpatterns = [
     # SUBSCRIPTIONS
     # --------------------------------------------------
     path("", subscription_list, name="subscription-list"),
+
+    path(
+        "admin/update-subscription/<int:subscription_id>/",
+        update_subscription,
+        name="update-subscription"
+    ),
 
     # --------------------------------------------------
     # PAYHERE PAYMENT
@@ -47,5 +56,21 @@ urlpatterns = [
         "user-subscriptions/<str:email>/",
         user_subscriptions,
         name="user-subscriptions"
+    ),
+
+    # --------------------------------------------------
+    # ADMIN ANALYTICS
+    # --------------------------------------------------
+    path(
+        "analytics/",
+        subscription_analytics,
+        name="subscription-analytics"
+    ),
+
+    # --------------------------------------------------
+    # ADMIN REPORTS (FOR FRONTEND DASHBOARD)
+    # --------------------------------------------------
+    path(
+        "reports/", admin_reports, name="admin-reports"
     ),
 ]

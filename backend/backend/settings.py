@@ -27,6 +27,7 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -80,6 +81,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://192.168.8.105:8081",
     "http://127.0.0.1:8081"
 ]
@@ -239,3 +241,8 @@ CSRF_TRUSTED_ORIGINS = [
 if DEBUG:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+
+JAZZMIN_SETTINGS = {
+    # Setting search_model to None removes the search bar from the header
+    "search_model": None,
+}

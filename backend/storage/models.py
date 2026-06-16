@@ -14,11 +14,11 @@ class File(models.Model):
     def __str__(self):
         return self.name
 
-# 🔥 ShareLink model for generating shareable links
+# 🔥 ShareLink model for generatin
 class ShareLink(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE, related_name="share_links")
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    expiry = models.DateTimeField()
+    expiry = models.DateTimeField()  # ← uncomment this
     created_at = models.DateTimeField(auto_now_add=True)
 
     def is_expired(self):
