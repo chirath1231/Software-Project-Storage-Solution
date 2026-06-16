@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
 import buynow from "../assets/buy_now.png";
+import { useAuth } from "../auth/AuthContext";
 
 export default function SubscriptionPage() {
+  const { email: userEmail } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const userEmail = localStorage.getItem("username");
 
   useEffect(() => {
     const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data);
@@ -43,6 +44,7 @@ export default function SubscriptionPage() {
       alert("Please login first");
       return;
     }
+    
 
     try {
       const res = await api.post("/api/subscriptions/create-payment/", {
