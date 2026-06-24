@@ -8,7 +8,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import File, ShareLink
+from .models import File
+from sharing.models import FileShare
 from notifications.utils import create_system_notification
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def upload_file(request):
     if expiry_str:
         expiry_date = parse_datetime(expiry_str)
         if expiry_date:
-            share = ShareLink.objects.create(
+            share = FileShare.objects.create(
                 file=file_obj,
                 token=uuid.uuid4(),
                 expiry=expiry_date
@@ -172,12 +173,12 @@ def permanent_delete_file(request, id):
 @api_view(["GET"])
 def access_shared_file(request, token):
     try:
-        share = ShareLink.objects.get(token=token)
+        share = FileShare.objects.get(token=token)
 
         if timezone.now() > share.expiry:
             return Response({"error": "This link has expired"}, status=403)
 
         return redirect(share.file.file.url)
 
-    except ShareLink.DoesNotExist:
+    except FileShare.DoesNotExist:
         return Response({"error": "Invalid link"}, status=404)
