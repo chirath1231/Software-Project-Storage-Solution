@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiLogin, apiRegister } from "../api/auth";
+import { apiLogin, apiRegister, apiGoogleLogin } from "../api/auth";
 
 const AuthContext = createContext(null);
 
@@ -57,6 +57,19 @@ export function AuthProvider({ children }) {
     });
   };
 
+  const loginWithGoogle = async (token) => {
+    const data = await apiGoogleLogin(token);
+    await persistUser({
+      ...DEFAULT_PROFILE,
+      id: data.user_id,
+      username: data.username,
+      name: data.username,
+      email: data.email,
+      accessToken: data.access,
+      refreshToken: data.refresh,
+    });
+  };
+
   const signOut = async () => {
     setUser(null);
     await AsyncStorage.removeItem("@ceynoa_user");
@@ -70,7 +83,7 @@ export function AuthProvider({ children }) {
     });
 
   const value = useMemo(
-    () => ({ user, isAuthed: !!user, isLoading, login, register, signOut, updateUser }),
+    () => ({ user, isAuthed: !!user, isLoading, login, loginWithGoogle, register, signOut, updateUser }),
     [user, isLoading]
   );
 

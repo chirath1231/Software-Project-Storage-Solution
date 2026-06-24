@@ -25,3 +25,6 @@ export const apiLogin = (email, password) =>
 
 export const apiRegister = (username, email, password, password2) =>
   post("/api/accounts/register/", { username, email, password, password2 });
+
+export const apiGoogleLogin = (token) =>
+  post("/api/accounts/google/", { token });
