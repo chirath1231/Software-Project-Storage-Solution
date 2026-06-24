@@ -36,32 +36,8 @@ export default function Navbar({ isDashboard = false }) {
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
-  // Unified Notifications State Management
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New message received",
-      message: "You have a new message from John Doe",
-      created_at: new Date(Date.now() - 5 * 60000).toISOString(),
-      is_read: false
-    },
-    {
-      id: 2,
-      title: "System update",
-      message: "Your system has been updated successfully",
-      created_at: new Date(Date.now() - 60 * 60000).toISOString(),
-      is_read: false
-    },
-    {
-      id: 3,
-      title: "Welcome!",
-      message: "Welcome to CEYNOA platform",
-      created_at: new Date(Date.now() - 120 * 60000).toISOString(),
-      is_read: true
-    }
-  ]);
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  // Fetch real notifications from backend context
+  const { notifications, unreadCount, fetchGlobalNotifications } = useNotifications();
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -112,33 +88,35 @@ export default function Navbar({ isDashboard = false }) {
     console.log("Navigate to:", href);
   };
 
-  // --- API PATCH Implementation ---
-  const markAsRead = async (notificationId) => {
-    // Optimistic Local UI State Mutation
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, is_read: true } : n
-    ));
-
+  // Handle marking notification as read
+  const handleMarkRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("access_token");
-      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/`, {
+      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: { 
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json" 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json" 
         }
       });
+      // Refresh notifications after marking as read
+      await fetchGlobalNotifications();
     } catch (error) {
-      console.error("Failed to mark read on server:", error);
+      console.error("Failed to mark as read:", error);
     }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+  const handleMarkAllAsRead = async () => {
+    // Mark all unread notifications as read
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    for (const notification of unreadNotifications) {
+      await handleMarkRead(notification.id);
+    }
   };
 
-  const clearNotification = (notificationId) => {
-    setNotifications(notifications.filter(n => n.id !== notificationId));
+  const handleClearNotification = (notificationId) => {
+    // For now, we'll just mark it as read. You can extend this to delete if needed.
+    handleMarkRead(notificationId);
   };
 
   return (
@@ -239,7 +217,7 @@ export default function Navbar({ isDashboard = false }) {
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
                       <h3 className="text-gray-800 font-bold text-xs uppercase tracking-wider">Alerts</h3>
                       {unreadCount > 0 && (
-                        <button onClick={markAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
+                        <button onClick={handleMarkAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
                           Mark all read
                         </button>
                       )}
@@ -251,7 +229,7 @@ export default function Navbar({ isDashboard = false }) {
                           <div
                             key={notification.id}
                             className={`px-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.is_read ? 'bg-orange-50/30' : ''}`}
-                            onClick={() => markAsRead(notification.id)}
+                            onClick={() => handleMarkRead(notification.id)}
                           >
                             <div className="flex items-start gap-3">
                               <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`} />
@@ -265,7 +243,7 @@ export default function Navbar({ isDashboard = false }) {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  clearNotification(notification.id);
+                                  handleClearNotification(notification.id);
                                 }}
                                 className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent border-0 cursor-pointer p-0"
                               >
