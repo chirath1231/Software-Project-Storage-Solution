@@ -24,31 +24,38 @@ function Landing() {
     const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  
 useEffect(() => {
-  fetch("http://127.0.0.1:8000/api/subscriptions/")
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch plans");
-      }
-      return res.json();
-    })
-    .then((data) => {
-      // Ensure it's always an array
+  const fetchPlans = async () => {
+    try {
+      const token = localStorage.getItem("access");
+
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/subscriptions/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      // 🔥 important check
       if (Array.isArray(data)) {
         setPlans(data);
-      } else if (data.results) {
-        // Django pagination case
-        setPlans(data.results);
       } else {
+        console.error("API returned non-array:", data);
         setPlans([]);
       }
-    })
-    .catch((err) => {
+    } catch (err) {
       console.error("Error fetching plans:", err);
-      setPlans([]); // prevent crash
-    })
-    .finally(() => setLoading(false));
+      setPlans([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPlans();
 }, []);
 
   if (loading) return <h2 className="loading">Loading...</h2>;

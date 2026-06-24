@@ -1,23 +1,21 @@
 # ================================
-# Python — never commit bytecode/cache (avoid merge noise)
+# Python
 # ================================
 __pycache__/
-**/__pycache__/
 *.py[cod]
-$py.class
-*.pyc
 *.pyo
 *.pyd
+*.pyc
 *.py.class
 
 # ================================
 # Virtual Environment
 # ================================
-
 .env/
 venv/
 .venv/
 ENV/
+env/
 
 # ================================
 # Django
@@ -29,7 +27,10 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Migrations (optional – keep if team prefers)
+# ================================
+# Migrations (optional)
+# ================================
+# Uncomment if you DON'T want migrations
 # **/migrations/
 # !**/migrations/__init__.py
 
@@ -49,7 +50,7 @@ staticfiles/
 *.swo
 
 # ================================
-# OS
+# OS Files
 # ================================
 .DS_Store
 Thumbs.db
@@ -62,20 +63,12 @@ htmlcov/
 .pytest_cache/
 
 # ================================
-# Python tooling / local artifacts
-# ================================
-.eggs/
-.mypy_cache/
-.ruff_cache/
-.tox/
-req-venv/
-
-# ================================
 # Build / Distribution
 # ================================
 build/
 dist/
 *.egg-info/
+.eggs/
 
 # ================================
 # Logs & Temp
@@ -84,12 +77,33 @@ dist/
 *.tmp
 
 # ================================
-# Node (if frontend exists)
+# Node (if using React / frontend)
 # ================================
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ================================
+# Static Build (React)
+# ================================
+build/
 
 # ================================
 # Secrets / Keys
 # ================================
 *.pem
 *.key
+*.crt
+
+# ================================
+# Docker (if used)
+# ================================
+*.pid
+*.seed
+*.pid.lock
+
+# ================================
+# VS Code Python
+# ================================
+.python-version

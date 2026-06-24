@@ -5,16 +5,17 @@ export default function DashboardSettings() {
   const navigate = useNavigate();
 
   const settingsItems = [
-    { name: "Profile Settings", path: "/dashboard/profile-settings" },
-    { name: "Security", path: "/dashboard/security" },
-    { name: "Notifications", path: "/dashboard/notifications" },
-    { name: "Privacy", path: "/dashboard/privacy" },
-    { name: "Ticket Submission", path: "/dashboard/ticket-submission" },
-    { name: "Delete Account", path: "/dashboard/delete-account" },
+    { name: "Profile Settings", path: "/dashboard/settings/profile" },
+    { name: "Security", path: "/dashboard/settings/security" },
+    { name: "Notifications", path: "/dashboard/settings/notifications" },
+    { name: "Privacy", path: "/dashboard/settings/privacy" },
+    { name: "Appearance", path: "/dashboard/settings/appearance" },
+    { name: "Connected Devices", path: "/dashboard/settings/devices" },
+    { name: "Delete Account", path: "/dashboard/settings/delete" },
   ];
 
   return (
-    <div className="p-10 min-h-screen">
+    <div className="p-10 bg-gray-100 min-h-screen">
 
       {/* HEADER */}
       <div className="flex items-stretch gap-5 mb-10">
