@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+
+# 1. Load the .env variables BEFORE initializing anything else
+load_dotenv()
+
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 import chat.routing

@@ -6,26 +6,33 @@ import { useNotifications } from '../context/NotificationContext';
 export default function Notifications() {
   const { notifications, fetchGlobalNotifications, nextPageUrl, prevPageUrl } = useNotifications();
   const [selectedNotification, setSelectedNotification] = useState(null);
-  
-  // --- NEW: Track the current sort state ---
   const [currentSort, setCurrentSort] = useState("newest");
 
-  // --- NEW: Handle Sort Dropdown ---
+  // --- FIX 1: Updated Base URL ---
+  const BASE_URL = "http://localhost:8000/api/accounts/notifications/";
+
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setCurrentSort(newSort);
-    fetchGlobalNotifications(newSort); // Tell Django to re-sort and send fresh data!
+    fetchGlobalNotifications(newSort); 
   };
 
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem("access_token");
-      await fetch(`http://localhost:8000/api/auth/notifications/${id}/read/`, {
+      
+      // --- FIX 2: Correct endpoint path and trailing slash ---
+      const response = await fetch(`${BASE_URL}${id}/read/`, {
         method: "PATCH",
-        headers: { "Authorization": `Bearer ${token}` },
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
       });
 
-      // Fetch fresh data, keeping the current sort rule active
+      if (!response.ok) throw new Error("Failed to update status");
+
+      // Fetch fresh data to keep UI synced
       fetchGlobalNotifications(currentSort);
     } catch (err) {
       console.error("Failed to mark as read", err);
@@ -53,7 +60,6 @@ export default function Notifications() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-800">Recent Alerts</h2>
             
-            {/* --- UPGRADED: Connected Dropdown --- */}
             <div className="inline-block relative">
               <select 
                 value={currentSort}
@@ -101,7 +107,7 @@ export default function Notifications() {
               ))
             )}
             
-            {/* --- NEW: Pagination Controls --- */}
+            {/* Pagination Controls */}
             {(nextPageUrl || prevPageUrl) && (
               <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-between items-center">
                 <button 
@@ -120,8 +126,6 @@ export default function Notifications() {
                 </button>
               </div>
             )}
-            {/* ------------------------------- */}
-
           </div>
         </div>
 

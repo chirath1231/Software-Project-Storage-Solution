@@ -19,6 +19,10 @@ import Trash from "./pages/Trash.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
+import AdminUsers from "./pages/AdminUsers"; 
+import DashboardSupport from "./pages/DashboardSupport";
+import DashboardSettings from "./pages/DashboardSettings.jsx";
+import ProfileSettings from "./pages/ProfileSettings.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import MyFiles from "./pages/MyFiles";
 import ClientChatSystem from "./pages/ClientChatSystem.jsx";
@@ -33,6 +37,7 @@ import SharedFile from "./pages/SharedFile";
 
 // Inside your routes:
 
+import { NotificationProvider } from './context/NotificationContext'; // <-- Global Brain imported
 
 function App() {
   return (
@@ -87,6 +92,27 @@ function App() {
               <Route path="profile-settings" element={<ProfileSettings />} />             
               
 
+              {/* Stubs for other admin pages */}
+              <Route path="/admin/reports" element={<div>Reports Page</div>} />
+              <Route path="/admin/subscription-analytics" element={<div>Subscription Analytics Page</div>} />
+              <Route path="/admin/tickets" element={<div>Tickets Page</div>} />
+              <Route path="/admin/settings" element={<div>Admin Settings Page</div>} />
+            </Route>
+
+            {/* PROTECTED */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardHome />} />
+                <Route path="files" element={<MyFiles />} />
+                <Route path="chat" element={<ClientChatSystem />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="support" element={<DashboardSupport />} />
+                <Route path="settings" element={<DashboardSettings />} />
+                <Route path="settings/profile" element={<ProfileSettings />} />
+                <Route path="subscription" element={<SubscriptionPage />} />
+                <Route path="payment-success/*" element={<PaymentSuccess />} />
+                <Route path="ticket-submission" element={<TicketSubmission />} />
+              </Route>
             </Route>
           </Route>
         </Routes>
