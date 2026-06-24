@@ -29,39 +29,32 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 
 INSTALLED_APPS = [
     "daphne",
+    # Django Core Apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "subscriptions",
-    # THIRD-PARTY APPS
+    "django.contrib.postgres",
+    # Third-Party Apps
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    'django.contrib.postgres',
-    # YOUR APPS
-    "accounts",  # your authentication app
-    "channels", # for WebSocket support
-    'chat', # your chat app
     "django_extensions",
     "storages",
+    "anymail",
+    "channels",
+    # Local Apps
+    "accounts",
+    "subscriptions",
     "storage",
-    'anymail',
-    'tickets',
-    'admin_management',
-    # 'assistant',
-    'sharing',  # the new sharing app
-
-    # YOUR LOCAL APPS
-    "accounts",         # Your authentication app
-    "subscriptions",    # Subscription management
-    "storage",          # Your local storage logic app
-    "chat",             # Your chat app
-    "tickets",  
+    "chat",
+    "tickets",
+    "admin_management",
+    "sharing",
     "notifications",
-    "events",        
+    "events",
 ]
 
 # -----------------------------------------------------
@@ -202,19 +195,15 @@ PAYHERE_SANDBOX = True
 # -----------------------------------------------------
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-    ),
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-        'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-
 }
 
 
@@ -234,12 +223,9 @@ SIMPLE_JWT = {
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
-AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
-AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
-AWS_S3_REGION_NAME = "sfo3"
-AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "ceynoa-storage")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "sfo3")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL", "https://sfo3.digitaloceanspaces.com")
 
 AWS_DEFAULT_ACL = "public-read"
 AWS_QUERYSTRING_AUTH = False
@@ -248,16 +234,6 @@ AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 AWS_LOCATION = "uploads"
-
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
 
 class DisableMigrations:
     def __contains__(self, item):
@@ -271,12 +247,6 @@ if "test" in sys.argv:
     MIGRATION_MODULES = DisableMigrations()
 
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-# Local media fallback for development
 # --- DYNAMIC STORAGE STRATEGY BASED ON DEVELOPMENT ENVIRONMENT ---
 if DEBUG:
     # Local Storage Engine Configuration (Wipes dependencies on third-party cloud SDKs)
@@ -293,7 +263,7 @@ if DEBUG:
     }
 else:
     # Production Infrastructure (DigitalOcean Spaces / AWS S3 backend bindings)
-    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
