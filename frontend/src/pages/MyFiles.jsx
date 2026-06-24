@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
-import logo_dark from "../../assets/Logo_on_Dark.png";
-import { useAuth } from "../../auth/AuthContext.jsx";
-import { useNotifications } from "../../context/NotificationContext.jsx"; 
+
+import logo_dark from "../assets/Logo_on_Dark.png";
+import { useAuth } from "../auth/AuthContext.jsx";
+import { useNotifications } from "../context/NotificationContext.jsx";
 
 const LogoDark = () => (
   <div className="flex items-center">
