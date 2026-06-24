@@ -13,7 +13,7 @@ class Notification(models.Model):
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
-        related_name='notifications'
+        related_name='notification_app_notifications'
     )
     
     title = models.CharField(max_length=255)
