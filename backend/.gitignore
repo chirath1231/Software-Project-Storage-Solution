@@ -1,8 +1,11 @@
 # ================================
-# Python
+# Python — never commit bytecode/cache (avoid merge noise)
 # ================================
 __pycache__/
+**/__pycache__/
 *.py[cod]
+$py.class
+*.pyc
 *.pyo
 *.pyd
 *.py.class
@@ -57,6 +60,15 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+# ================================
+# Python tooling / local artifacts
+# ================================
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.tox/
+req-venv/
 
 # ================================
 # Build / Distribution
