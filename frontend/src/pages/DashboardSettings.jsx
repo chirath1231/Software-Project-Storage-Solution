@@ -4,18 +4,22 @@ import { ArrowRight } from "lucide-react";
 export default function DashboardSettings() {
   const navigate = useNavigate();
 
+  // Cleaned up and merged both of your arrays into one unified list
   const settingsItems = [
-    { name: "Profile Settings", path: "/dashboard/settings/profile" },
-    { name: "Security", path: "/dashboard/settings/security" },
+    { name: "Profile Settings", path: "/dashboard/profile-settings" },
+    { name: "Security", path: "/dashboard/security" },
+    { name: "Notifications", path: "/dashboard/notifications" },
+    { name: "Privacy", path: "/dashboard/privacy" },
     { name: "Notifications", path: "/dashboard/settings/notifications" },
-    { name: "Privacy", path: "/dashboard/settings/privacy" },
+    { name: "Privacy", path: "/dashboard/privacy" },
     { name: "Appearance", path: "/dashboard/settings/appearance" },
     { name: "Connected Devices", path: "/dashboard/settings/devices" },
-    { name: "Delete Account", path: "/dashboard/settings/delete" },
+    { name: "Ticket Submission", path: "/dashboard/ticket-submission" },
+    { name: "Delete Account", path: "/dashboard/delete-account" },
   ];
 
   return (
-    <div className="p-10 bg-gray-100 min-h-screen">
+    <div className="p-10 min-h-screen">
 
       {/* HEADER */}
       <div className="flex items-stretch gap-5 mb-10">

@@ -10,12 +10,11 @@ import {
   HelpCircle,
   Menu,
   X,
+  Trash2,
   BarChart2,
   TrendingUp,
   FileText,
-  Trash2
 } from "lucide-react";
-import Trash from "../../pages/Trash";
 
 export default function Sidebar({ isAdmin = false }) {
   const navigate = useNavigate();
@@ -24,7 +23,7 @@ export default function Sidebar({ isAdmin = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("dashboard");
 
-  // 🔹 User Menu
+  // 🔹 Menu config with ROUTES
   const userMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/dashboard" },
     { id: "files", label: "My Files", icon: <Folder />, path: "/dashboard/files" },
@@ -36,7 +35,6 @@ export default function Sidebar({ isAdmin = false }) {
     { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" }
   ];
 
-  // 🔹 Admin Menu
   const adminMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/admin-dashboard" },
     { id: "users", label: "User Management", icon: <Users />, path: "/admin/users" },
@@ -46,10 +44,9 @@ export default function Sidebar({ isAdmin = false }) {
     { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings" },
   ];
 
-  // ✅ Single menuItems (NO DUPLICATE)
   const menuItems = isAdmin ? adminMenuItems : userMenuItems;
 
-  // 🔥 Sync active item with URL
+  // 🔥 FIXED LOGIC HERE (longest path match first)
   useEffect(() => {
     const sortedMenu = [...menuItems].sort(
       (a, b) => b.path.length - a.path.length
@@ -65,7 +62,6 @@ export default function Sidebar({ isAdmin = false }) {
   }, [location.pathname, menuItems]);
 
   const handleMenuClick = (item) => {
-    setActiveItem(item.id); // ✅ instant highlight
     navigate(item.path);
 
     if (window.innerWidth < 768) {
@@ -100,7 +96,7 @@ export default function Sidebar({ isAdmin = false }) {
             bg-gradient-to-b from-white via-orange-50 to-orange-200
             flex flex-col py-6
             transition-transform duration-300 ease-in-out
-            z-40 mt-5 ml-10 rounded-2xl mb-5 mr-10
+            z-40 mt-5 ml-10 rounded-2xl mb-5  mr-10
             
             ${isOpen ? "fixed inset-y-0 left-0 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full"}
             md:relative md:translate-x-0 md:w-[260px]
