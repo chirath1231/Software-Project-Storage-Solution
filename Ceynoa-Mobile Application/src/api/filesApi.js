@@ -1,8 +1,8 @@
 import { apiGet, apiPost, apiDelete, apiUpload } from "./apiClient";
 
-export const getFiles = () => apiGet("/api/files/");
+export const getFiles = () => apiGet("/api/");
 
-export const trashFile = (id) => apiDelete(`/api/files/${id}/trash/`);
+export const trashFile = (id) => apiDelete(`/api/${id}/trash/`);
 
 // Pass user.username (not email) — matches what the web app stores in subscriptions
 export async function getSubscription(usernameOrEmail) {

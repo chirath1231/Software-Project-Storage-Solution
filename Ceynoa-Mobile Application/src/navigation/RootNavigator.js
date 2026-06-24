@@ -23,7 +23,9 @@ import ChatScreen from "../screens/ChatScreen";
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { isAuthed } = useAuth();
+  const { isAuthed, isLoading } = useAuth();
+
+  if (isLoading) return null;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
