@@ -1,342 +1,309 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
+// src/pages/DashboardHome.jsx
+import React, { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
+import api from "../api/axios";
+import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import UpcomingMeetingsWidget from "../components/UpcomingMeetingsWidget";
 
-import logo_dark from "../assets/Logo_on_Dark.png";
-import { useAuth } from "../auth/AuthContext.jsx";
-import { useNotifications } from "../context/NotificationContext.jsx";
+export default function DashboardHome() {
+  const { user } = useAuth();
+  const [files, setFiles] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [storageUsed, setStorageUsed] = useState(0);
+  const [totalUsedGB, setTotalUsedGB] = useState(0);
+  const [totalStorageGB, setTotalStorageGB] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [isStorageFull, setIsStorageFull] = useState(false);
 
-const LogoDark = () => (
-  <div className="flex items-center">
-    <img
-      src={logo_dark}
-      alt="CEYNOA Logo"
-      className="h-10 w-auto"
-    />
-  </div>
-);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(null);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const fileInputRef = useRef(null);
 
-const GradientButton = ({ title, onClick, ariaLabel }) => (
-  <button
-    onClick={onClick}
-    aria-label={ariaLabel || title}
-    className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-800"
-  >
-    {title}
-  </button>
-);
-
-export default function Navbar({ isDashboard = false }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, username, logout } = useAuth();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  const showDashboardView = isAuthenticated || isDashboard;
-  
-  const profileMenuRef = useRef(null);
-  const notificationRef = useRef(null);
-
-  // Unified Notifications State Management
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New message received",
-      message: "You have a new message from John Doe",
-      created_at: new Date(Date.now() - 5 * 60000).toISOString(),
-      is_read: false
-    },
-    {
-      id: 2,
-      title: "System update",
-      message: "Your system has been updated successfully",
-      created_at: new Date(Date.now() - 60 * 60000).toISOString(),
-      is_read: false
-    },
-    {
-      id: 3,
-      title: "Welcome!",
-      message: "Welcome to CEYNOA platform",
-      created_at: new Date(Date.now() - 120 * 60000).toISOString(),
-      is_read: true
-    }
-  ]);
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-
-  // Close menus when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
-        setShowProfileMenu(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
-    };
-    if (showProfileMenu || showNotifications) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (user?.id) {
+      initDashboard();
     }
-  }, [showProfileMenu, showNotifications]);
+  }, [user]);
 
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        setMenuOpen(false);
-        setShowProfileMenu(false);
-        setShowNotifications(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, []);
-
-  const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  const handleLogout = () => {
-    logout();
-    setShowProfileMenu(false);
-    setShowNotifications(false);
+  const initDashboard = async () => {
+    setLoading(true);
+    const storageGB = await fetchUserSubscription();
+    await fetchFiles(storageGB);
+    await fetchNotifications();
+    setLoading(false);
   };
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
-    }
-  };
-
-  const handleNavClick = (href) => {
-    setMenuOpen(false);
-    console.log("Navigate to:", href);
-  };
-
-  // --- API PATCH Implementation ---
-  const markAsRead = async (notificationId) => {
-    // Optimistic Local UI State Mutation
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, is_read: true } : n
-    ));
-
+  const fetchUserSubscription = async () => {
     try {
-      const token = localStorage.getItem("access_token");
-      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/`, {
-        method: "PATCH",
-        headers: { 
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json" 
-        }
-      });
-    } catch (error) {
-      console.error("Failed to mark read on server:", error);
+      const res = await api.get(`/api/subscriptions/user-subscriptions/${user.id}/`);
+      const payments = res.data;
+      const latest = payments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      const gb = latest?.storage || 5;
+      setTotalStorageGB(gb);
+      return gb;
+    } catch (err) {
+      console.error("Error fetching subscription:", err);
+      return 5;
     }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+  const fetchFiles = async (storageGB = totalStorageGB) => {
+    try {
+      const res = await api.get(`/api/files/?user_id=${user.id}`);
+      const data = res.data;
+      const sorted = [...data].sort((a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at));
+      setFiles(sorted);
+      const totalBytes = data.reduce((sum, file) => sum + (file.size || 0), 0);
+      const usedGB = totalBytes / (1024 ** 3);
+      setTotalUsedGB(Math.min(usedGB, storageGB).toFixed(2));
+      setStorageUsed(Math.min(Math.round((usedGB / storageGB) * 100), 100));
+      setIsStorageFull(usedGB >= storageGB * 0.99);
+    } catch (error) {
+      console.error("Failed to fetch files", error);
+    }
   };
 
-  const clearNotification = (notificationId) => {
-    setNotifications(notifications.filter(n => n.id !== notificationId));
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get("/api/accounts/notifications/");
+      setNotifications(res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      await uploadFile(files[0]);
+    }
+  };
+
+  const uploadFile = async (file) => {
+    try {
+      setUploadStatus("uploading");
+      setUploadMessage("Uploading...");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await api.post("/api/files/upload/", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      setUploadStatus("success");
+      setUploadMessage("File uploaded successfully");
+      await fetchFiles();
+      setTimeout(() => setUploadStatus(null), 3000);
+    } catch (error) {
+      setUploadStatus("error");
+      setUploadMessage(error.response?.data?.error || "Upload failed");
+      setTimeout(() => setUploadStatus(null), 3000);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  };
+
+  // Helper to get simple file icons based on extension
+  const getFileIcon = (filename) => {
+    const ext = filename?.split(".").pop()?.toLowerCase();
+    const icons = {
+      pdf: "📄", jpg: "🖼️", jpeg: "🖼️", png: "🖼️", gif: "🖼️",
+      mp4: "🎬", mov: "🎬",
+      zip: "🗜️", rar: "🗜️",
+      doc: "📝", docx: "📝",
+      xls: "📊", xlsx: "📊",
+    };
+    return icons[ext] || "📁";
   };
 
   return (
-    <nav className="py-4 relative shadow-lg bg-[#323D41]">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        
-        {/* Left Side: Logo */}
-        <div className="flex-none">
-          <LogoDark />
-        </div>
-
-        {/* Center section (Search bar or Navigation links) */}
-        <div className={`
-          flex-1 flex justify-center items-center mx-10
-          ${menuOpen ? 'flex' : 'hidden'} md:flex
-          md:relative absolute top-full left-0 right-0 bg-[#323D41] md:bg-transparent
-          flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
-        `}>
-          {!showDashboardView ? (
-            // Public Navigation links (Before Login)
-            <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
-              {[
-                { href: "#home", label: "Home" },
-                { href: "#features", label: "Features" },
-                { href: "#pricing", label: "Pricing" },
-                { href: "#aboutus", label: "About Us" }
-              ].map((item) => (
-                <li key={item.href} className="m-0 before:content-none">
-                  <a
-                    href={item.href}
-                    className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
-                    onClick={() => handleNavClick(item.href)}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            // Main App Search bar (After Login)
-            <div className="relative w-full max-w-xl">
-              <Search 
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-                size={18} 
-                aria-hidden="true"
-              />
-              <input
-                type="text"
-                placeholder="Search files or events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                aria-label="Search"
-                className="w-full py-3 pl-12 pr-4 rounded-full bg-gray-700 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
-              />
-            </div>
-          )}
-
-          {/* Mobile Auth Buttons Toggle */}
-          {!showDashboardView && (
-            <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
-              <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
-              <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
-            </div>
-          )}
-        </div>
-
-        {/* Right Section: Actions Panel (Auth Controls or Profile Context) */}
-        <div className="flex gap-3 items-center relative">
-          {!showDashboardView ? (
-            <div className="hidden md:flex gap-3">
-              <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
-              <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
-            </div>
-          ) : (
-            <>
-              {/* Notification Center Trigger */}
-              <div className="relative" ref={notificationRef}>
-                <button
-                  className="relative p-2 rounded-full hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  onClick={() => {
-                    setShowNotifications(!showNotifications);
-                    setShowProfileMenu(false);
-                  }}
-                  aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-                >
-                  <Bell size={22} className="text-gray-300" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-[#323D41]">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Notifications Panel Box Dropdown */}
-                {showNotifications && (
-                  <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl w-80 z-50 overflow-hidden border border-gray-100">
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-                      <h3 className="text-gray-800 font-bold text-xs uppercase tracking-wider">Alerts</h3>
-                      {unreadCount > 0 && (
-                        <button onClick={markAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
-                          Mark all read
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.slice(0, 5).map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`px-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.is_read ? 'bg-orange-50/30' : ''}`}
-                            onClick={() => markAsRead(notification.id)}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`} />
-                              <div className="flex-1">
-                                <h4 className={`text-gray-800 text-sm leading-tight ${!notification.is_read ? 'font-bold' : 'font-medium'}`}>{notification.title}</h4>
-                                <p className="text-gray-500 text-xs mt-1 line-clamp-2">{notification.message}</p>
-                                <p className="text-gray-400 text-[10px] mt-2 font-semibold uppercase">
-                                  {new Date(notification.created_at).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  clearNotification(notification.id);
-                                }}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent border-0 cursor-pointer p-0"
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-10 text-center text-gray-400 text-sm italic">No new alerts</div>
-                      )}
-                    </div>
-                    <div className="p-3 bg-gray-50 text-center border-t border-gray-100">
-                      <button 
-                        onClick={() => window.location.href = "/notifications"} 
-                        className="text-gray-600 text-xs font-bold hover:text-orange-500 transition-colors w-full bg-transparent border-0 cursor-pointer"
-                      >
-                        View All Activity
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* User Profile Navigation Trigger */}
-              <div className="relative" ref={profileMenuRef}>
-                <button
-                  className="flex items-center gap-3 py-1.5 px-2 rounded-full hover:bg-gray-700 transition-colors bg-transparent border-0 cursor-pointer"
-                  onClick={() => {
-                    setShowProfileMenu(!showProfileMenu);
-                    setShowNotifications(false);
-                  }}
-                >
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
-                    <User size={20} className="text-orange-500" />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <div className="text-white text-sm font-bold leading-none">{username || "User"}</div>
-                  </div>
-                  <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Profile Options Context Menu */}
-                {showProfileMenu && (
-                  <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl min-w-[220px] z-50 overflow-hidden border border-gray-100">
-                    <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Logged in as</p>
-                      <p className="text-sm font-bold text-gray-800 truncate">{username || "Workspace Account"}</p>
-                    </div>
-                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/profile"}>My Profile</button>
-                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/settings"}>Settings</button>
-                    <div className="h-px bg-gray-100 mx-2"></div>
-                    <button className="w-full py-3 px-4 text-left hover:bg-red-50 text-sm text-red-500 font-bold bg-transparent border-0 cursor-pointer" onClick={handleLogout}>Logout</button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Desktop Hamburg Menu Icon for Mobile view scaling toggle */}
-          <button
-            onClick={toggleMenu}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="md:hidden text-white p-2 hover:bg-gray-700 rounded transition-colors bg-transparent border-0 cursor-pointer"
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
-        </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome back, <span className="text-orange-500">{user?.username || "User"}</span> 👋
+        </h1>
+        <p className="text-gray-500 mt-1">Here's a quick look at your storage and recent activity</p>
       </div>
-    </nav>
+
+      {isStorageFull && (
+        <div className="mb-6 bg-red-50 border border-red-300 rounded-xl p-4 flex items-center gap-3">
+          <AlertTriangle className="text-red-500" size={22} />
+          <p className="text-red-700 text-sm font-medium">Storage full. Please upgrade your plan to upload more files.</p>
+        </div>
+      )}
+
+      {/* 2x2 Grid Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        {/* --- CARD 1: STORAGE OVERVIEW --- */}
+        <div className="bg-white rounded-xl shadow-md p-8 border-l-4 border-orange-500 flex flex-col justify-center">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Storage Overview</h2>
+          <div className="flex items-center gap-8">
+            {/* Circular Progress */}
+            <div className="relative w-28 h-28 flex-shrink-0">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path stroke="#F3F4F6" strokeWidth="4" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path
+                  stroke="#F97316"
+                  strokeWidth="4"
+                  strokeDasharray={`${storageUsed}, 100`}
+                  strokeLinecap="round"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-gray-800">
+                {loading ? "..." : `${storageUsed}%`}
+              </div>
+            </div>
+
+            {/* Storage Text & Upgrade Button */}
+            <div>
+              <p className="text-2xl font-bold text-gray-800">
+                {totalUsedGB} / {totalStorageGB} GB used
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                {files.length} files stored
+              </p>
+              <Link to="/dashboard/subscription">
+                <button className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors">
+                  Upgrade Plan
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="w-full bg-gray-100 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${isStorageFull ? "bg-red-500" : "bg-orange-500"}`}
+                style={{ width: `${storageUsed}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-right">
+              {isStorageFull ? "Storage full" : `${(totalStorageGB - totalUsedGB).toFixed(2)} GB free`}
+            </p>
+          </div>
+        </div>
+
+        {/* --- CARD 2: QUICK UPLOAD --- */}
+        <div className="bg-white rounded-xl shadow-md p-8 border-l-4 border-orange-500 flex flex-col">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Quick Upload</h2>
+          <div
+            className={`flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+              isDragging ? "border-orange-500 bg-orange-50 scale-[1.02]" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {uploadStatus === "uploading" ? (
+              <Loader className="mx-auto mb-3 text-orange-500 animate-spin" size={40} />
+            ) : uploadStatus === "success" ? (
+              <CheckCircle className="mx-auto mb-3 text-green-500" size={40} />
+            ) : uploadStatus === "error" ? (
+              <XCircle className="mx-auto mb-3 text-red-500" size={40} />
+            ) : (
+              <Upload className={`mx-auto mb-3 ${isDragging ? "text-orange-500" : "text-gray-400"}`} size={40} />
+            )}
+
+            <p className="text-gray-800 font-bold text-base">
+              {isDragging ? "Drop file to upload" : "Drag & drop your file here"}
+            </p>
+            <p className="text-gray-500 text-sm mt-1">
+              or <span className="text-orange-500 font-medium underline">browse to upload</span> (Max 2GB)
+            </p>
+
+            {uploadStatus && (
+              <p className={`mt-3 text-sm font-semibold ${
+                uploadStatus === "success" ? "text-green-600" : uploadStatus === "error" ? "text-red-500" : "text-orange-500"
+              }`}>
+                {uploadMessage}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* --- CARD 3: RECENT FILES --- */}
+        <div className="bg-white rounded-xl shadow-md p-8 border-l-4 border-orange-500 flex flex-col min-h-[350px]">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-800">Recent Files</h2>
+            <Link to="/dashboard/files" className="text-sm font-bold text-orange-500 hover:text-orange-600 transition-colors">
+              View all →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader size={30} className="animate-spin text-orange-500" />
+            </div>
+          ) : files.length > 0 ? (
+            <div className="flex-1 overflow-y-auto pr-2">
+              <div className="divide-y divide-gray-100">
+                {files.slice(0, 5).map((file) => (
+                  <div key={file.id} className="py-4 flex items-center justify-between hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{getFileIcon(file.file_name)}</span>
+                      <div>
+                        <p className="font-bold text-gray-800 truncate max-w-[200px]">{file.file_name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/file/${file.id}`}
+                      className="text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+                    >
+                      View
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+              <span className="text-5xl mb-3">📂</span>
+              <p className="text-gray-500 font-medium">No files uploaded yet.</p>
+            </div>
+          )}
+        </div>
+
+       {/* --- CARD 4: UPCOMING MEETINGS --- */}
+        <div className="flex flex-col min-h-[350px]">
+          <UpcomingMeetingsWidget />
+        </div>
+
+      </div>
+    </div>
   );
 }
