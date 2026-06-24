@@ -1,30 +1,44 @@
-// File: App.js
+import React from "react";
+import { StatusBar } from "expo-status-bar";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ThemeProvider, useTheme } from "./src/theme/ThemeContext";
+import { AuthProvider } from "./src/context/AuthContext";
+import RootNavigator from "./src/navigation/RootNavigator";
 
-// Import only the Login screen
-import LoginScreen from './src/screens/LoginScreen';
-import RegisterScreen from './src/screens/RegistrationScreen';
+function NavThemeWrapper() {
+  const { isDark, c } = useTheme();
 
-const Stack = createNativeStackNavigator();
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: c.bgApp,
+      card: c.bgSecondary,
+      text: c.textPrimary,
+      border: c.border,
+      primary: c.accent.orange,
+      notification: c.accent.amber,
+    },
+  };
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-          options={{ headerShown: false }} // optional: hide header
-        />
-        <Stack.Screen 
-          name="Register" 
-          component={RegisterScreen} 
-          options={{ headerShown: false }} // optional: hide header
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <NavThemeWrapper />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
