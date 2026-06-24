@@ -104,3 +104,7 @@ node_modules/
 # ================================
 *.pem
 *.key
+*.cpython
+*.pyc
+package-lock.json
+__init__.py

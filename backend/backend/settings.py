@@ -35,12 +35,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+<<<<<<< HEAD
     "django.contrib.postgres",
 
+=======
+    "subscriptions",
+    "core",
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
     # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+<<<<<<< HEAD
     "storages",         # For AWS S3 / Cloud storage
     "anymail",          # For Email services
     "channels",         # For WebSockets
@@ -51,6 +57,17 @@ INSTALLED_APPS = [
     "subscriptions",    # Subscription management
     "storage",          # Your local storage logic app
     "chat",             # Your chat app
+=======
+    'django.contrib.postgres',
+    "storages",
+    'anymail',  
+    # YOUR APPS
+    "accounts",  # your authentication app
+    "channels", # for WebSocket support
+    'chat', # your chat app
+    "django_extensions",
+    "storage",
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
 ]
 
 

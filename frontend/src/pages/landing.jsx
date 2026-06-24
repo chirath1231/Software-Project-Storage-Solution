@@ -24,14 +24,39 @@ function Landing() {
     const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+useEffect(() => {
+  const fetchPlans = async () => {
+    try {
+      const token = localStorage.getItem("access");
 
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/subscriptions/")
-      .then((res) => res.json())
-      .then((data) => setPlans(data))
-      .catch((err) => console.error("Error fetching plans:", err))
-      .finally(() => setLoading(false));
-  }, []);
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/subscriptions/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      // 🔥 important check
+      if (Array.isArray(data)) {
+        setPlans(data);
+      } else {
+        console.error("API returned non-array:", data);
+        setPlans([]);
+      }
+    } catch (err) {
+      console.error("Error fetching plans:", err);
+      setPlans([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPlans();
+}, []);
 
   if (loading) return <h2 className="loading">Loading...</h2>;
 

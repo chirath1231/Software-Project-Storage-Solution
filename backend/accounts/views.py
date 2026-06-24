@@ -103,11 +103,34 @@ class GoogleLoginAPIView(APIView):
         token = serializer.validated_data['token']
 
         try:
+<<<<<<< HEAD
             idinfo = id_token.verify_oauth2_token(
                 token,
                 google_requests.Request(),
                 GOOGLE_CLIENT_ID
             )
+=======
+            # Try verifying as a Google ID token (web frontend flow)
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    token,
+                    google_requests.Request(),
+                    GOOGLE_CLIENT_ID
+                )
+            except ValueError:
+                # Fall back to access token — fetch user info from Google (mobile flow)
+                resp = requests.get(
+                    "https://www.googleapis.com/userinfo/v2/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5,
+                )
+                if resp.status_code != 200:
+                    return Response(
+                        {"detail": "Invalid Google token"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                idinfo = resp.json()
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
 
             email = idinfo['email']
             name = idinfo.get('name', email.split('@')[0])

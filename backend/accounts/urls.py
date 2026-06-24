@@ -12,6 +12,11 @@ urlpatterns = [
     path("google/", GoogleLoginAPIView.as_view()),
     path('events/', EventListCreateView.as_view(), name='event-list-create'),
     path('events/<int:pk>/', EventDetailView.as_view(), name='event-detail'),
+<<<<<<< HEAD
     path('notifications/', NotificationListView.as_view(), name='notifications-list'),
     path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
+=======
+    # path('notifications/', NotificationListView.as_view(), name='notifications-list'),
+    # path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
 ]

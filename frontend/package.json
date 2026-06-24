@@ -6,8 +6,12 @@
     "@aws-sdk/client-s3": "^3.992.0",
     "@react-oauth/google": "^0.12.2",
     "@tailwindcss/vite": "^4.1.18",
+<<<<<<< HEAD
     "axios": "^1.13.5",
     "date-fns": "^4.1.0",
+=======
+    "axios": "^1.15.2",
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
     "lucide-react": "^0.561.0",
     "react": "^18.2.0",
     "react-big-calendar": "^1.19.4",

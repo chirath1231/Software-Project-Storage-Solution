@@ -1,7 +1,8 @@
-# backend/storage/views.py
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+<<<<<<< HEAD
 from django.shortcuts import redirect
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -13,21 +14,25 @@ import uuid
 from accounts.views import create_system_notification 
 
 # ---------------- UPLOAD FILE ----------------
+=======
+from .models import File
+
+
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def upload_file(request):
     uploaded_file = request.FILES.get("file")
-
     if not uploaded_file:
         return Response({"error": "No file uploaded"}, status=400)
 
-    # Save file
     file_obj = File.objects.create(
         user=request.user,
         name=uploaded_file.name,
         file=uploaded_file,
         size=uploaded_file.size
     )
+<<<<<<< HEAD
 
     # --- NEW: Trigger Upload Success Notification ---
     create_system_notification(
@@ -78,37 +83,63 @@ def upload_file(request):
         "token": str(share.token),
         "expiry": share.expiry
     })
+=======
+    return Response({"message": "Uploaded successfully", "url": file_obj.file.url})
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
 
 
-# ---------------- LIST FILES ----------------
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_files(request):
-    files = File.objects.filter(user=request.user)
+    # request.user comes from the JWT token — no user_id param needed
+    files = File.objects.filter(user=request.user, is_deleted=False)
+    data = [{
+        "id": f.id,
+        "name": f.name,
+        "size": f.size,
+        "uploaded_at": f.uploaded_at,
+        "url": f.file.url,
+    } for f in files]
+    return Response(data)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def move_to_trash(request, id):
+    try:
+        file = File.objects.get(id=id, user=request.user)
+
+        file.is_deleted = True
+        file.deleted_at = timezone.now()  # ✅ mark time
+        file.save()
+
+        return Response({"message": "Moved to trash"})
+    except File.DoesNotExist:
+        return Response({"error": "Not found"}, status=404)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_trash(request):
+    files = File.objects.filter(user=request.user, is_deleted=True)
+
     data = []
-
     for f in files:
-        shares = ShareLink.objects.filter(file=f)
-        share_links = [
-            request.build_absolute_uri(f"/api/share/{s.token}/") for s in shares
-        ]
-
         data.append({
             "id": f.id,
             "name": f.name,
             "size": f.size,
             "uploaded_at": f.uploaded_at,
-            "share_links": share_links
+            "deleted_at": f.deleted_at,  # ✅ send this
+            "url": f.file.url
         })
 
     return Response(data)
 
-
-# ---------------- DELETE FILE ----------------
-@api_view(["DELETE"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def delete_file(request, id):
+def restore_file(request, id):
     try:
+<<<<<<< HEAD
         file = File.objects.get(id=id, user=request.user)
         file_name = file.name # Save name before deleting
         file.file.delete()
@@ -122,25 +153,29 @@ def delete_file(request, id):
         )
 
         return Response({"message": "Deleted"})
+=======
+        file = File.objects.get(id=id, user=request.user, is_deleted=True)
+
+        file.is_deleted = False
+        file.deleted_at = None  # ✅ clear
+        file.save()
+
+        return Response({"message": "Restored"})
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
     except File.DoesNotExist:
         return Response({"error": "Not found"}, status=404)
 
 
-# ---------------- GENERATE SHARE LINK ----------------
-@api_view(["POST"])
+@api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def generate_share_link(request, file_id):
-    expiry_str = request.data.get("expiry_date")
-    if not expiry_str:
-        return Response({"error": "Expiry date required"}, status=400)
-
-    expiry_date = parse_datetime(expiry_str)
-    if not expiry_date:
-        return Response({"error": "Invalid expiry date"}, status=400)
-
+def permanent_delete_file(request, id):
     try:
-        file = File.objects.get(id=file_id, user=request.user)
+        file = File.objects.get(id=id, user=request.user, is_deleted=True)
+        file.file.delete()  # removes from Digital Ocean Spaces
+        file.delete()
+        return Response({"message": "Permanently deleted"})
     except File.DoesNotExist:
+<<<<<<< HEAD
         return Response({"error": "File not found"}, status=404)
 
     share = ShareLink.objects.create(
@@ -173,3 +208,6 @@ def access_shared_file(request, token):
 
     except ShareLink.DoesNotExist:
         return Response({"error": "Invalid link"}, status=404)
+=======
+        return Response({"error": "Not found"}, status=404)
+>>>>>>> 033a4415673509957acf845880283bc658bc5224
