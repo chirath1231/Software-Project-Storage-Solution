@@ -79,7 +79,7 @@ function Login() {
   };
 
   // ==========================
-  // 🔵 GOOGLE LOGIN (Updated for Debugging)
+  // 🔵 GOOGLE LOGIN
   // ==========================
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
@@ -91,7 +91,7 @@ function Login() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            token: credentialResponse.credential, // Make sure your Django Serializer expects "token"
+            token: credentialResponse.credential,
           }),
         }
       );
@@ -99,9 +99,7 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        // --- NEW: Print the EXACT error from Django to the console ---
-        console.error("🚨 Django rejected the Google Login. Reason:", data);
-        alert(`Google Login Failed: ${data.detail || JSON.stringify(data)}`);
+        alert("Google login failed");
         setLoading(false);
         return;
       }
@@ -113,8 +111,7 @@ function Login() {
       login(data.access, data.username);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Network or parsing error:", error);
-      alert("Google login error. Check console.");
+      alert("Google login error");
     }
 
     setLoading(false);

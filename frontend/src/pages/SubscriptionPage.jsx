@@ -7,7 +7,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(true);
 
   const userEmail = localStorage.getItem("username");
-  const token = localStorage.getItem("access_token"); 
+  const token = localStorage.getItem("access_token"); // change key if needed
 
   useEffect(() => {
     const authHeaders = token
@@ -48,16 +48,13 @@ export default function SubscriptionPage() {
 
     Promise.all([fetchPlans, fetchUserActive])
       .then(([plans, userActive]) => {
-        console.log("Raw plans response from Django:", plans);
-        
-        // --- THE FIX: Handle both direct arrays AND Django Pagination objects ---
-        const plansArray = Array.isArray(plans) ? plans : (plans.results || []);
-        setSubscriptions(plansArray);
+        console.log("plans response:", plans);
+        console.log("userActive response:", userActive);
+
+        setSubscriptions(Array.isArray(plans) ? plans : []);
 
         const paidIds = new Set();
-        const userActiveArray = Array.isArray(userActive) ? userActive : (userActive.results || []);
-        
-        userActiveArray.forEach((r) => {
+        (Array.isArray(userActive) ? userActive : []).forEach((r) => {
           if (r.subscription_id) paidIds.add(Number(r.subscription_id));
         });
         setPaidSubs(paidIds);
@@ -138,70 +135,62 @@ export default function SubscriptionPage() {
         Choose the plan that fits your needs
       </p>
 
-      {/* --- THE FIX: Show a clear message if the database is empty --- */}
-      {subscriptions.length === 0 ? (
-        <div className="text-center bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-lg mx-auto">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">No Plans Available</h3>
-          <p className="text-gray-500">The administrator hasn't added any subscription plans to the database yet. Please check back later!</p>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
-          {subscriptions.map((sub) => {
-            const isPaid = paidSubs.has(sub.id);
-            const isBest = sub.name === "Standard";
+      <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
+        {subscriptions.map((sub) => {
+          const isPaid = paidSubs.has(sub.id);
+          const isBest = sub.name === "Standard";
 
-            return (
-              <div
-                key={sub.id}
-                className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border ${
-                  isBest ? "border-orange-400" : "border-gray-200"
-                } hover:scale-105 transition-transform`}
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <span className="px-3 py-1 rounded-full text-sm font-semibold">
-                    {sub.name}
+          return (
+            <div
+              key={sub.id}
+              className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border ${
+                isBest ? "border-orange-400" : "border-gray-200"
+              } hover:scale-105 transition-transform`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <span className="px-3 py-1 rounded-full text-sm font-semibold">
+                  {sub.name}
+                </span>
+
+                {isBest && (
+                  <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    Best Value
                   </span>
-
-                  {isBest && (
-                    <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      Best Value
-                    </span>
-                  )}
-                </div>
-
-                <h2 className="text-2xl font-bold mb-2">
-                  Rs. {Number(sub.price).toFixed(2)}
-                </h2>
-
-                <p className="text-gray-500 mb-4">{sub.description}</p>
-
-                <ul className="mb-6 space-y-2 text-gray-600 text-sm">
-                  {(Array.isArray(sub.features) ? sub.features : []).map((feat, i) => (
-                    <li key={i} className="flex items-center">
-                      <span className="mr-2 text-green-500">✔</span> {feat}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  className={`flex items-center justify-center gap-2 font-semibold py-2 rounded-xl w-full text-white ${
-                    isPaid
-                      ? "bg-gray-400 cursor-not-allowed opacity-60"
-                      : isBest
-                      ? "bg-orange-500 hover:bg-orange-600"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  } transition-colors`}
-                  onClick={() => handleSubscribe(sub)}
-                  disabled={isPaid}
-                >
-                  <img src={buynow} alt="buy" className="w-5" />
-                  {isPaid ? "Subscribed" : "Subscribe Now"}
-                </button>
+                )}
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <h2 className="text-2xl font-bold mb-2">
+                Rs. {Number(sub.price).toFixed(2)}
+              </h2>
+
+              <p className="text-gray-500 mb-4">{sub.description}</p>
+
+              <ul className="mb-6 space-y-2 text-gray-600 text-sm">
+                {(Array.isArray(sub.features) ? sub.features : []).map((feat, i) => (
+                  <li key={i} className="flex items-center">
+                    <span className="mr-2 text-green-500">✔</span> {feat}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                className={`flex items-center justify-center gap-2 font-semibold py-2 rounded-xl w-full text-white ${
+                  isPaid
+                    ? "bg-gray-400 cursor-not-allowed opacity-60"
+                    : isBest
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : "bg-blue-500 hover:bg-blue-600"
+                } transition-colors`}
+                onClick={() => handleSubscribe(sub)}
+                disabled={isPaid}
+              >
+                <img src={buynow} alt="buy" className="w-5" />
+                {isPaid ? "Subscribed" : "Subscribe Now"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

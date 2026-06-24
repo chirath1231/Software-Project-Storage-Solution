@@ -1,12 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Search, Paperclip, Send } from "lucide-react";
+import { Search, Paperclip, Send, X } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
-
-// --- 1. IMPORT GLOBAL NOTIFICATIONS ---
-import { useNotifications } from '../context/NotificationContext';
 
 // ✅ one axios client (avoid URL mistakes)
 const api = axios.create({
@@ -31,9 +28,6 @@ const formatTime = (isoOrDate) => {
 };
 
 const ClientChatSystem = () => {
-  // --- 2. HOOK INTO THE GLOBAL BRAIN ---
-  const { fetchGlobalNotifications } = useNotifications();
-
   // ----------------- State -----------------
   const [search, setSearch] = useState("");
   const [conversations, setConversations] = useState([]); // left list
@@ -48,10 +42,34 @@ const ClientChatSystem = () => {
   const [usersLoading, setUsersLoading] = useState(false);
 
   const wsRef = useRef(null);
+  const fileInputRef = useRef(null); // ✅ For file attachments
+
+  // ----------------- Handle Attachments -----------------
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log("File selected:", file);
+      // TODO: Call your Upload API here
+    }
+  };
 
   // Current user identity (best you currently have)
   const currentUsername =
     sessionStorage.getItem("username") || localStorage.getItem("username") || "";
+
+  // ================= AUTO SCROLL FIX =================
+  const messagesContainerRef = useRef(null);
+
+  const scrollToBottom = () => {
+    const el = messagesContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // ----------------- Derived -----------------
   const selectedConversation = useMemo(() => {
@@ -121,28 +139,19 @@ const ClientChatSystem = () => {
   // ----------------- New Chat: Start conversation -----------------
   const startChatWithUser = async (otherUserId) => {
     try {
-      const res = await api.post("/conversations/start/", {
-        other_user_id: otherUserId,
-      });
-
-      const newConversationId = res.data?.conversation_id;
-      if (!newConversationId) {
-        console.error("No conversation_id returned");
-        return;
-      }
-
+      const res = await api.post("/conversations/start/", { other_user_id: otherUserId });
       await loadConversations();
-      setSelectedConversationId(newConversationId);
-      setShowNewChat(false);
-      
-      // --- 3. REFRESH NOTIFICATIONS ON NEW CHAT ---
-      fetchGlobalNotifications();
-      
+      setSelectedConversationId(res.data?.conversation_id);
+      setSearch(""); // Reset search after starting
     } catch (err) {
       console.error("Failed to start chat:", err);
     }
   };
 
+  useEffect(() => {
+    loadConversations();
+    loadUsers();
+  }, []);
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
     loadConversations();
@@ -190,6 +199,26 @@ const ClientChatSystem = () => {
       try {
         const data = JSON.parse(event.data);
 
+        // --- NEW EDIT: Handle Status Updates ---
+        if (data.type === "status_update") {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.other_user?.id === data.user_id
+                ? {
+                    ...c,
+                    other_user: {
+                      ...c.other_user,
+                      is_online: data.is_online,
+                      last_active: data.is_online ? "Active now" : "Just now",
+                    },
+                  }
+                : c
+            )
+          );
+          return; // Stop processing this as a message
+        }
+        // --- END EDIT ---
+
         const incomingText = (data.text || "").trim();
         if (!incomingText) return;
 
@@ -199,12 +228,10 @@ const ClientChatSystem = () => {
           sender: data.sender ?? null,
           sender_username: data.sender_username ?? "Unknown",
           timestamp: data.created_at || new Date().toISOString(),
-          is_mine:
-            (data.sender_username && data.sender_username === currentUsername) ||
-            false,
+          is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
         };
 
-        // ✅ FIX DUPLICATES: if server echoed back optimistic msg, replace it
+        // Update Message UI
         setMessages((prev) => {
           if (data.client_id) {
             const idx = prev.findIndex((m) => m.id === data.client_id);
@@ -214,40 +241,31 @@ const ClientChatSystem = () => {
               return copy;
             }
           }
-
-          // normal de-dupe by DB id
           if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-
           return [...prev, incoming];
         });
 
-        // update preview
-        setConversations((prev) =>
-          prev.map((c) =>
+        // Update Conversation List + SORT TO TOP
+        setConversations((prev) => {
+          const updated = prev.map((c) =>
             c.id === selectedConversationId
-              ? {
-                  ...c,
-                  last_message: {
-                    text: incomingText,
-                    timestamp: incoming.timestamp,
-                  },
-                  unread_count: 0,
-                }
+              ? { ...c, last_message: { text: incomingText, timestamp: incoming.timestamp }, unread_count: 0 }
               : c
-          )
-        );
+          );
+          // Sort by date (newest first)
+          return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
+        });
       } catch (e) {
         console.error("WS message parse error:", e);
       }
     };
-
     ws.onclose = () => console.log("WS closed");
     ws.onerror = (e) => console.error("WS error:", e);
 
     return () => {
       try {
         ws.close();
-      } catch {}
+      } catch { }
     };
   }, [selectedConversationId, currentUsername]);
 
@@ -257,7 +275,6 @@ const ClientChatSystem = () => {
     if (!text) return;
     if (!selectedConversationId) return;
 
-    // ✅ Optimistic UI
     const tempId = `temp-${Date.now()}`;
     const optimistic = {
       id: tempId,
@@ -270,33 +287,33 @@ const ClientChatSystem = () => {
     setMessages((prev) => [...prev, optimistic]);
     setMessageInput("");
 
-    // 1) WebSocket primary (server saves + broadcasts)
+    // Update Conversation List (Move to top locally immediately)
+    setConversations((prev) => {
+      const updated = prev.map((c) =>
+        c.id === selectedConversationId
+          ? { ...c, last_message: { text, timestamp: new Date().toISOString() } }
+          : c
+      );
+      return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
+    });
+
+    // WebSocket send
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // ✅ IMPORTANT: send client_id so we can replace optimistic message
       wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
-      
-      // --- 4. REFRESH NOTIFICATIONS (WS PATH) ---
-      fetchGlobalNotifications();
       return;
     }
 
-    // 2) HTTP fallback (if WS not connected)
+    // HTTP fallback
     try {
       const res = await api.post("/messages/send/", {
         conversation_id: selectedConversationId,
         text,
       });
-
-      // Replace optimistic with real DB message
       setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
-      
-      // --- 5. REFRESH NOTIFICATIONS (HTTP PATH) ---
-      fetchGlobalNotifications();
-      
     } catch (err) {
       console.error("Send message failed:", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      alert("Message send failed (WS closed and HTTP failed).");
+      alert("Message send failed.");
     }
   };
 
@@ -313,71 +330,81 @@ const ClientChatSystem = () => {
     });
   }, [conversations, search]);
 
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return users.filter((u) => u.username.toLowerCase().includes(q));
+  }, [users, search]);
+
   // ----------------- Render -----------------
   return (
     <div>
+
+      <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Clients
+          </h1>
+          <p className="text-gray-500 mt-1">Manage your clients, share files, and track activity </p>
+        </div>
+      </div>
+
       <div className="flex h-screen bg-white">
+
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
+
           {/* Sidebar (Clients List) */}
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-            {/* Header + Search */}
+            {/* Header + Unified Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
-              {/* ✅ New Chat button */}
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Chats</h3>
-                <button
-                  onClick={() => {
-                    setShowNewChat((v) => !v);
-                    if (!showNewChat) loadUsers();
-                  }}
-                  className="px-3 py-1 rounded-lg bg-orange-500 text-white text-sm hover:bg-orange-600"
-                >
-                  New Chat
-                </button>
-              </div>
-
-              {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+                {!search && (
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                )}
+                {/* Input */}
                 <input
                   type="text"
                   placeholder="Search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className={`w-full ${search ? "pl-4" : "pl-5"
+                    } pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setShowNewChat(false);
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
+              {/* Search Results Panel */}
+              {search.length > 0 && (
+                <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
 
-              {/* ✅ New Chat panel */}
-              {showNewChat && (
-                <div className="mt-4 p-3 border rounded-lg bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-gray-800">Start a chat</p>
-                    <button
-                      className="text-sm text-gray-500 hover:text-gray-800"
-                      onClick={() => setShowNewChat(false)}
-                    >
-                      Close
-                    </button>
-                  </div>
-
-                  {usersLoading ? (
-                    <p className="text-sm text-gray-500">Loading users...</p>
-                  ) : (
-                    <div className="max-h-48 overflow-y-auto">
-                      {users.length === 0 ? (
-                        <p className="text-sm text-gray-500">No users found.</p>
-                      ) : (
-                        users.map((u) => (
-                          <div
-                            key={u.id}
-                            onClick={() => startChatWithUser(u.id)}
-                            className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
-                          >
-                            {u.username}
-                          </div>
-                        ))
-                      )}
+                  {filteredConversations.length > 0 && (
+                    <div className="p-2 border-b">
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">Chats</p>
+                      {filteredConversations.map((c) => (
+                        <div key={c.id} onClick={() => { setSelectedConversationId(c.id); setSearch(""); }} className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm">
+                          {c.other_user?.username || "Chat"}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {filteredUsers.length > 0 && (
+                    <div className="p-2">
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">People</p>
+                      {filteredUsers.map((u) => (
+                        <div key={u.id} onClick={() => { startChatWithUser(u.id); }} className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium">
+                          + Start chat with {u.username}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -385,65 +412,65 @@ const ClientChatSystem = () => {
             </div>
 
             {/* Conversations */}
-            <div className="flex-1 overflow-y-auto">
-              {filteredConversations.map((conv) => {
-                const other = conv.other_user || {};
-                const isSelected = selectedConversationId === conv.id;
+            {search.length === 0 && (
+              <div className="flex-1 overflow-y-auto">
+                {filteredConversations.map((conv) => {
+                  const other = conv.other_user || {};
+                  const isSelected = selectedConversationId === conv.id;
 
-                const name =
-                  other.full_name ||
-                  other.username ||
-                  other.email ||
-                  `Conversation #${conv.id}`;
-                const avatar = other.avatar_emoji || "👤";
-                const online = Boolean(other.is_online);
-                const preview = conv.last_message?.text || "";
-                const unread = conv.unread_count || 0;
+                  const name =
+                    other.full_name ||
+                    other.username ||
+                    other.email ||
+                    `Conversation #${conv.id}`;
+                  const avatar = other.avatar_emoji || "👤";
+                  const online = Boolean(other.is_online);
+                  const preview = conv.last_message?.text || "";
+                  const unread = conv.unread_count || 0;
 
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => setSelectedConversationId(conv.id)}
-                    className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${
-                      isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
-                        {avatar}
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => setSelectedConversationId(conv.id)}
+                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"
+                        }`}
+                    >
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
+                          {avatar}
+                        </div>
+                        {online && (
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                        )}
                       </div>
-                      {online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"
+                            }`}
+                        >
+                          {name}
+                        </h3>
+                        <p
+                          className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"
+                            }`}
+                        >
+                          {preview}
+                        </p>
+                      </div>
+
+                      {unread > 0 && (
+                        <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                          {unread}
+                        </div>
                       )}
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-semibold truncate ${
-                          isSelected ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        {name}
-                      </h3>
-                      <p
-                        className={`text-sm truncate ${
-                          isSelected ? "text-white/80" : "text-gray-500"
-                        }`}
-                      >
-                        {preview}
-                      </p>
-                    </div>
-
-                    {unread > 0 && (
-                      <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                        {unread}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
 
           {/* Chat Area */}
           <div className="flex-1 flex flex-col bg-white">
@@ -472,26 +499,29 @@ const ClientChatSystem = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4" >
+
               {messages.map((m) => {
                 const isMine =
                   m.is_mine === true ||
                   (m.sender_username && m.sender_username === currentUsername);
 
                 return (
-                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`} >
+
                     <div
-                      className={`max-w-md rounded-2xl p-4 ${
-                        isMine
-                          ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
-                          : "bg-white shadow-lg text-gray-900"
-                      }`}
+                      className={`max-w-md rounded-2xl p-4 ${isMine
+                        ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
+                        : "bg-white shadow-lg text-gray-900"
+                        }`}
                     >
                       <p className={isMine ? "text-white" : "text-gray-900"}>{m.text}</p>
                       <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
                         {formatTime(m.timestamp)}
                       </p>
+
                     </div>
+
                   </div>
                 );
               })}
@@ -507,12 +537,12 @@ const ClientChatSystem = () => {
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="flex-1 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+
                 />
 
-                <button
-                  className="p-3 text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Attach file (later)"
-                >
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+
+                <button onClick={() => fileInputRef.current.click()} className="p-3 text-gray-500 hover:text-gray-700">
                   <Paperclip className="w-6 h-6" />
                 </button>
 
@@ -522,7 +552,9 @@ const ClientChatSystem = () => {
                 >
                   <Send className="w-5 h-5" />
                 </button>
+
               </div>
+
             </div>
           </div>
 
@@ -586,6 +618,8 @@ const ClientChatSystem = () => {
           </div>
         </div>
       </div>
+
+
     </div>
   );
 };

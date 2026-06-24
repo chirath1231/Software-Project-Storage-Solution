@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
-
+import sys
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,47 +27,31 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
-    # DJANGO CORE APPS
-    "daphne",  # Must be at the top if using Channels/WebSockets
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-<<<<<<< HEAD
-    "django.contrib.postgres",
-
-=======
     "subscriptions",
-    "core",
->>>>>>> 033a4415673509957acf845880283bc658bc5224
     # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-<<<<<<< HEAD
-    "storages",         # For AWS S3 / Cloud storage
-    "anymail",          # For Email services
-    "channels",         # For WebSockets
-    "django_extensions",
-
-    # YOUR LOCAL APPS
-    "accounts",         # Your authentication app
-    "subscriptions",    # Subscription management
-    "storage",          # Your local storage logic app
-    "chat",             # Your chat app
-=======
     'django.contrib.postgres',
-    "storages",
-    'anymail',  
     # YOUR APPS
     "accounts",  # your authentication app
     "channels", # for WebSocket support
     'chat', # your chat app
     "django_extensions",
+    "storages",
     "storage",
->>>>>>> 033a4415673509957acf845880283bc658bc5224
+    'anymail',
+    'tickets',
+    'admin_management',
+    # 'assistant',
+    'sharing',  # the new sharing app
 ]
 
 
@@ -225,8 +209,15 @@ REST_FRAMEWORK = {
     ),
         "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-    ]
+    ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+
 }
+
+
+
 
 DOMAIN = 'http://localhost:3000'
 
@@ -238,8 +229,8 @@ SIMPLE_JWT = {
 
 
 
-AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
-AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
 AWS_S3_REGION_NAME = "sfo3"
@@ -264,7 +255,16 @@ STORAGES = {
     },
 }
 
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
 
+    def __getitem__(self, item):
+        return None
+
+
+if "test" in sys.argv:
+    MIGRATION_MODULES = DisableMigrations()
 
 
 CSRF_TRUSTED_ORIGINS = [
