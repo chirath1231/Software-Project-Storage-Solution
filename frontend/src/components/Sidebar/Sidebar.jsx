@@ -70,7 +70,7 @@ export default function Sidebar({ isAdmin = false }) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="absolute md:static md:min-h-screen bg-transparent md:bg-white">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}

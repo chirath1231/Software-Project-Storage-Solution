@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Search, Paperclip, Send, X } from "lucide-react";
+import { Search, Paperclip, Send, X, ArrowLeft, Info } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
@@ -40,6 +40,9 @@ const ClientChatSystem = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
+
+  // Responsive Details states
+  const [showDetailsMobile, setShowDetailsMobile] = useState(false);
 
   const wsRef = useRef(null);
   const fileInputRef = useRef(null); // ✅ For file attachments
@@ -102,6 +105,10 @@ const ClientChatSystem = () => {
       unread: selectedConversation.unread_count || 0,
     };
   }, [selectedConversation]);
+
+  useEffect(() => {
+    setShowDetailsMobile(false);
+  }, [selectedConversationId]);
 
   // ----------------- Helpers: Load Conversations -----------------
   const loadConversations = async () => {
@@ -354,7 +361,7 @@ const ClientChatSystem = () => {
         <div className="flex flex-row mt-10 mb-5 flex-1 bg-white">
 
           {/* Sidebar (Clients List) */}
-          <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg">
+          <div className={`${selectedConversationId ? "hidden" : "flex w-full"} md:flex md:w-80 bg-white border-r border-gray-200 flex-col shadow-lg`}>
             {/* Header + Unified Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
               <div className="relative">
@@ -377,7 +384,7 @@ const ClientChatSystem = () => {
                       setSearch("");
                       setShowNewChat(false);
                     }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition z-10"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -473,12 +480,21 @@ const ClientChatSystem = () => {
 
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col bg-white">
+          <div className={`${selectedConversationId ? "flex-1 flex" : "hidden"} md:flex md:flex-1 flex-col bg-white`}>
             {/* Chat Header */}
-            <div className="bg-orange-100 p-6">
+            <div className="bg-orange-100 p-6 flex items-center justify-between">
               {selectedClient ? (
-                <div className="flex items-center gap-3">
-                  <div className="relative">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {/* Mobile Back Button */}
+                  <button 
+                    onClick={() => setSelectedConversationId(null)}
+                    className="md:hidden mr-2 p-1.5 rounded hover:bg-orange-200 text-gray-700 transition flex-shrink-0"
+                    title="Back to list"
+                  >
+                    <ArrowLeft className="w-6 h-6" />
+                  </button>
+
+                  <div className="relative flex-shrink-0">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
                       {selectedClient.avatar}
                     </div>
@@ -486,15 +502,25 @@ const ClientChatSystem = () => {
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                     )}
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedClient.name}</h2>
-                    <p className="text-sm text-gray-600">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-xl font-bold text-gray-900 truncate">{selectedClient.name}</h2>
+                    <p className="text-sm text-gray-600 truncate">
                       {selectedClient.online ? "Active now" : selectedClient.lastActive || "Offline"}
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="text-gray-700">Select a conversation</div>
+              )}
+
+              {selectedClient && (
+                <button 
+                  onClick={() => setShowDetailsMobile(true)}
+                  className="md:hidden text-gray-600 hover:text-orange-600 p-2 rounded hover:bg-orange-200 transition-colors flex-shrink-0"
+                  title="View details"
+                >
+                  <Info className="w-6 h-6" />
+                </button>
               )}
             </div>
 
@@ -558,10 +584,33 @@ const ClientChatSystem = () => {
             </div>
           </div>
 
-          {/* Client Details Sidebar */}
-          <div className="w-80 bg-orange-50 shadow-lg p-6 overflow-y-auto mr-10">
-            {selectedClient ? (
-              <>
+          {/* Details Sidebar/Drawer */}
+          {selectedClient && (
+            <>
+              {/* Mobile Drawer Overlay Backdrop */}
+              {showDetailsMobile && (
+                <div 
+                  className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+                  onClick={() => setShowDetailsMobile(false)}
+                />
+              )}
+
+              {/* Sidebar/Drawer Container */}
+              <div className={`
+                fixed md:static inset-y-0 right-0 z-50 w-80 max-w-[85%] bg-orange-50 shadow-lg p-6 overflow-y-auto transition-transform duration-300 ease-in-out md:transition-none
+                ${showDetailsMobile ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+                md:flex md:flex-col md:mr-10
+              `}>
+                
+                {/* Mobile Drawer Header */}
+                <div className="flex md:hidden justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-800">Client Details</h3>
+                  <button onClick={() => setShowDetailsMobile(false)} className="text-gray-500 hover:text-red-500">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Details Contents */}
                 <div className="flex flex-col items-center text-center mb-6">
                   <div className="relative mb-4">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-5xl border-4 border-white shadow-lg">
@@ -611,11 +660,9 @@ const ClientChatSystem = () => {
                     </div>
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="text-gray-700">No conversation selected</div>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
