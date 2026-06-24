@@ -7,7 +7,15 @@ from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
-from google.oauth2 import id_token
+
+try:
+    from google.oauth2 import id_token
+except ImportError:
+    import sys
+    print("Current Python Executable:", sys.executable)
+    print("System Path:", sys.path)
+    raise
+
 from google.auth.transport import requests as google_requests
 
 from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer
