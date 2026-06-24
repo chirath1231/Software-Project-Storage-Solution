@@ -58,16 +58,6 @@ export default function DashboardHome() {
   // FETCH FILES
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
-    //======= dummy ==========
-    if (!userId) {
-      setFiles([]);
-      setStorageUsed(0);
-      setTotalUsedGB(0);
-      setIsStorageFull(false);
-      return;
-    }
-    //======================
-    
     try {
       // Fetch from storage_file table filtered by user_id
       const res = await api.get(`/api/files/?user_id=${userId}`);
@@ -526,20 +516,6 @@ export default function DashboardHome() {
             </table>
           </div>
         )}
-      </div>
-
-      {/* Notifications */}
-      <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">
-            Notifications
-          </h2>
-          <Link to="/dashboard/notifications">
-            <button className="bg-orange-500 hover:bg-orange-600 transition text-white px-4 py-1 rounded-full text-sm">
-              See All
-            </button>
-          </Link>
-        </div>
       </div>
     </div>
   );

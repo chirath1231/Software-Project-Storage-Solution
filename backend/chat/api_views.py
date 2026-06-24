@@ -174,22 +174,3 @@ class StartConversationView(APIView):
             ConversationParticipant.objects.create(conversation=conversation, user_id=other_user_id)
 
         return Response({"conversation_id": conversation.id}, status=status.HTTP_200_OK)
-
-class DeleteMessageView(APIView):
-    """
-    DELETE /api/messages/<message_id>/delete/
-    Deletes a specific message if the requester is the sender.
-    """
-    permission_classes = [permissions.IsAuthenticated]
-
-    def delete(self, request, message_id: int):
-        try:
-            # We filter by both ID and sender to ensure a user can only delete their own messages
-            message = Message.objects.get(id=message_id, sender=request.user)
-            message.delete()
-            return Response({"detail": "Message deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-        except Message.DoesNotExist:
-            return Response(
-                {"detail": "Message not found or you do not have permission to delete it."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )

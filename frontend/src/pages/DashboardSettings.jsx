@@ -7,9 +7,9 @@ export default function DashboardSettings() {
   const settingsItems = [
     { name: "Profile Settings", path: "/dashboard/profile-settings" },
     { name: "Security", path: "/dashboard/security" },
-    { name: "Notifications", path: "/dashboard/settings/notifications" },
+    { name: "Notifications", path: "/dashboard/notifications" },
     { name: "Privacy", path: "/dashboard/privacy" },
-    { name: "Ticket Submission", path: "/ticket-submission" },
+    { name: "Ticket Submission", path: "/dashboard/ticket-submission" },
     { name: "Delete Account", path: "/dashboard/delete-account" },
   ];
 

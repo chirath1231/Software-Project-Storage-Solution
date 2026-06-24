@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
-
+import sys
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,23 +35,23 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "subscriptions",
+    # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
     'django.contrib.postgres',
     # YOUR APPS
     "accounts",  # your authentication app
-
     "channels", # for WebSocket support
     'chat', # your chat app
     "django_extensions",
-
     "storages",
     "storage",
-    
-    'anymail',  
+    'anymail',
     'tickets',
-
+    'admin_management',
+    # 'assistant',
+    'sharing',  # the new sharing app
 ]
 
 
@@ -65,6 +65,8 @@ SESSION_COOKIE_SAMESITE = "None"
 CSRF_USE_SESSIONS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
+
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -93,6 +95,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
 
 # -----------------------------------------------------
 # URL CONFIG
@@ -162,6 +172,8 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -197,8 +209,15 @@ REST_FRAMEWORK = {
     ),
         "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-    ]
+    ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+
 }
+
+
+
 
 DOMAIN = 'http://localhost:3000'
 
@@ -210,8 +229,8 @@ SIMPLE_JWT = {
 
 
 
-AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
-AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
 AWS_S3_REGION_NAME = "sfo3"
@@ -236,7 +255,16 @@ STORAGES = {
     },
 }
 
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
 
+    def __getitem__(self, item):
+        return None
+
+
+if "test" in sys.argv:
+    MIGRATION_MODULES = DisableMigrations()
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -244,16 +272,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-# -----------------------------------------------------
-# MAILGUN ANYMAIL SETUP
-# -----------------------------------------------------
-ANYMAIL = {
-    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY"), 
-    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_DOMAIN"), 
-}
-
-# Tell Django to use Anymail for sending emails
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
-
-# The default email address your emails will come from (make sure to use your domain here)
-DEFAULT_FROM_EMAIL = f"CEYNOA Notifications <postmaster@{os.getenv('MAILGUN_DOMAIN')}>"
+# Local media fallback for development
+if DEBUG:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'

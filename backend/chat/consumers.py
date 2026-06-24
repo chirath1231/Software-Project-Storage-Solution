@@ -13,7 +13,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
+        # 1. Get the conversation ID
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
+        
+        # 2. DEFINED HERE: Now it exists for all subsequent methods
         self.room_group_name = f"chat_{self.conversation_id}"
 
         is_member = await self.is_member(user.id, self.conversation_id)
@@ -21,9 +24,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
+        # 3. Join the group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+        # 4. Update status
         await self.update_user_status(user.id, True)
         
+        # 5. Broadcast "User is Online"
         await self.channel_layer.group_send(
             self.room_group_name,
             {"type": "user_status_update", "user_id": user.id, "is_online": True}
@@ -32,9 +39,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
+        # ✅ The check hasattr(self, "room_group_name") is safe now, 
+        # but since we define it in connect, it will always be there for authenticated users.
         user = self.scope["user"]
         if user.is_authenticated:
             await self.update_user_status(user.id, False)
+            
+            # Broadcast "User is Offline"
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {"type": "user_status_update", "user_id": user.id, "is_online": False}
@@ -46,21 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         user = self.scope["user"]
         data = json.loads(text_data)
-        
-        # --- NEW: Handle Delete Action ---
-        action = data.get("action")
-        if action == "delete_message":
-            message_id = data.get("message_id")
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "chat_message_deleted",
-                    "message_id": message_id
-                }
-            )
-            return
 
-        # --- EXISTING: Handle Send Message ---
         text = (data.get("text") or "").strip()
         client_id = data.get("client_id")
 
@@ -75,13 +72,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_send(self.room_group_name, payload)
 
-    # --- NEW: Broadcast Delete to Clients ---
-    async def chat_message_deleted(self, event):
-        await self.send(text_data=json.dumps({
-            "action": "delete",
-            "message_id": event["message_id"]
-        }))
-
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
 
@@ -90,7 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "status_update",
             "user_id": event["user_id"],
             "is_online": event["is_online"]
-        }))     
+        }))    
 
     @database_sync_to_async
     def is_member(self, user_id, conversation_id):
