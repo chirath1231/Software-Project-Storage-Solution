@@ -70,20 +70,22 @@ export default function Sidebar({ isAdmin = false }) {
   };
 
   return (
-    <div className="absolute md:static md:min-h-screen bg-transparent md:bg-white">
+    <div className="md:static bg-transparent">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-6 left-6 z-50 p-3 bg-gradient-to-b from-orange-500 to-amber-400 text-white rounded-xl shadow-lg md:hidden hover:scale-105 transition-transform"
+        className={`fixed top-20 z-50 p-3 bg-gradient-to-b from-orange-500 to-amber-400 text-white rounded-xl shadow-lg md:hidden hover:scale-105 active:scale-95 transition-all duration-300 ${
+          isOpen ? "left-[295px] rotate-90" : "left-4 rotate-0"
+        }`}
         aria-label="Toggle menu"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/40 z-35 md:hidden transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -92,14 +94,18 @@ export default function Sidebar({ isAdmin = false }) {
       <div className="flex">
         <div
           className={`
-            w-[280px] min-h-screen
+            w-[280px] h-screen md:h-auto md:min-h-[calc(100vh-120px)]
             bg-gradient-to-b from-white via-orange-50 to-orange-200
             flex flex-col py-6
-            transition-transform duration-300 ease-in-out
-            z-40 mt-5 ml-10 rounded-2xl mb-5  mr-10
+            transition-all duration-300 ease-in-out
+            z-40
             
-            ${isOpen ? "fixed inset-y-0 left-0 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full"}
-            md:relative md:translate-x-0 md:w-[260px]
+            ${
+              isOpen 
+                ? "fixed inset-y-0 left-0 translate-x-0 mt-0 ml-0 mr-0 mb-0 rounded-none rounded-r-3xl shadow-2xl" 
+                : "fixed inset-y-0 left-0 -translate-x-full mt-0 ml-0 mr-0 mb-0"
+            }
+            md:relative md:translate-x-0 md:w-[260px] md:mt-5 md:ml-10 md:mr-10 md:mb-5 md:rounded-2xl
             lg:w-[280px]
             xl:w-[300px]
           `}

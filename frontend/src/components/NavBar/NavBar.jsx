@@ -224,6 +224,68 @@ const handleLogout = () => {
               />
             </div>
           )}
+
+          {/* Mobile user profile, settings, notifications, and logout (only when logged in) */}
+          {showDashboardView && (
+            <div className="flex md:hidden gap-4 mt-5 w-full flex-col border-t border-gray-750 pt-4">
+              {/* User Identity Info */}
+              <div className="flex items-center gap-3 px-2">
+                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-700 flex-shrink-0">
+                  {userData.avatar ? (
+                    <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={20} className="text-orange-500" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-0.5 text-left">
+                  <div className="text-white text-sm font-semibold">{username || userData.name}</div>
+                  <div className="text-gray-400 text-xs">{userData.email}</div>
+                </div>
+              </div>
+
+              {/* Notification Link */}
+              <button 
+                className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
+                onClick={() => {
+                  window.location.href = "/dashboard/notifications";
+                  setMenuOpen(false);
+                }}
+              >
+                <div className="relative">
+                  <Bell size={18} className="text-gray-300" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                Notifications
+              </button>
+
+              {/* Settings Link */}
+              <button 
+                className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
+                onClick={() => {
+                  window.location.href = "/dashboard/settings";
+                  setMenuOpen(false);
+                }}
+              >
+                <User size={18} className="text-gray-300" />
+                Profile & Settings
+              </button>
+
+              {/* Logout Button */}
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors mt-2"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right section - Auth buttons or Profile */}
