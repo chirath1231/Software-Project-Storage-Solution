@@ -47,6 +47,12 @@ const ClientChatSystem = () => {
   const wsRef = useRef(null);
   const fileInputRef = useRef(null); // ✅ For file attachments
 
+  // Ref to hold the active conversation ID for WebSocket message handlers (avoids React stale closure)
+  const selectedIdRef = useRef(selectedConversationId);
+  useEffect(() => {
+    selectedIdRef.current = selectedConversationId;
+  }, [selectedConversationId]);
+
   // ----------------- Handle Attachments -----------------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -96,7 +102,7 @@ const ClientChatSystem = () => {
       language: other.language || "",
       avatar: other.avatar_emoji || "👤",
       online: Boolean(other.is_online),
-      lastActive: other.last_active || "",
+      lastActive: other.last_active || (Boolean(other.is_online) ? "Online" : "Offline"),
       recentFiles: selectedConversation.recent_files || [],
       preview:
         selectedConversation.last_message?.text ||
@@ -165,15 +171,117 @@ const ClientChatSystem = () => {
     // eslint-disable-next-line
   }, []);
 
-  // ----------------- Load Messages + WebSocket -----------------
+  // ----------------- Global WebSocket Connection -----------------
   useEffect(() => {
-    if (!selectedConversationId) return;
-
     const token = sessionStorage.getItem("token");
     if (!token) {
       console.warn("No JWT token found in sessionStorage. WebSocket will not connect.");
       return;
     }
+
+    const wsUrl = `ws://127.0.0.1:8000/ws/chat/?token=${encodeURIComponent(token)}`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => console.log("WS connected globally:", wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // 1. Handle status updates
+        if (data.type === "status_update") {
+          setConversations((prev) =>
+            prev.map((c) => {
+              const isMatch = c.other_user?.id && data.user_id && Number(c.other_user.id) === Number(data.user_id);
+              return isMatch
+                ? {
+                    ...c,
+                    other_user: {
+                      ...c.other_user,
+                      is_online: data.is_online,
+                      last_active: data.is_online ? "Online" : "Offline",
+                    },
+                  }
+                : c;
+            })
+          );
+          return;
+        }
+
+        // 2. Handle chat messages
+        if (data.type === "chat_message") {
+          const incomingText = (data.text || "").trim();
+          if (!incomingText) return;
+
+          const incoming = {
+            id: data.id ?? `ws-${Date.now()}`,
+            text: incomingText,
+            sender: data.sender ?? null,
+            sender_username: data.sender_username ?? "Unknown",
+            timestamp: data.created_at || new Date().toISOString(),
+            is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
+          };
+
+          // If the message is for the currently active conversation, append it in real-time
+          const isMsgForActive = data.conversation && selectedIdRef.current && Number(data.conversation) === Number(selectedIdRef.current);
+          if (isMsgForActive) {
+            setMessages((prev) => {
+              if (data.client_id) {
+                const idx = prev.findIndex((m) => m.id === data.client_id);
+                if (idx !== -1) {
+                  const copy = [...prev];
+                  copy[idx] = incoming;
+                  return copy;
+                }
+              }
+              if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+              return [...prev, incoming];
+            });
+          }
+
+          // Update sidebar conversations list (move to top, set last message, increment unread if not selected)
+          setConversations((prev) => {
+            const updated = prev.map((c) => {
+              if (c.id && data.conversation && Number(c.id) === Number(data.conversation)) {
+                const isCurrent = selectedIdRef.current && Number(c.id) === Number(selectedIdRef.current);
+                return {
+                  ...c,
+                  last_message: {
+                    text: incomingText,
+                    timestamp: incoming.timestamp,
+                  },
+                  unread_count: isCurrent ? 0 : (c.unread_count || 0) + (incoming.is_mine ? 0 : 1),
+                };
+              }
+              return c;
+            });
+            // Sort conversations (newest message first)
+            return updated.sort(
+              (a, b) =>
+                new Date(b.last_message?.timestamp || 0) -
+                new Date(a.last_message?.timestamp || 0)
+            );
+          });
+        }
+      } catch (e) {
+        console.error("WS message parse error:", e);
+      }
+    };
+
+    ws.onclose = () => console.log("WS closed");
+    ws.onerror = (e) => console.error("WS error:", e);
+
+    return () => {
+      try {
+        ws.close();
+      } catch { }
+    };
+  }, [currentUsername]);
+
+  // ----------------- Load Messages for selected conversation -----------------
+  useEffect(() => {
+    if (!selectedConversationId) return;
 
     const loadMessages = async () => {
       try {
@@ -187,98 +295,13 @@ const ClientChatSystem = () => {
 
     loadMessages();
 
-    // close old ws
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${selectedConversationId}/?token=${encodeURIComponent(
-      token
-    )}`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => console.log("WS connected:", wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // --- NEW EDIT: Handle Status Updates ---
-        if (data.type === "status_update") {
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.other_user?.id === data.user_id
-                ? {
-                    ...c,
-                    other_user: {
-                      ...c.other_user,
-                      is_online: data.is_online,
-                      last_active: data.is_online
-                        ? "Active now"
-                        : data.last_seen
-                        ? `Last active: ${formatTime(data.last_seen)}`
-                        : "Offline",
-                    },
-                  }
-                : c
-            )
-          );
-          return; // Stop processing this as a message
-        }
-        // --- END EDIT ---
-
-        const incomingText = (data.text || "").trim();
-        if (!incomingText) return;
-
-        const incoming = {
-          id: data.id ?? `ws-${Date.now()}`,
-          text: incomingText,
-          sender: data.sender ?? null,
-          sender_username: data.sender_username ?? "Unknown",
-          timestamp: data.created_at || new Date().toISOString(),
-          is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
-        };
-
-        // Update Message UI
-        setMessages((prev) => {
-          if (data.client_id) {
-            const idx = prev.findIndex((m) => m.id === data.client_id);
-            if (idx !== -1) {
-              const copy = [...prev];
-              copy[idx] = incoming;
-              return copy;
-            }
-          }
-          if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-          return [...prev, incoming];
-        });
-
-        // Update Conversation List + SORT TO TOP
-        setConversations((prev) => {
-          const updated = prev.map((c) =>
-            c.id === selectedConversationId
-              ? { ...c, last_message: { text: incomingText, timestamp: incoming.timestamp }, unread_count: 0 }
-              : c
-          );
-          // Sort by date (newest first)
-          return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
-        });
-      } catch (e) {
-        console.error("WS message parse error:", e);
-      }
-    };
-    ws.onclose = () => console.log("WS closed");
-    ws.onerror = (e) => console.error("WS error:", e);
-
-    return () => {
-      try {
-        ws.close();
-      } catch { }
-    };
-  }, [selectedConversationId, currentUsername]);
+    // Local reset of unread count for this selected conversation
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === selectedConversationId ? { ...c, unread_count: 0 } : c
+      )
+    );
+  }, [selectedConversationId]);
 
   // ----------------- Send Message (REALTIME FIRST) -----------------
   const handleSendMessage = async () => {
@@ -310,7 +333,13 @@ const ClientChatSystem = () => {
 
     // WebSocket send
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ text, client_id: tempId }));
+      wsRef.current.send(
+        JSON.stringify({
+          conversation_id: selectedConversationId,
+          text,
+          client_id: tempId,
+        })
+      );
       return;
     }
 
@@ -509,7 +538,7 @@ const ClientChatSystem = () => {
                   <div className="min-w-0 flex-1">
                     <h2 className="text-xl font-bold text-gray-900 truncate">{selectedClient.name}</h2>
                     <p className="text-sm text-gray-600 truncate">
-                      {selectedClient.online ? "Active now" : selectedClient.lastActive || "Offline"}
+                      {selectedClient.online ? "Online" : "Offline"}
                     </p>
                   </div>
                 </div>
@@ -636,9 +665,9 @@ const ClientChatSystem = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Last Active:</h3>
+                    <h3 className="font-semibold text-gray-900 mb-2">Status:</h3>
                     <p className="text-gray-700">
-                      {selectedClient.lastActive || (selectedClient.online ? "Online" : "-")}
+                      {selectedClient.online ? "Online" : "Offline"}
                     </p>
                   </div>
 
