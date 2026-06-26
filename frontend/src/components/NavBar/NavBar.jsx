@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, use } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 // Mock logo - replace with your actual import
 const LogoDark = () => (
@@ -27,6 +28,7 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 );
 
 export default function Navbar({ isDashboard = false }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, username, login, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -114,6 +116,7 @@ const handleLogout = () => {
   logout();
   setShowProfileMenu(false);
   setShowNotifications(false);
+  navigate("/login");
 };
 
 
