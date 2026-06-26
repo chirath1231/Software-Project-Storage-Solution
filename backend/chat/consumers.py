@@ -114,7 +114,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "status_update",
             "user_id": event["user_id"],
             "is_online": event["is_online"]
-        }))    
+        }))
+
+    async def group_update(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "group_update",
+            "conversation_id": event["conversation_id"]
+        }))
 
     @database_sync_to_async
     def is_member(self, user_id, conversation_id):
