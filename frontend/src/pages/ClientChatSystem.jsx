@@ -216,7 +216,11 @@ const ClientChatSystem = () => {
                     other_user: {
                       ...c.other_user,
                       is_online: data.is_online,
-                      last_active: data.is_online ? "Active now" : "Just now",
+                      last_active: data.is_online
+                        ? "Active now"
+                        : data.last_seen
+                        ? `Last active: ${formatTime(data.last_seen)}`
+                        : "Offline",
                     },
                   }
                 : c

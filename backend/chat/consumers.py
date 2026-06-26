@@ -43,12 +43,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # but since we define it in connect, it will always be there for authenticated users.
         user = self.scope["user"]
         if user.is_authenticated:
-            await self.update_user_status(user.id, False)
+            last_seen = await self.update_user_status(user.id, False)
             
             # Broadcast "User is Offline"
             await self.channel_layer.group_send(
                 self.room_group_name,
-                {"type": "user_status_update", "user_id": user.id, "is_online": False}
+                {
+                    "type": "user_status_update",
+                    "user_id": user.id,
+                    "is_online": False,
+                    "last_seen": last_seen
+                }
             )
 
         if hasattr(self, "room_group_name"):
@@ -79,7 +84,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "status_update",
             "user_id": event["user_id"],
-            "is_online": event["is_online"]
+            "is_online": event["is_online"],
+            "last_seen": event.get("last_seen")
         }))    
 
     @database_sync_to_async
@@ -107,9 +113,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             profile = Profile.objects.get(user_id=user_id)
             profile.is_online = is_online
+            last_seen_iso = None
             if not is_online:
-                profile.last_seen = timezone.now()
+                now = timezone.now()
+                profile.last_seen = now
+                last_seen_iso = now.isoformat()
             profile.save()
-            return True
+            return last_seen_iso
         except Profile.DoesNotExist:
-            return False
+            return None
