@@ -40,7 +40,10 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(null=True, blank=True)
+<<<<<<< HEAD
     online_connections_count = models.IntegerField(default=0)
+=======
+>>>>>>> main
 
     def __str__(self):
         return f"Profile of {self.user.username}"

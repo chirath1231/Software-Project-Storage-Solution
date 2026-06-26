@@ -109,6 +109,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             **msg_data
         }))
 
+    async def user_status_update(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "status_update",
+            "user_id": event["user_id"],
+            "is_online": event["is_online"]
+        }))    
+
     @database_sync_to_async
     def is_member(self, user_id, conversation_id):
         return ConversationParticipant.objects.filter(
