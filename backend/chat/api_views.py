@@ -44,10 +44,22 @@ class ConversationListView(APIView):
                 ConversationParticipant.objects
                 .filter(conversation=c)
                 .exclude(user=me)
-                .select_related("user")
+                .select_related("user__profile")
                 .first()
             )
             other_user = other_part.user if other_part else None
+            is_online = False
+            last_active = "Offline"
+            if other_user:
+                try:
+                    profile = other_user.profile
+                    is_online = profile.is_online
+                    if is_online:
+                        last_active = "Online"
+                    else:
+                        last_active = "Offline"
+                except Exception:
+                    pass
 
             data.append({
                 "id": c.id,
@@ -60,8 +72,8 @@ class ConversationListView(APIView):
                     "phone": getattr(other_user, "phone", "") if other_user else "",
                     "language": getattr(other_user, "language", "") if other_user else "",
                     "avatar_emoji": getattr(other_user, "avatar_emoji", "👤") if other_user else "👤",
-                    "is_online": False,
-                    "last_active": "",
+                    "is_online": is_online,
+                    "last_active": last_active,
                 },
                 "last_message": {
                     "text": c.last_text or "",
