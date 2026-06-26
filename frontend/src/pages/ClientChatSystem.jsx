@@ -4,6 +4,7 @@ import { Search, Paperclip, Send, X, ArrowLeft, Info } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
+import { useAuth } from "../auth/AuthContext";
 
 // ✅ one axios client (avoid URL mistakes)
 const api = axios.create({
@@ -28,6 +29,8 @@ const formatTime = (isoOrDate) => {
 };
 
 const ClientChatSystem = () => {
+  const { token } = useAuth();
+
   // ----------------- State -----------------
   const [search, setSearch] = useState("");
   const [conversations, setConversations] = useState([]); // left list
@@ -43,6 +46,15 @@ const ClientChatSystem = () => {
 
   // Responsive Details states
   const [showDetailsMobile, setShowDetailsMobile] = useState(false);
+
+  // Group chat states
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState([]);
+  const [isEditingGroupName, setIsEditingGroupName] = useState(false);
+  const [editGroupNameVal, setEditGroupNameVal] = useState("");
+  const [groupSearchQuery, setGroupSearchQuery] = useState("");
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
 
   const wsRef = useRef(null);
   const fileInputRef = useRef(null); // ✅ For file attachments
@@ -62,9 +74,10 @@ const ClientChatSystem = () => {
     }
   };
 
-  // Current user identity (best you currently have)
   const currentUsername =
     sessionStorage.getItem("username") || localStorage.getItem("username") || "";
+
+  const currentUserId = localStorage.getItem("user_id") || "";
 
   // ================= AUTO SCROLL FIX =================
   const messagesContainerRef = useRef(null);
@@ -88,9 +101,26 @@ const ClientChatSystem = () => {
   const selectedClient = useMemo(() => {
     if (!selectedConversation) return null;
 
+    if (selectedConversation.is_group) {
+      return {
+        id: selectedConversation.id,
+        isGroup: true,
+        name: selectedConversation.name || "Group Chat",
+        adminId: selectedConversation.admin_id,
+        avatar: "👥",
+        online: false,
+        lastActive: "",
+        recentFiles: selectedConversation.recent_files || [],
+        preview: selectedConversation.last_message?.text || selectedConversation.preview || "",
+        unread: selectedConversation.unread_count || 0,
+        participants: selectedConversation.participants || [],
+      };
+    }
+
     const other = selectedConversation.other_user || {};
     return {
       id: other.id ?? selectedConversation.id,
+      isGroup: false,
       name:
         other.full_name ||
         other.username ||
@@ -109,6 +139,7 @@ const ClientChatSystem = () => {
         selectedConversation.preview ||
         "",
       unread: selectedConversation.unread_count || 0,
+      participants: selectedConversation.participants || [],
     };
   }, [selectedConversation]);
 
@@ -161,6 +192,69 @@ const ClientChatSystem = () => {
     }
   };
 
+  // ----------------- Group Chat Functions -----------------
+  const handleCreateGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name) return alert("Please enter a group name");
+    if (selectedGroupMembers.length === 0) return alert("Please select at least one member to add");
+
+    try {
+      const res = await api.post("/conversations/group/create/", {
+        name,
+        user_ids: selectedGroupMembers,
+      });
+      setShowNewGroupModal(false);
+      setNewGroupName("");
+      setSelectedGroupMembers([]);
+      setGroupSearchQuery("");
+      await loadConversations();
+      setSelectedConversationId(res.data?.conversation_id);
+    } catch (err) {
+      console.error("Failed to create group:", err);
+      alert(err.response?.data?.detail || "Failed to create group");
+    }
+  };
+
+  const handleRenameGroup = async () => {
+    const name = editGroupNameVal.trim();
+    if (!name) return;
+    try {
+      await api.post(`/conversations/group/${selectedConversationId}/rename/`, { name });
+      setIsEditingGroupName(false);
+      await loadConversations();
+    } catch (err) {
+      console.error("Failed to rename group:", err);
+      alert(err.response?.data?.detail || "Failed to rename group");
+    }
+  };
+
+  const handleAddGroupMember = async (memberId) => {
+    if (!memberId) return;
+    try {
+      await api.post(`/conversations/group/${selectedConversationId}/add/`, {
+        user_ids: [memberId],
+      });
+      setShowAddMemberDropdown(false);
+      await loadConversations();
+    } catch (err) {
+      console.error("Failed to add member:", err);
+      alert(err.response?.data?.detail || "Failed to add member");
+    }
+  };
+
+  const handleRemoveGroupMember = async (memberId) => {
+    if (!confirm("Are you sure you want to remove this member?")) return;
+    try {
+      await api.post(`/conversations/group/${selectedConversationId}/remove/`, {
+        user_id: memberId,
+      });
+      await loadConversations();
+    } catch (err) {
+      console.error("Failed to remove member:", err);
+      alert(err.response?.data?.detail || "Failed to remove member");
+    }
+  };
+
   useEffect(() => {
     loadConversations();
     loadUsers();
@@ -173,9 +267,8 @@ const ClientChatSystem = () => {
 
   // ----------------- Global WebSocket Connection -----------------
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
     if (!token) {
-      console.warn("No JWT token found in sessionStorage. WebSocket will not connect.");
+      console.warn("No JWT token found. WebSocket will not connect.");
       return;
     }
 
@@ -206,6 +299,12 @@ const ClientChatSystem = () => {
                 : c;
             })
           );
+          return;
+        }
+
+        // 3. Handle group updates
+        if (data.type === "group_update") {
+          loadConversations();
           return;
         }
 
@@ -277,7 +376,7 @@ const ClientChatSystem = () => {
         ws.close();
       } catch { }
     };
-  }, [currentUsername]);
+  }, [currentUsername, token]);
 
   // ----------------- Load Messages for selected conversation -----------------
   useEffect(() => {
@@ -397,6 +496,20 @@ const ClientChatSystem = () => {
           <div className={`${selectedConversationId ? "hidden" : "flex w-full"} md:flex md:w-80 bg-white border-r border-gray-200 flex-col shadow-lg`}>
             {/* Header + Unified Search */}
             <div className="p-7 border-b border-gray-200 shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Chats</h2>
+                <button
+                  onClick={() => {
+                    setShowNewGroupModal(true);
+                    setSelectedGroupMembers([]);
+                    setNewGroupName("");
+                    setGroupSearchQuery("");
+                  }}
+                  className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1 shadow-sm cursor-pointer"
+                >
+                  👥 New Group
+                </button>
+              </div>
               <div className="relative">
 
                 {!search && (
@@ -458,13 +571,11 @@ const ClientChatSystem = () => {
                   const other = conv.other_user || {};
                   const isSelected = selectedConversationId === conv.id;
 
-                  const name =
-                    other.full_name ||
-                    other.username ||
-                    other.email ||
-                    `Conversation #${conv.id}`;
-                  const avatar = other.avatar_emoji || "👤";
-                  const online = Boolean(other.is_online);
+                  const name = conv.is_group
+                    ? (conv.name || "Group Chat")
+                    : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
+                  const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
+                  const online = !conv.is_group && Boolean(other.is_online);
                   const preview = conv.last_message?.text || "";
                   const unread = conv.unread_count || 0;
 
@@ -538,7 +649,9 @@ const ClientChatSystem = () => {
                   <div className="min-w-0 flex-1">
                     <h2 className="text-xl font-bold text-gray-900 truncate">{selectedClient.name}</h2>
                     <p className="text-sm text-gray-600 truncate">
-                      {selectedClient.online ? "Online" : "Offline"}
+                      {selectedClient.isGroup
+                        ? `${selectedClient.participants.length} members`
+                        : (selectedClient.online ? "Online" : "Offline")}
                     </p>
                   </div>
                 </div>
@@ -644,7 +757,7 @@ const ClientChatSystem = () => {
                 </div>
 
                 {/* Details Contents */}
-                <div className="flex flex-col items-center text-center mb-6">
+                <div className="flex flex-col items-center text-center mb-6 w-full">
                   <div className="relative mb-4">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-5xl border-4 border-white shadow-lg">
                       {selectedClient.avatar}
@@ -654,51 +767,315 @@ const ClientChatSystem = () => {
                     )}
                   </div>
 
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedClient.name}</h2>
-                  {selectedClient.username && <p className="text-sm text-gray-600 mt-1">{selectedClient.username}</p>}
-                  {selectedClient.email && <p className="text-sm text-gray-600">{selectedClient.email}</p>}
-                  {selectedClient.phone && <p className="text-sm text-gray-600">{selectedClient.phone}</p>}
-                  {selectedClient.language && <p className="text-sm text-gray-600 mt-2">{selectedClient.language}</p>}
+                  {selectedClient.isGroup && isEditingGroupName ? (
+                    <div className="flex items-center gap-2 mt-2 w-full justify-center px-4">
+                      <input
+                        type="text"
+                        value={editGroupNameVal}
+                        onChange={(e) => setEditGroupNameVal(e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm w-3/4 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                        placeholder="Group Name"
+                      />
+                      <button
+                        onClick={handleRenameGroup}
+                        className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-semibold cursor-pointer"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setIsEditingGroupName(false)}
+                        className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs font-semibold cursor-pointer"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 justify-center">
+                      <h2 className="text-2xl font-bold text-gray-900 truncate max-w-[200px]">{selectedClient.name}</h2>
+                      {selectedClient.isGroup && selectedClient.isAdmin && (
+                        <button
+                          onClick={() => {
+                            setIsEditingGroupName(true);
+                            setEditGroupNameVal(selectedClient.name);
+                          }}
+                          className="text-xs text-orange-500 hover:text-orange-600 underline cursor-pointer"
+                          title="Rename group"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedClient.isGroup ? (
+                    <p className="text-xs text-orange-500 font-bold uppercase mt-1">
+                      {selectedClient.isAdmin ? "👑 Group Admin" : "👥 Group Member"}
+                    </p>
+                  ) : (
+                    <>
+                      {selectedClient.username && <p className="text-sm text-gray-600 mt-1">{selectedClient.username}</p>}
+                      {selectedClient.email && <p className="text-sm text-gray-600">{selectedClient.email}</p>}
+                      {selectedClient.phone && <p className="text-sm text-gray-600">{selectedClient.phone}</p>}
+                      {selectedClient.language && <p className="text-sm text-gray-600 mt-2">{selectedClient.language}</p>}
+                    </>
+                  )}
                 </div>
 
                 <hr className="border-gray-300 my-4" />
 
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Status:</h3>
-                    <p className="text-gray-700">
-                      {selectedClient.online ? "Online" : "Offline"}
-                    </p>
-                  </div>
+                  {selectedClient.isGroup ? (
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-3 text-left">Members ({selectedClient.participants.length}):</h3>
+                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {selectedClient.participants.map((member) => {
+                          const isMe = Number(member.id) === Number(currentUserId);
+                          return (
+                            <div key={member.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative">
+                                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm">
+                                    {member.avatar_emoji || "👤"}
+                                  </div>
+                                  {member.is_online && (
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-white"></div>
+                                  )}
+                                </div>
+                                <div className="text-left min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {member.username} {isMe && "(You)"}
+                                  </p>
+                                  {member.is_admin && (
+                                    <span className="text-[10px] text-orange-500 font-semibold uppercase">Admin</span>
+                                  )}
+                                </div>
+                              </div>
+                              {selectedClient.isAdmin && !isMe && (
+                                <button
+                                  onClick={() => handleRemoveGroupMember(member.id)}
+                                  className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-semibold transition cursor-pointer"
+                                  title="Remove member"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Recent Shared:</h3>
-                    <div className="space-y-2">
-                      {(selectedClient.recentFiles || []).map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 p-2 bg-white rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                            </svg>
+                      {/* Add Member Search Panel */}
+                      {selectedClient.isAdmin && (
+                        <div className="mt-4 pt-3 border-t border-gray-200">
+                          <h4 className="text-xs font-bold text-gray-700 uppercase mb-2 text-left">Add Member:</h4>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Search username..."
+                              value={memberSearchQuery}
+                              onChange={(e) => setMemberSearchQuery(e.target.value)}
+                              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white"
+                            />
+                            {memberSearchQuery.trim() && (
+                              <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-40 overflow-y-auto z-[60]">
+                                {users
+                                  .filter(
+                                    (u) =>
+                                      !selectedClient.participants.some((p) => Number(p.id) === Number(u.id)) &&
+                                      (u.username || "").toLowerCase().includes(memberSearchQuery.toLowerCase())
+                                  )
+                                  .map((u) => (
+                                    <div
+                                      key={u.id}
+                                      onClick={() => {
+                                        handleAddGroupMember(u.id);
+                                        setMemberSearchQuery("");
+                                      }}
+                                      className="p-2 text-sm text-left hover:bg-orange-50 cursor-pointer text-orange-600 font-medium border-b border-gray-100 last:border-0"
+                                    >
+                                      + Add {u.username}
+                                    </div>
+                                  ))}
+                                {users.filter(
+                                  (u) =>
+                                    !selectedClient.participants.some((p) => Number(p.id) === Number(u.id)) &&
+                                    (u.username || "").toLowerCase().includes(memberSearchQuery.toLowerCase())
+                                ).length === 0 && (
+                                  <div className="p-2 text-xs text-gray-500 text-center">No users match query</div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          <span className="text-sm text-gray-700">{file}</span>
                         </div>
-                      ))}
-                      {(!selectedClient.recentFiles || selectedClient.recentFiles.length === 0) && (
-                        <p className="text-sm text-gray-600">No recent files</p>
                       )}
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Status:</h3>
+                        <p className="text-gray-700">
+                          {selectedClient.online ? "Online" : "Offline"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-3">Recent Shared:</h3>
+                        <div className="space-y-2">
+                          {(selectedClient.recentFiles || []).map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 p-2 bg-white rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                            >
+                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                                <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                                </svg>
+                              </div>
+                              <span className="text-sm text-gray-700">{file}</span>
+                            </div>
+                          ))}
+                          {(!selectedClient.recentFiles || selectedClient.recentFiles.length === 0) && (
+                            <p className="text-sm text-gray-600">No recent files</p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </>
           )}
         </div>
-      </div>
+      </div>      {/* New Group Chat Modal */}
+      {showNewGroupModal && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative border border-gray-100">
+            <button
+              onClick={() => setShowNewGroupModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-red-500 cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h3 className="text-xl font-bold text-gray-950 mb-4 flex items-center gap-2">
+              👥 Create New Group Chat
+            </h3>
 
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Group Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Project Discussion"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Select Members
+                </label>
+
+                {/* Selected members pill display */}
+                {selectedGroupMembers.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3 max-h-24 overflow-y-auto p-1.5 border border-dashed border-orange-200 rounded-lg bg-orange-50/20">
+                    {selectedGroupMembers.map((id) => {
+                      const user = users.find((u) => u.id === id);
+                      if (!user) return null;
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 bg-orange-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm"
+                        >
+                          {user.username}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGroupMembers((prev) => prev.filter((mid) => mid !== id))}
+                            className="hover:text-orange-200 text-white cursor-pointer ml-1 font-bold text-sm leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  placeholder="Search members to add..."
+                  value={groupSearchQuery}
+                  onChange={(e) => setGroupSearchQuery(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 mb-2 text-sm bg-white"
+                />
+                
+                <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto p-2 bg-gray-50 space-y-2">
+                  {groupSearchQuery.trim() === "" ? (
+                    <p className="text-xs text-gray-500 p-3 text-center">
+                      Type in the search box above to find and add members.
+                    </p>
+                  ) : (
+                    (() => {
+                      const filtered = users.filter((u) =>
+                        (u.username || "").toLowerCase().includes(groupSearchQuery.toLowerCase())
+                      );
+                      if (filtered.length === 0) {
+                        return (
+                          <p className="text-xs text-gray-500 p-3 text-center">
+                            No matching users found.
+                          </p>
+                        );
+                      }
+                      return filtered.map((u) => (
+                        <label
+                          key={u.id}
+                          className="flex items-center gap-3 p-2 bg-white rounded border border-gray-150 shadow-sm cursor-pointer hover:bg-orange-50/50 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedGroupMembers.includes(u.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedGroupMembers((prev) => [...prev, u.id]);
+                              } else {
+                                setSelectedGroupMembers((prev) =>
+                                  prev.filter((id) => id !== u.id)
+                                );
+                              }
+                            }}
+                            className="w-4 h-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-800">
+                            {u.username}
+                          </span>
+                        </label>
+                      ));
+                    })()
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowNewGroupModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateGroup}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-semibold transition cursor-pointer shadow-md"
+                >
+                  Create Group
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

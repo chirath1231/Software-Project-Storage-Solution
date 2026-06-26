@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 from .models import Conversation, ConversationParticipant, Message
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 def _is_participant(user, conversation_id):
@@ -39,51 +41,95 @@ class ConversationListView(APIView):
 
         data = []
         for c in qs:
-            # find "other user" (for 1–1 conversations)
-            other_part = (
-                ConversationParticipant.objects
-                .filter(conversation=c)
-                .exclude(user=me)
-                .select_related("user__profile")
-                .first()
-            )
-            other_user = other_part.user if other_part else None
-            is_online = False
-            last_active = "Offline"
-            if other_user:
+            # list of participants
+            participants_data = []
+            part_qs = ConversationParticipant.objects.filter(conversation=c).select_related("user__profile")
+            for p in part_qs:
+                p_user = p.user
+                p_online = False
+                p_last_active = "Offline"
                 try:
-                    profile = other_user.profile
-                    is_online = profile.is_online
-                    if is_online:
-                        last_active = "Online"
-                    else:
-                        last_active = "Offline"
+                    p_profile = p_user.profile
+                    p_online = p_profile.is_online
+                    p_last_active = "Online" if p_online else "Offline"
                 except Exception:
                     pass
 
-            data.append({
-                "id": c.id,
-                "other_user": {
-                    "id": other_user.id if other_user else None,
-                    "username": other_user.username if other_user else "",
-                    "email": other_user.email if other_user else "",
-                    # these are optional fields your UI tries to read
-                    "full_name": getattr(other_user, "full_name", "") if other_user else "",
-                    "phone": getattr(other_user, "phone", "") if other_user else "",
-                    "language": getattr(other_user, "language", "") if other_user else "",
-                    "avatar_emoji": getattr(other_user, "avatar_emoji", "👤") if other_user else "👤",
-                    "is_online": is_online,
-                    "last_active": last_active,
-                },
-                "last_message": {
-                    "text": c.last_text or "",
-                    "timestamp": c.last_time.isoformat() if c.last_time else "",
-                },
-                # unread requires extra model (read receipts). For now return 0.
-                "unread_count": 0,
-                "recent_files": [],
-                "preview": c.last_text or "",
-            })
+                participants_data.append({
+                    "id": p_user.id,
+                    "username": p_user.username,
+                    "email": p_user.email,
+                    "full_name": getattr(p_user, "full_name", "") or p_user.username,
+                    "avatar_emoji": getattr(p_user, "avatar_emoji", "👤"),
+                    "is_online": p_online,
+                    "last_active": p_last_active,
+                    "is_admin": (c.is_group and c.admin_id == p_user.id)
+                })
+
+            if c.is_group:
+                data.append({
+                    "id": c.id,
+                    "is_group": True,
+                    "name": c.name or "Group Chat",
+                    "admin_id": c.admin_id,
+                    "other_user": None,
+                    "participants": participants_data,
+                    "last_message": {
+                        "text": c.last_text or "",
+                        "timestamp": c.last_time.isoformat() if c.last_time else "",
+                    },
+                    "unread_count": 0,
+                    "recent_files": [],
+                    "preview": c.last_text or "",
+                })
+            else:
+                # find "other user" (for 1–1 conversations)
+                other_part = (
+                    ConversationParticipant.objects
+                    .filter(conversation=c)
+                    .exclude(user=me)
+                    .select_related("user__profile")
+                    .first()
+                )
+                other_user = other_part.user if other_part else None
+                is_online = False
+                last_active = "Offline"
+                if other_user:
+                    try:
+                        profile = other_user.profile
+                        is_online = profile.is_online
+                        if is_online:
+                            last_active = "Online"
+                        else:
+                            last_active = "Offline"
+                    except Exception:
+                        pass
+
+                data.append({
+                    "id": c.id,
+                    "is_group": False,
+                    "name": other_user.username if other_user else "Chat",
+                    "admin_id": None,
+                    "other_user": {
+                        "id": other_user.id if other_user else None,
+                        "username": other_user.username if other_user else "",
+                        "email": other_user.email if other_user else "",
+                        "full_name": getattr(other_user, "full_name", "") if other_user else "",
+                        "phone": getattr(other_user, "phone", "") if other_user else "",
+                        "language": getattr(other_user, "language", "") if other_user else "",
+                        "avatar_emoji": getattr(other_user, "avatar_emoji", "👤") if other_user else "👤",
+                        "is_online": is_online,
+                        "last_active": last_active,
+                    },
+                    "participants": participants_data,
+                    "last_message": {
+                        "text": c.last_text or "",
+                        "timestamp": c.last_time.isoformat() if c.last_time else "",
+                    },
+                    "unread_count": 0,
+                    "recent_files": [],
+                    "preview": c.last_text or "",
+                })
 
         return Response(data)
 
@@ -186,3 +232,180 @@ class StartConversationView(APIView):
             ConversationParticipant.objects.create(conversation=conversation, user_id=other_user_id)
 
         return Response({"conversation_id": conversation.id}, status=status.HTTP_200_OK)
+
+
+class CreateGroupConversationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        name = (request.data.get("name") or "").strip()
+        user_ids = request.data.get("user_ids") or []
+
+        if not name:
+            return Response({"detail": "Group name is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the group conversation
+        c = Conversation.objects.create(
+            is_group=True,
+            name=name,
+            admin=request.user
+        )
+
+        # Add participants: creator + all selected users
+        participants_to_create = [ConversationParticipant(conversation=c, user=request.user)]
+        
+        # Keep track of unique user IDs to add (excluding the creator)
+        unique_user_ids = set(int(uid) for uid in user_ids if int(uid) != request.user.id)
+        
+        for uid in unique_user_ids:
+            try:
+                user = User.objects.get(id=uid)
+                participants_to_create.append(ConversationParticipant(conversation=c, user=user))
+            except User.DoesNotExist:
+                pass
+
+        ConversationParticipant.objects.bulk_create(participants_to_create)
+
+        # Broadcast group creation to all participants' WebSocket user groups
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for p in participants_to_create:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{p.user_id}",
+                    {
+                        "type": "group_update",
+                        "conversation_id": c.id
+                    }
+                )
+
+        return Response({"conversation_id": c.id}, status=status.HTTP_201_CREATED)
+
+
+class AddGroupMemberView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        try:
+            c = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({"detail": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not c.is_group:
+            return Response({"detail": "Not a group chat"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify admin
+        if c.admin_id != request.user.id:
+            return Response({"detail": "Only the group administrator can add members"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_ids = request.data.get("user_ids") or []
+        unique_user_ids = set(int(uid) for uid in user_ids)
+
+        new_participants = []
+        for uid in unique_user_ids:
+            # Check if already a participant
+            if not ConversationParticipant.objects.filter(conversation=c, user_id=uid).exists():
+                try:
+                    user = User.objects.get(id=uid)
+                    new_participants.append(ConversationParticipant(conversation=c, user=user))
+                except User.DoesNotExist:
+                    pass
+
+        if new_participants:
+            ConversationParticipant.objects.bulk_create(new_participants)
+
+        # Broadcast group_update to all participants
+        participants = list(ConversationParticipant.objects.filter(conversation=c).values_list('user_id', flat=True))
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for pid in participants:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{pid}",
+                    {
+                        "type": "group_update",
+                        "conversation_id": c.id
+                    }
+                )
+
+        return Response({"detail": f"Added {len(new_participants)} members successfully"})
+
+
+class RemoveGroupMemberView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        try:
+            c = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({"detail": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not c.is_group:
+            return Response({"detail": "Not a group chat"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify admin
+        if c.admin_id != request.user.id:
+            return Response({"detail": "Only the group administrator can remove members"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"detail": "user_id required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if int(user_id) == request.user.id:
+            return Response({"detail": "Admin cannot remove themselves from the group"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Delete participant record
+        participants = list(ConversationParticipant.objects.filter(conversation=c).values_list('user_id', flat=True))
+
+        deleted_count, _ = ConversationParticipant.objects.filter(conversation=c, user_id=user_id).delete()
+
+        # Broadcast group_update to all original participants (including the removed one)
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for pid in participants:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{pid}",
+                    {
+                        "type": "group_update",
+                        "conversation_id": c.id
+                    }
+                )
+
+        return Response({"detail": "Member removed successfully"})
+
+
+class RenameGroupView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        try:
+            c = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({"detail": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not c.is_group:
+            return Response({"detail": "Not a group chat"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify admin
+        if c.admin_id != request.user.id:
+            return Response({"detail": "Only the group administrator can rename the group"}, status=status.HTTP_403_FORBIDDEN)
+
+        name = (request.data.get("name") or "").strip()
+        if not name:
+            return Response({"detail": "Group name cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        c.name = name
+        c.save()
+
+        # Broadcast group_update to all participants
+        participants = list(ConversationParticipant.objects.filter(conversation=c).values_list('user_id', flat=True))
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for pid in participants:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{pid}",
+                    {
+                        "type": "group_update",
+                        "conversation_id": c.id
+                    }
+                )
+
+        return Response({"detail": "Group renamed successfully"})
