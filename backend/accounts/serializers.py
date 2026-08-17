@@ -34,18 +34,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
 
     def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Username already exists.")
-        return value
-
-    def validate_email(self, value):
+        val = value.strip()
         user = self.instance
-        qs = User.objects.filter(email=value)
+        qs = User.objects.filter(username__iexact=val)
         if user:
             qs = qs.exclude(id=user.id)
         if qs.exists():
-            raise serializers.ValidationError("Email already exists")
-        return value
+            raise serializers.ValidationError("Username already exists.")
+        return val
+
+    def validate_email(self, value):
+        val = value.strip().lower()
+        user = self.instance
+        qs = User.objects.filter(email__iexact=val)
+        if user:
+            qs = qs.exclude(id=user.id)
+        if qs.exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return val
 
     def create(self, validated_data):
         validated_data.pop("password2")
@@ -149,17 +155,20 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
     def validate(self, data):
-        email = data.get("email")
-        password = data.get("password")
+        email = data.get("email", "").strip().lower()
+        password = data.get("password", "")
 
-        # find the username from the email
-        try:
-            username = User.objects.get(email=email).username
-        except User.DoesNotExist:
+        # find the user by email
+        user_obj = User.objects.filter(email__iexact=email).first()
+        if not user_obj:
             raise serializers.ValidationError("Invalid email or password")
 
+        # Check if the account is suspended
+        if not user_obj.is_active:
+            raise serializers.ValidationError("This account has been suspended. Please contact support.")
+
         # authenticate user
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=user_obj.username, password=password)
 
         if not user:
             raise serializers.ValidationError("Invalid email or password")

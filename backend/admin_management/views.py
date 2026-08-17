@@ -261,6 +261,8 @@ class AdminUserListView(APIView):
                 "email": u.email,
                 "first_name": u.first_name,
                 "last_name": u.last_name,
+                "is_active": u.is_active,
+                "is_staff": u.is_staff,
                 "country": u.profile.country if hasattr(u, 'profile') else "N/A",
                 "date_joined": u.date_joined.strftime("%Y-%m-%d"),
                 "last_login": (
@@ -275,3 +277,60 @@ class AdminUserListView(APIView):
             })
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+class AdminUserToggleSuspendView(APIView):
+    """
+    Suspend or reactivate a user account by setting is_active in Django auth_user.
+    This preserves the user's data, subscriptions, and profile in the database while
+    preventing them from logging in or making authenticated requests on the web app.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        # Step 1: Staff-only authorization check
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Not authorized: Staff privileges required.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'User not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Protect against suspending own admin account
+        if target_user.id == request.user.id:
+            return Response(
+                {'detail': 'You cannot suspend your own admin account.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        action = request.data.get('action')
+        if action == 'suspend':
+            target_user.is_active = False
+        elif action in ['activate', 'reactivate']:
+            target_user.is_active = True
+        else:
+            target_user.is_active = not target_user.is_active
+
+        target_user.save()
+
+        status_text = "reactivated" if target_user.is_active else "suspended"
+        logger.info(
+            "Admin %s %s user %s (ID: %s)",
+            request.user.email,
+            status_text,
+            target_user.email,
+            target_user.id
+        )
+
+        return Response({
+            'message': f"User account has been {status_text} successfully.",
+            'user_id': target_user.id,
+            'is_active': target_user.is_active,
+        }, status=status.HTTP_200_OK)

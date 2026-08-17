@@ -90,6 +90,12 @@ class GoogleLoginAPIView(APIView):
             # Ensure a profile exists for Google users
             Profile.objects.get_or_create(user=user)
 
+            if not user.is_active:
+                return Response(
+                    {"detail": "This account has been suspended. Please contact support."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             refresh = RefreshToken.for_user(user)
 
             return Response({
