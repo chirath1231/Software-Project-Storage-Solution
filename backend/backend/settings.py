@@ -10,6 +10,8 @@ import os
 import sys
 load_dotenv()
 
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # -----------------------------------------------------
@@ -20,7 +22,6 @@ SECRET_KEY = "django-insecure-niq()9d-nh7fjeg^_3*5r98u!1!suywhiz7-&x=8%r9imlnja(
 DEBUG = True
 
 ALLOWED_HOSTS = ["*", "192.168.8.101"]
-  # allow all during development
 
 # -----------------------------------------------------
 # INSTALLED APPS
@@ -28,25 +29,32 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 
 INSTALLED_APPS = [
     "daphne",
+    # Django Core Apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "subscriptions",
-    # THIRD-PARTY APPS
+    "django.contrib.postgres",
+    # Third-Party Apps
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    'django.contrib.postgres',
-    # YOUR APPS
-    "accounts",  # your authentication app
-    "channels", # for WebSocket support
-    'chat', # your chat app
     "django_extensions",
     "storages",
+    "anymail",
+    "channels",
+    # Local Apps
+    "accounts",
+    "subscriptions",
     "storage",
+    "chat",
+    "tickets",
+    "admin_management",
+    "sharing",
+    "notifications",
+    "events",
     "sharing",
     'anymail',
     'tickets',
@@ -55,26 +63,14 @@ INSTALLED_APPS = [
     'sharing',  # the new sharing app
 ]
 
-
 # -----------------------------------------------------
 # MIDDLEWARE
 # -----------------------------------------------------
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SAMESITE = "None"
-CSRF_USE_SESSIONS = False
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True
-
-
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
     # CORS (MUST appear before CommonMiddleware)
     "corsheaders.middleware.CorsMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -84,10 +80,11 @@ MIDDLEWARE = [
 ]
 
 # -----------------------------------------------------
-# CORS SETTINGS
+# CORS & CSRF SETTINGS
 # -----------------------------------------------------
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -95,18 +92,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8081"
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-
-
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_USE_SESSIONS = False
 
 # -----------------------------------------------------
-# URL CONFIG
+# URL CONFIG & TEMPLATES
 # -----------------------------------------------------
 
 ROOT_URLCONF = "backend.urls"
@@ -127,7 +125,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
-
 ASGI_APPLICATION = 'backend.asgi.application'
 
 CHANNEL_LAYERS = {
@@ -154,9 +151,8 @@ DATABASES = {
     }
 }
 
-
 # -----------------------------------------------------
-# PASSWORD VALIDATION
+# PASSWORD VALIDATION & AUTHENTICATION
 # -----------------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -166,17 +162,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# -----------------------------------------------------
-# INTERNATIONALIZATION
-# -----------------------------------------------------
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-
+# -----------------------------------------------------
+# INTERNATIONALIZATION
+# -----------------------------------------------------
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = 'Asia/Colombo'
 USE_I18N = True
 USE_TZ = True
 
@@ -192,29 +187,29 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # -----------------------------------------------------
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -----------------------------------------------------
+# PAYMENTS (PAYHERE)
+# -----------------------------------------------------
+
 PAYHERE_MERCHANT_ID = "1233030"  # Your Merchant ID
 PAYHERE_MERCHANT_SECRET = "MTI2ODEyMjAxMzM4NDgyNjQ1NTUyNjI1NTk0MjY1MTQ0MzE3OTY0MA=="
 PAYHERE_SANDBOX = True 
-
 
 # -----------------------------------------------------
 # REST FRAMEWORK + JWT SETTINGS
 # -----------------------------------------------------
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-    ),
-        "DEFAULT_RENDERER_CLASSES": [
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-        'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-
 }
 
 
@@ -228,15 +223,15 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-
+# -----------------------------------------------------
+# FILE STORAGE INFRASTRUCTURE (LOCAL VS PRODUCTION DIGITALOCEAN SPACES)
+# -----------------------------------------------------
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
-AWS_S3_REGION_NAME = "sfo3"
-AWS_S3_ENDPOINT_URL = "https://sfo3.digitaloceanspaces.com"
-
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "ceynoa-storage")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "sfo3")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL", "https://sfo3.digitaloceanspaces.com")
 
 AWS_DEFAULT_ACL = "private"
 AWS_QUERYSTRING_AUTH = True
@@ -246,16 +241,6 @@ AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 AWS_LOCATION = "uploads"
-
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.sfo3.digitaloceanspaces.com/{AWS_LOCATION}/'
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
 
 class DisableMigrations:
     def __contains__(self, item):
@@ -269,12 +254,33 @@ if "test" in sys.argv:
     MIGRATION_MODULES = DisableMigrations()
 
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-# Local media fallback for development
+# --- DYNAMIC STORAGE STRATEGY BASED ON DEVELOPMENT ENVIRONMENT ---
 if DEBUG:
+    # Local Storage Engine Configuration (Wipes dependencies on third-party cloud SDKs)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    # Production Infrastructure (DigitalOcean Spaces / AWS S3 backend bindings)
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+# ==============================================================================
+# EXTERNAL INTEGRATIONS CONFIGURATION
+# ==============================================================================
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")

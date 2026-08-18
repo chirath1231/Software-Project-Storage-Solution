@@ -30,7 +30,7 @@ export default function Sidebar({ isAdmin = false }) {
     { id: "trash", label: "Trash", icon: <Trash2 />, path: "/dashboard/trash" },
     { id: "clients", label: "Clients", icon: <Users />, path: "/dashboard/chat" },
     { id: "subscription", label: "Subscription", icon: <CreditCard />, path: "/dashboard/subscription" },
-    // { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
+    { id: "notifications", label: "Notifications", icon: <Bell />, path: "/dashboard/notifications" },
     { id: "settings", label: "Settings", icon: <Settings />, path: "/dashboard/settings" },
     { id: "support", label: "Support", icon: <HelpCircle />, path: "/dashboard/support" }
   ];
