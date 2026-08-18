@@ -8,8 +8,11 @@ import {
   Copy, Check, Lock, UserMinus, Link as LinkIcon, FolderPlus, Folder,
   ChevronRight,
 } from "lucide-react";
+import { useNotifications } from '../context/NotificationContext';
 
 export default function MyFiles() {
+  const { fetchGlobalNotifications } = useNotifications();
+
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -202,6 +205,7 @@ export default function MyFiles() {
       if (input) input.value = "";
       const planGB = await fetchSubscription();
       await fetchFiles(planGB, currentFolderId);
+      if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
       if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
       else {
@@ -219,6 +223,7 @@ export default function MyFiles() {
       await api.delete(`/api/${id}/trash/`);
       const planGB = await fetchSubscription();
       await fetchFiles(planGB, currentFolderId);
+      if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
       if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
       else alert("Delete failed.");
