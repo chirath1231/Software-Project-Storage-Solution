@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
 import {
   LayoutDashboard,
   Folder,
@@ -13,12 +14,13 @@ import {
   BarChart2,
   TrendingUp,
   FileText,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function Sidebar({ isAdmin = false }) {
   const navigate = useNavigate(); // For programmatic navigation
   const location = useLocation(); // Gets current URL path
-
+  const { hasPermission } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("dashboard"); // State to store currently active menu item
@@ -35,17 +37,15 @@ export default function Sidebar({ isAdmin = false }) {
   ];
 
   const adminMenuItems = [
-    //{ id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/admin-dashboard" },
-    //{ id: "users", label: "User Management", icon: <Users />, path: "/admin/users" },
-    //{ id: "reports", label: "Reports and Analytics", icon: <BarChart2 />, path: "/admin/reports" },
-    //{ id: "subs_analytics", label: "Subscription Analytics", icon: <TrendingUp />, path: "/admin/subscription-analytics" },
-    {id: "overview",label: "Admin Overview",icon: <LayoutDashboard />,path: "/admin/overview"},
-    { id: "tickets", label: "Ticket Submissions", icon: <FileText />, path: "/admin/tickets" },
-    { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings" },
-    
+    { id: "overview", label: "Admin Overview", icon: <LayoutDashboard />, path: "/admin/overview" },
+    { id: "tickets", label: "Ticket Submissions", icon: <FileText />, path: "/admin/tickets", requiredPermission: "support.view" },
+    { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings", requiredPermission: "settings.view" },
+    { id: "admin_permissions", label: "Admin Permissions", icon: <ShieldCheck />, path: "/admin/permissions", requiredPermission: "admin_permissions.manage" },
   ];
 
-  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
+  const menuItems = isAdmin
+    ? adminMenuItems.filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission))
+    : userMenuItems;
 
   // 🔥 FIXED LOGIC HERE (longest path match first)
   // Sort menu items by longest path first

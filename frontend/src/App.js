@@ -20,6 +20,9 @@ import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
 import AdminOverview from "./pages/AdminOverview.jsx";
+import AdminPermissionsManager from "./pages/AdminPermissionsManager";
+import AdminUnauthorized from "./pages/AdminUnauthorized";
+import AdminRoute from "./routes/AdminRoute";
 import MyFiles from "./pages/MyFiles";
 
 function App() {
@@ -33,17 +36,17 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ADMIN ROUTES (Public for development as requested) */}
-          <Route element={<AdminLayout />}>
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            
-            {/* Stubs for other admin pages (using AdminUsers as placeholder if files not created yet) */}
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/subscription-analytics" element={<AdminSubscriptionAnalytics />} />
-            <Route path="/admin/tickets" element={<AdminTickets />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
+          {/* ADMIN RBAC PROTECTED ROUTES */}
+          <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route path="/admin/overview" element={<AdminOverview />} />
+            <Route path="/admin-dashboard" element={<AdminRoute requiredPermission="reports.view"><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute requiredPermission="users.view"><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/reports" element={<AdminRoute requiredPermission="reports.view"><AdminReports /></AdminRoute>} />
+            <Route path="/admin/subscription-analytics" element={<AdminRoute requiredPermission="payments.view"><AdminSubscriptionAnalytics /></AdminRoute>} />
+            <Route path="/admin/tickets" element={<AdminRoute requiredPermission="support.view"><AdminTickets /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute requiredPermission="settings.view"><AdminSettings /></AdminRoute>} />
+            <Route path="/admin/permissions" element={<AdminRoute requiredPermission="admin_permissions.manage"><AdminPermissionsManager /></AdminRoute>} />
+            <Route path="/admin/unauthorized" element={<AdminUnauthorized />} />
           </Route>
 
           {/* PROTECTED */}

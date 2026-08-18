@@ -52,11 +52,20 @@ class LoginAPIView(APIView):
             user = serializer.validated_data["user"]
             refresh = RefreshToken.for_user(user)
 
+            perms = []
+            if user.is_staff:
+                perms = ["*"] if user.is_superuser else list(user.admin_permissions.values_list('code', flat=True))
+
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "id": user.id,
                 "username": user.username,
                 "email": user.email,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "role": "superadmin" if user.is_superuser else ("admin" if user.is_staff else "user"),
+                "permissions": perms,
             })
 
         return Response(serializer.errors, status=400)
@@ -98,12 +107,20 @@ class GoogleLoginAPIView(APIView):
 
             refresh = RefreshToken.for_user(user)
 
+            perms = []
+            if user.is_staff:
+                perms = ["*"] if user.is_superuser else list(user.admin_permissions.values_list('code', flat=True))
+
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "role": "superadmin" if user.is_superuser else ("admin" if user.is_staff else "user"),
+                "permissions": perms,
                 "is_new_user": created
             })
 

@@ -1,32 +1,30 @@
-import logging #For logging important events and errors.
-from rest_framework.views import APIView #Base class for API views in Django REST Framework.
-from rest_framework.response import Response #Standard response object for API views.,json responds back to frontend
-from rest_framework import status #HTTP status codes for responses
-from rest_framework.permissions import IsAuthenticated  #Permission class to restrict access to authenticated users only.
-from django.contrib.auth.hashers import check_password, make_password #Utilities for hashing and verifying passwords.
-from django.contrib.auth import get_user_model #Gets the active Django User model safely.
-from rest_framework_simplejwt.tokens import RefreshToken #Creates JWT tokens for authentication.
-from django.db.models import Sum #Used for database aggregation.
+import logging
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Sum
 from django.apps import apps
-from .models import AdminUser
+from .models import AdminUser, AdminPermission
+from .permissions import HasAdminPermission
 
-
-User = get_user_model() #Stores reference to Django auth user model.
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 class AdminLoginView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         # ==========================================
         # STEP 1: GET EMAIL + PASSWORD FROM FRONTEND
         # ==========================================
-        email = request.data.get('email', '').strip().lower() 
+        email = request.data.get('email', '').strip().lower()
         password = request.data.get('password', '')
 
-        # ==========================================
-        # STEP 1: VALIDATE INPUTS
-        # ==========================================
         if not email or not password:
             return Response(
                 {'detail': 'Email and password are required.'},
@@ -39,7 +37,6 @@ class AdminLoginView(APIView):
             # ==========================================
             admin_record = AdminUser.objects.get(email=email)
 
-            #Looks inside custom Admin table
             # ==========================================
             # STEP 3: VERIFY PASSWORD
             # ==========================================
@@ -52,46 +49,56 @@ class AdminLoginView(APIView):
             # ==========================================
             # STEP 4: SYNC WITH DJANGO AUTH USER TABLE
             # ==========================================
-            #checks default Django auth table
             user = User.objects.filter(email=email).first()
 
+            # Check if there are any existing superusers in the system
+            has_superuser = User.objects.filter(is_superuser=True).exists()
+
             if not user:
-                # Create a new staff user if they don't exist in auth_user
+                # The very first admin created becomes Super Admin automatically
                 user = User.objects.create_user(
                     username=email,
                     email=email,
-                    is_staff=True
+                    is_staff=True,
+                    is_superuser=not has_superuser
                 )
-                logger.info("Created new staff user for admin: %s", email)
-
-            # If user exists but isn't staff, promote them to staff - this handles the case where an admin was created in the custom table but not yet synced to auth_user
-            elif not user.is_staff:
-                # Promote existing normal user to staff
-                logger.warning(
-                    "Promoting existing user %s to staff on admin login", email
-                )
-                user.is_staff = True
-                user.save()
+                logger.info("Created new staff user for admin: %s (superuser: %s)", email, not has_superuser)
+            else:
+                updated = False
+                if not user.is_staff:
+                    user.is_staff = True
+                    updated = True
+                # If no superuser exists yet, promote this user
+                if not has_superuser and not user.is_superuser:
+                    user.is_superuser = True
+                    updated = True
+                if updated:
+                    user.save()
 
             # ==========================================
-            # STEP 5: GENERATE JWT TOKENS
-            # Only return access token — refresh token
-            # should not be exposed in JSON response
+            # STEP 5: GENERATE JWT TOKENS & PERMISSIONS
             # ==========================================
             refresh = RefreshToken.for_user(user)
-            #creates login tokens
+
+            if user.is_superuser:
+                perms_list = ["*"]
+            else:
+                perms_list = list(user.admin_permissions.values_list('code', flat=True))
 
             return Response({
-                #Frontend stores token.
                 'access': str(refresh.access_token),
+                'refresh': str(refresh),
                 'user': {
                     'id': user.id,
                     'email': email,
-                    'is_staff': True,
+                    'username': user.username,
+                    'is_staff': user.is_staff,
+                    'is_superuser': user.is_superuser,
+                    'role': 'superadmin' if user.is_superuser else 'admin',
+                    'permissions': perms_list,
                 }
             }, status=status.HTTP_200_OK)
 
-        #If email not found:prevent server crash.
         except AdminUser.DoesNotExist:
             return Response(
                 {'detail': 'Invalid credentials'},
@@ -100,23 +107,14 @@ class AdminLoginView(APIView):
 
 
 class AdminChangePasswordView(APIView):
-    permission_classes = [IsAuthenticated]
-    #Only logged-in users can access this
+    permission_classes = [HasAdminPermission]
+    required_permission = "settings.manage"
 
     def post(self, request):
-        # ==========================================
-        # STEP 1: USE AUTHENTICATED USER'S EMAIL
-        # Never trust client-supplied email —
-        # an admin could change another admin's
-        # password by supplying a different email
-        # ==========================================
-        email = request.user.email  #prevent from malicious admin change another admin's password.
+        email = request.user.email
         current_password = request.data.get('current_password', '')
         new_password = request.data.get('new_password', '')
 
-        # ==========================================
-        # STEP 2: VALIDATE INPUTS
-        # ==========================================
         if not all([current_password, new_password]):
             return Response(
                 {'error': 'All fields are required.'},
@@ -136,25 +134,20 @@ class AdminChangePasswordView(APIView):
             )
 
         try:
-            # ==========================================
-            # STEP 3: FETCH ADMIN RECORD
-            # ==========================================
             admin_user = AdminUser.objects.get(email=email)
 
-            # ==========================================
-            # STEP 4: VERIFY CURRENT PASSWORD
-            # ==========================================
             if not check_password(current_password, admin_user.password):
                 return Response(
                     {'error': 'Incorrect current password.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # ==========================================
-            # STEP 5: HASH AND SAVE NEW PASSWORD
-            # ==========================================
             admin_user.password = make_password(new_password)
             admin_user.save()
+
+            # Also update auth_user password to stay synchronized
+            request.user.set_password(new_password)
+            request.user.save()
 
             logger.info("Password changed successfully for admin: %s", email)
 
@@ -169,93 +162,63 @@ class AdminChangePasswordView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-#CHECK IF USER IS ADMIN
+
 class CheckAdminView(APIView):
-    def post(self, request): #checks if user is admin by looking up email in custom AdminUser table
+    permission_classes = [AllowAny]
+
+    def post(self, request):
         email = request.data.get('email', '').strip().lower()
         if not email:
             return Response({'is_admin': False}, status=status.HTTP_200_OK)
         is_admin = AdminUser.objects.filter(email=email).exists()
         return Response({'is_admin': is_admin}, status=status.HTTP_200_OK)
 
+
 class AdminUserListView(APIView):
-    #AdminUserListView is used to provide the admin dashboard with complete user management data by securely fetching users, storage usage, subscription details, and calculated analytics from the database and sending them to the frontend
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasAdminPermission]
+    required_permission = "users.view"
 
     def get(self, request):
-        # ==========================================
-        # STEP 1: STAFF-ONLY AUTHORIZATION CHECK
-        # ==========================================
-        #Only admins allowed
-        if not request.user.is_staff:
-            return Response(
-                {'detail': 'Not authorized: Staff privileges required.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # Fetch all users from database
+        users = User.objects.select_related('profile').all().order_by('-date_joined')
 
-        # ==========================================
-        # STEP 2: FETCH ALL USERS WITH PROFILES
-        # ==========================================
-        users = User.objects.select_related('profile').all().order_by('-date_joined') #fetches all users from database
-
-        # ==========================================
-        # STEP 3: AGGREGATE STORAGE USAGE
-        # ==========================================
+        # Storage usage aggregation
         try:
             FileModel = apps.get_model('storage', 'File')
-            #dynamically loads File model
-
             usage_data = (
                 FileModel.objects
                 .values('user_id')
-                .annotate(total_size=Sum('size')) #calculates total storage per user
+                .annotate(total_size=Sum('size'))
             )
             usage_map = {item['user_id']: item['total_size'] for item in usage_data}
-
-        except LookupError:
-            logger.error("Storage app or File model not found.")
-            usage_map = {}
-
         except Exception as e:
             logger.error("Storage aggregation failed: %s", e)
             usage_map = {}
 
-        # ==========================================
-        # STEP 4: FETCH ACTIVE SUBSCRIPTION DATA
-        # ==========================================
+        # Active subscriptions
         try:
-            SubPaymentModel = apps.get_model('subscriptions', 'SubscriptionPayment') #loads subscription table
+            SubPaymentModel = apps.get_model('subscriptions', 'SubscriptionPayment')
             active_subs = (
                 SubPaymentModel.objects
-                .filter(status="ACTIVE") #only active plans ; gets each user's plan
-                .select_related('subscription') #optimizes by fetching related subscription data in same query
+                .filter(status="ACTIVE")
+                .select_related('subscription')
             )
             sub_map = {
                 s.user_email.lower(): (s.subscription.name, s.subscription.storage)
                 for s in active_subs
             }
-
-        except LookupError:
-            logger.error("Subscriptions app or SubscriptionPayment model not found.")
-            sub_map = {}
-
         except Exception as e:
             logger.error("Subscription data fetch failed: %s", e)
             sub_map = {}
 
-        # ==========================================
-        # STEP 5: BUILD RESPONSE DATA
-        # ==========================================
         data = []
-
-        for u in users: #create loops
-            used_bytes = usage_map.get(u.id, 0) or 0   #STORAGE USED
-            package_name, limit_gb = sub_map.get(u.email.lower(), ("Free", 5))  #plan info-default 5gb
+        for u in users:
+            used_bytes = usage_map.get(u.id, 0) or 0
+            package_name, limit_gb = sub_map.get(u.email.lower(), ("Free", 5))
             limit_bytes = limit_gb * 1024 * 1024 * 1024
+            pct = (used_bytes / limit_bytes * 100) if limit_bytes > 0 else 0
 
-            pct = (used_bytes / limit_bytes * 100) if limit_bytes > 0 else 0 #PERCENTAGE CALCULATION
-
-            data.append({ #builds response data
+            data.append({
                 "id": u.id,
                 "username": u.username,
                 "email": u.email,
@@ -263,6 +226,7 @@ class AdminUserListView(APIView):
                 "last_name": u.last_name,
                 "is_active": u.is_active,
                 "is_staff": u.is_staff,
+                "is_superuser": u.is_superuser,
                 "country": u.profile.country if hasattr(u, 'profile') else "N/A",
                 "date_joined": u.date_joined.strftime("%Y-%m-%d"),
                 "last_login": (
@@ -272,8 +236,7 @@ class AdminUserListView(APIView):
                 "storage_used_bytes": used_bytes,
                 "total_storage_gb": limit_gb,
                 "package_name": package_name,
-                # Cap at 100% to handle edge cases where usage exceeds plan limit
-                "storage_usage_pct": min(round(pct, 2), 100.0), 
+                "storage_usage_pct": min(round(pct, 2), 100.0),
             })
 
         return Response(data, status=status.HTTP_200_OK)
@@ -282,19 +245,12 @@ class AdminUserListView(APIView):
 class AdminUserToggleSuspendView(APIView):
     """
     Suspend or reactivate a user account by setting is_active in Django auth_user.
-    This preserves the user's data, subscriptions, and profile in the database while
-    preventing them from logging in or making authenticated requests on the web app.
+    Requires users.manage permission.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasAdminPermission]
+    required_permission = "users.manage"
 
     def post(self, request, user_id):
-        # Step 1: Staff-only authorization check
-        if not request.user.is_staff:
-            return Response(
-                {'detail': 'Not authorized: Staff privileges required.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         try:
             target_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
@@ -333,4 +289,148 @@ class AdminUserToggleSuspendView(APIView):
             'message': f"User account has been {status_text} successfully.",
             'user_id': target_user.id,
             'is_active': target_user.is_active,
+        }, status=status.HTTP_200_OK)
+
+
+# ==============================================================================
+# RBAC: SUPER ADMIN PERMISSION MANAGEMENT VIEWS
+# ==============================================================================
+
+class AdminPermissionListView(APIView):
+    """
+    Super Admin endpoint to list all system permissions and all admin accounts
+    with their assigned permission scopes.
+    """
+    permission_classes = [HasAdminPermission]
+    required_permission = "admin_permissions.manage"
+
+    def get(self, request):
+        # 0. Automatically synchronize all AdminUser records (admins table) into Django auth_user
+        try:
+            for admin_rec in AdminUser.objects.all():
+                email_clean = (admin_rec.email or "").strip().lower()
+                if email_clean:
+                    u = User.objects.filter(email=email_clean).first()
+                    if not u:
+                        has_super = User.objects.filter(is_superuser=True).exists()
+                        User.objects.create_user(
+                            username=email_clean,
+                            email=email_clean,
+                            is_staff=True,
+                            is_superuser=not has_super
+                        )
+                    elif not u.is_staff:
+                        u.is_staff = True
+                        u.save(update_fields=['is_staff'])
+        except Exception as sync_err:
+            logger.warning("AdminUser to auth_user auto-sync encountered an issue: %s", sync_err)
+
+        # 1. Fetch all permissions
+        permissions = AdminPermission.objects.all().order_by('category', 'code')
+        permissions_data = [
+            {
+                "id": p.id,
+                "code": p.code,
+                "name": p.name,
+                "category": p.category,
+                "description": p.description,
+            }
+            for p in permissions
+        ]
+
+        # 2. Fetch all staff admin accounts from auth_user
+        admins = User.objects.filter(is_staff=True).prefetch_related('admin_permissions').order_by('id')
+        admins_data = []
+
+        for admin in admins:
+            if admin.is_superuser:
+                assigned_codes = ["*"]
+            else:
+                assigned_codes = list(admin.admin_permissions.values_list('code', flat=True))
+
+            admins_data.append({
+                "id": admin.id,
+                "username": admin.username,
+                "email": admin.email,
+                "first_name": admin.first_name,
+                "last_name": admin.last_name,
+                "is_superuser": admin.is_superuser,
+                "is_staff": admin.is_staff,
+                "is_active": admin.is_active,
+                "date_joined": admin.date_joined.strftime("%Y-%m-%d"),
+                "last_login": (
+                    admin.last_login.strftime("%Y-%m-%d %H:%M")
+                    if admin.last_login else "Never"
+                ),
+                "permissions": assigned_codes,
+            })
+
+        return Response({
+            "permissions": permissions_data,
+            "admins": admins_data,
+        }, status=status.HTTP_200_OK)
+
+
+class AdminUserPermissionUpdateView(APIView):
+    """
+    Super Admin endpoint to update the assigned permissions for an admin account.
+    """
+    permission_classes = [HasAdminPermission]
+    required_permission = "admin_permissions.manage"
+
+    def put(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Admin user not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not target_user.is_staff:
+            return Response(
+                {"detail": "Permissions can only be assigned to staff/admin accounts."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Handle optional is_superuser toggle
+        if "is_superuser" in request.data and request.user.is_superuser:
+            is_super = bool(request.data.get("is_superuser"))
+            # Prevent removing own superuser status if it's the last superuser
+            if target_user.id == request.user.id and not is_super:
+                if User.objects.filter(is_superuser=True).count() <= 1:
+                    return Response(
+                        {"detail": "Cannot demote the only remaining Super Admin."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            target_user.is_superuser = is_super
+            target_user.save()
+
+        # Update permissions
+        permissions_codes = request.data.get("permissions", [])
+        if not isinstance(permissions_codes, list):
+            return Response(
+                {"detail": "Permissions must be a list of permission codes."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Find matching permission records
+        matched_perms = AdminPermission.objects.filter(code__in=permissions_codes)
+        target_user.admin_permissions.set(matched_perms)
+
+        logger.info(
+            "Super Admin %s updated permissions for %s (ID: %s): %s",
+            request.user.email,
+            target_user.email,
+            target_user.id,
+            list(matched_perms.values_list('code', flat=True))
+        )
+
+        return Response({
+            "message": f"Permissions updated successfully for {target_user.email}.",
+            "user_id": target_user.id,
+            "is_superuser": target_user.is_superuser,
+            "permissions": (
+                ["*"] if target_user.is_superuser else list(target_user.admin_permissions.values_list('code', flat=True))
+            ),
         }, status=status.HTTP_200_OK)

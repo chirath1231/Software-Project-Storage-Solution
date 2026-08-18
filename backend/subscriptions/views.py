@@ -11,6 +11,7 @@ from django.apps import apps
 from datetime import timedelta
 from .models import Subscription, Payment, SubscriptionPayment
 from .serializers import SubscriptionSerializer
+from admin_management.permissions import admin_permission_required
 import uuid
 import hashlib
 import logging
@@ -45,7 +46,7 @@ def subscription_list(request): #This endpoint simply fetches all subscription p
 # UPDATE SUBSCRIPTION (ADMIN ONLY)
 # --------------------------------------------------------
 @api_view(["PUT"])
-@permission_classes([IsAdminUser])
+@admin_permission_required("payments.manage")
 def update_subscription(request, subscription_id):
     """
     Admin can update a subscription plan
@@ -319,7 +320,7 @@ def check_payment_status(request, order_id):
 # ADMIN ANALYTICS ENDPOINT
 # --------------------------------------------------------
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@admin_permission_required("payments.view")
 def subscription_analytics(request):
     """
     Aggregates data for the Admin Subscription Analytics dashboard.
@@ -369,7 +370,7 @@ def subscription_analytics(request):
 # ADMIN REPORTS ENDPOINT
 # --------------------------------------------------------
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@admin_permission_required("reports.view")
 def admin_reports(request): #This endpoint generates ALL analytics data for admin dashboard
     """
     Aggregates data for the Reports & Analytics tab.

@@ -138,7 +138,22 @@ export const AuthProvider = ({ children }) => {
   const username = user?.username || user?.email || "";
   const email = user?.email || "";
   const userId = user?.id || user?.user_id || null;
-  const isAdmin = Boolean(user?.role === "admin" || user?.is_staff);
+  const isAdmin = Boolean(user?.role === "admin" || user?.role === "superadmin" || user?.is_staff);
+  const isSuperUser = Boolean(user?.is_superuser || user?.role === "superadmin");
+  const permissions = user?.permissions || [];
+
+  const hasPermission = useCallback((permissionCode) => {
+    if (!user) return false;
+    // Super Admin unconditionally bypasses all checks
+    if (user.is_superuser || user.role === "superadmin" || user.permissions?.includes("*")) {
+      return true;
+    }
+    if (!permissionCode) return true;
+    if (Array.isArray(permissionCode)) {
+      return permissionCode.some(p => user.permissions?.includes(p));
+    }
+    return Boolean(user.permissions && user.permissions.includes(permissionCode));
+  }, [user]);
 
   return (
     <AuthContext.Provider
@@ -150,6 +165,9 @@ export const AuthProvider = ({ children }) => {
         username,
         email,
         isAdmin,
+        isSuperUser,
+        permissions,
+        hasPermission,
         isAuthenticated,
         loading,
         login,
