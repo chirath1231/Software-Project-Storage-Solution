@@ -18,7 +18,6 @@ export default function DashboardHome() {
   const fileInputRef = useRef(null);
 
   const userEmail = localStorage.getItem("username");
-  const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
     initDashboard();
@@ -59,8 +58,7 @@ export default function DashboardHome() {
   // ==========================
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
-      // Fetch from storage_file table filtered by user_id
-      const res = await api.get(`/api/?user_id=${userId}`);
+      const res = await api.get(`/api/?all=true`);
       const data = res.data;
 
       // Sort by upload date descending for recent files
