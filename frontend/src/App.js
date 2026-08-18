@@ -21,6 +21,8 @@ import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import MyFiles from "./pages/MyFiles";
+import SharedFile from "./pages/SharedFile.jsx";
+import SharedFolder from "./pages/SharedFolder.jsx";
 import ClientChatSystem from "./pages/ClientChatSystem.jsx";
 import TicketSubmission from "./pages/TicketSubmission.jsx";
 import DeleteAccount from "./pages/DeleteAccount.jsx";
@@ -47,6 +49,9 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          {/* Shared file/folder — handle their own auth, redirect to login if needed */}
+          <Route path="/shared/:token" element={<SharedFile />} />
+          <Route path="/shared/folder/:token" element={<SharedFolder />} />
 
           {/* ADMIN ROUTES (Public for development as requested) */}
           <Route element={<AdminLayout />}>
