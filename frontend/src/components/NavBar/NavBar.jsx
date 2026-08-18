@@ -2,11 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
+<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+=======
+import { useNotifications } from "../../context/NotificationContext.jsx"; 
+import { useNavigate } from "react-router-dom";
+>>>>>>> origin/main
 
-// Mock logo - replace with your actual import
 const LogoDark = () => (
+<<<<<<< HEAD
   <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
     <div className="flex-none mr-auto">
       <img
@@ -15,6 +20,14 @@ const LogoDark = () => (
         className="h-10 w-auto"
       />
     </div>
+=======
+  <div className="flex items-center">
+    <img
+      src={logo_dark}
+      alt="CEYNOA Logo"
+      className="h-10 w-auto"
+    />
+>>>>>>> origin/main
   </div>
 );
 
@@ -28,9 +41,16 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
   </button>
 );
 
+<<<<<<< HEAD
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, user, username, logout } = useAuth();
+=======
+export default function Navbar({ isDashboard = false }) {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isAuthenticated, username, logout } = useAuth();
+>>>>>>> origin/main
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +60,7 @@ export default function Navbar() {
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
+<<<<<<< HEAD
   const userData = {
     name: user?.username || user?.email || "User",
     email: user?.email || "user@example.com",
@@ -65,6 +86,10 @@ export default function Navbar() {
   }, [isAuthenticated]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+=======
+  // Fetch real notifications from backend context
+  const { notifications, unreadCount, fetchGlobalNotifications } = useNotifications();
+>>>>>>> origin/main
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -76,7 +101,6 @@ export default function Navbar() {
         setShowNotifications(false);
       }
     };
-
     if (showProfileMenu || showNotifications) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -99,30 +123,36 @@ export default function Navbar() {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
+<<<<<<< HEAD
   const handleLogin = () => {
     navigate("/login");
     setMenuOpen(false);
   };
 
+=======
+>>>>>>> origin/main
   const handleLogout = () => {
     logout();
     setShowProfileMenu(false);
     setShowNotifications(false);
+<<<<<<< HEAD
+=======
+    navigate("/login");
+>>>>>>> origin/main
   };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       console.log("Searching for:", searchQuery);
-      // Add your search logic here
     }
   };
 
   const handleNavClick = (href) => {
     setMenuOpen(false);
-    // In real app, handle navigation here
     console.log("Navigate to:", href);
   };
 
+<<<<<<< HEAD
   // Hit the API to mark a specific notification as read
   const markAsRead = async (notificationId) => {
     try {
@@ -147,43 +177,71 @@ export default function Navbar() {
   // Locally hides the notification (since we don't have a delete API yet)
   const clearNotification = (notificationId) => {
     setNotifications(notifications.filter(n => n.id !== notificationId));
+=======
+  // Handle marking notification as read
+  const handleMarkRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
+        method: "PATCH",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json" 
+        }
+      });
+      // Refresh notifications after marking as read
+      await fetchGlobalNotifications();
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    // Mark all unread notifications as read
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    for (const notification of unreadNotifications) {
+      await handleMarkRead(notification.id);
+    }
+  };
+
+  const handleClearNotification = (notificationId) => {
+    // For now, we'll just mark it as read. You can extend this to delete if needed.
+    handleMarkRead(notificationId);
+>>>>>>> origin/main
   };
 
   return (
     <nav className="py-4 relative shadow-lg bg-[#323D41]">
-      <div className="max-w-7xl mx-auto px-0  flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex-none mr-auto ">
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        
+        {/* Left Side: Logo */}
+        <div className="flex-none">
           <LogoDark />
         </div>
 
-        {/* Mobile menu toggle */}
-        <button
-          onClick={toggleMenu}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          className="md:hidden text-white p-2 hover:bg-gray-700 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
-        >
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-
-        {/* Center section - Navigation or Search */}
+        {/* Center section (Search bar or Navigation links) */}
         <div className={`
           flex-1 flex justify-center items-center mx-10
           ${menuOpen ? 'flex' : 'hidden'} md:flex
-          md:relative absolute top-full left-0 right-0 bg-gray-800 md:bg-transparent
+          md:relative absolute top-full left-0 right-0 bg-[#323D41] md:bg-transparent
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
+<<<<<<< HEAD
           {!isAuthenticated ? (
             // Navigation links (before login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
+=======
+          {!showDashboardView ? (
+            // Public Navigation links (Before Login)
+            <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
+>>>>>>> origin/main
               {[
                 { href: "#home", label: "Home" },
                 { href: "#features", label: "Features" },
                 { href: "#pricing", label: "Pricing" },
                 { href: "#aboutus", label: "About Us" }
               ].map((item) => (
-                <li key={item.href} className="m-0 before:content-none" >
+                <li key={item.href} className="m-0 before:content-none">
                   <a
                     href={item.href}
                     className="text-white no-underline text-base font-medium hover:text-orange-400 transition-colors focus:outline-none focus:text-orange-400"
@@ -195,7 +253,7 @@ export default function Navbar() {
               ))}
             </ul>
           ) : (
-            // Search bar (after login)
+            // Main App Search bar (After Login)
             <div className="relative w-full max-w-xl">
               <Search 
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
@@ -204,7 +262,7 @@ export default function Navbar() {
               />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search files or events..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -214,43 +272,94 @@ export default function Navbar() {
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Mobile auth buttons (only when logged out) */}
           {!isAuthenticated && (
+=======
+          {/* Mobile Auth Buttons Toggle */}
+          {!showDashboardView && (
+>>>>>>> origin/main
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
-              <GradientButton 
-                title="Register" 
-                onClick={() => window.location.href = "/register"}
-                ariaLabel="Register for an account"
-              />
-              <GradientButton 
-                title="Login" 
-                onClick={() => window.location.href = "/login"}
-                ariaLabel="Login to your account"
-              />
+              <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
+              <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
+            </div>
+          )}
+
+          {/* Mobile user profile, settings, notifications, and logout (only when logged in) */}
+          {showDashboardView && (
+            <div className="flex md:hidden gap-4 mt-5 w-full flex-col border-t border-gray-750 pt-4">
+              {/* User Identity Info */}
+              <div className="flex items-center gap-3 px-2">
+                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-700 flex-shrink-0">
+                  <User size={20} className="text-orange-500" />
+                </div>
+                <div className="flex flex-col gap-0.5 text-left">
+                  <div className="text-white text-sm font-semibold">{username || "User"}</div>
+                </div>
+              </div>
+
+              {/* Notification Link */}
+              <button 
+                className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
+                onClick={() => {
+                  window.location.href = "/dashboard/notifications";
+                  setMenuOpen(false);
+                }}
+              >
+                <div className="relative">
+                  <Bell size={18} className="text-gray-300" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                Notifications
+              </button>
+
+              {/* Settings Link */}
+              <button 
+                className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
+                onClick={() => {
+                  window.location.href = "/dashboard/settings";
+                  setMenuOpen(false);
+                }}
+              >
+                <User size={18} className="text-gray-300" />
+                Profile & Settings
+              </button>
+
+              {/* Logout Button */}
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors mt-2"
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>
 
+<<<<<<< HEAD
         {/* Right section - Auth buttons or Profile */}
         <div className="hidden md:flex gap-3 items-center relative">
           {!isAuthenticated ? (
             // Auth buttons (before login)
+=======
+        {/* Right Section: Actions Panel (Auth Controls or Profile Context) */}
+        <div className="flex gap-3 items-center relative">
+          {!showDashboardView ? (
+            <div className="hidden md:flex gap-3">
+              <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
+              <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
+            </div>
+          ) : (
+>>>>>>> origin/main
             <>
-              <GradientButton 
-              title="Register" 
-              onClick={() => window.location.href = "/register"}
-              ariaLabel="Register for an account"
-              />
-              <GradientButton 
-              title="Login" 
-              onClick={() => window.location.href = "/login"}
-              ariaLabel="Login to your account"
-              />
-            </>
-            ) : (
-            // Notifications and User profile (after login)
-            <>
-              {/* Notification Bell */}
+              {/* Notification Center Trigger */}
               <div className="relative" ref={notificationRef}>
                 <button
                   className="relative p-2 rounded-full hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -261,50 +370,46 @@ export default function Navbar() {
                     if (!showNotifications) fetchNotifications(); 
                   }}
                   aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-                  aria-expanded={showNotifications}
-                  aria-haspopup="true"
                 >
                   <Bell size={22} className="text-gray-300" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-[#323D41]">
                       {unreadCount}
                     </span>
                   )}
                 </button>
 
-                {/* Notifications Dropdown */}
+                {/* Notifications Panel Box Dropdown */}
                 {showNotifications && (
-                  <div 
-                    className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl w-80 z-50 overflow-hidden"
-                    role="menu"
-                    aria-orientation="vertical"
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                      <h3 className="text-gray-800 font-semibold text-sm">Notifications</h3>
+                  <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl w-80 z-50 overflow-hidden border border-gray-100">
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <h3 className="text-gray-800 font-bold text-xs uppercase tracking-wider">Alerts</h3>
                       {unreadCount > 0 && (
-                        <button
-                          onClick={markAllAsRead}
-                          className="text-orange-500 text-xs hover:text-orange-600 focus:outline-none"
-                        >
-                          Mark all as read
+                        <button onClick={handleMarkAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
+                          Mark all read
                         </button>
                       )}
                     </div>
 
-                    {/* Notifications List */}
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length > 0 ? (
-                        notifications.map((notification) => (
+                        notifications.slice(0, 5).map((notification) => (
                           <div
                             key={notification.id}
+<<<<<<< HEAD
                             className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
                               !notification.is_read ? 'bg-orange-50/50' : ''
                             }`}
                             onClick={() => markAsRead(notification.id)}
+=======
+                            className={`px-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.is_read ? 'bg-orange-50/30' : ''}`}
+                            onClick={() => handleMarkRead(notification.id)}
+>>>>>>> origin/main
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`} />
                               <div className="flex-1">
+<<<<<<< HEAD
                                 <div className="flex items-center gap-2">
                                   <h4 className="text-gray-800 font-medium text-sm">
                                     {notification.title}
@@ -317,28 +422,31 @@ export default function Navbar() {
                                   {notification.message}
                                 </p>
                                 <p className="text-gray-400 text-xs mt-1">
+=======
+                                <h4 className={`text-gray-800 text-sm leading-tight ${!notification.is_read ? 'font-bold' : 'font-medium'}`}>{notification.title}</h4>
+                                <p className="text-gray-500 text-xs mt-1 line-clamp-2">{notification.message}</p>
+                                <p className="text-gray-400 text-[10px] mt-2 font-semibold uppercase">
+>>>>>>> origin/main
                                   {new Date(notification.created_at).toLocaleDateString()}
                                 </p>
                               </div>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  clearNotification(notification.id);
+                                  handleClearNotification(notification.id);
                                 }}
-                                className="text-gray-400 hover:text-red-500 focus:outline-none"
-                                aria-label="Clear notification"
+                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent border-0 cursor-pointer p-0"
                               >
-                                <X size={16} />
+                                <X size={14} />
                               </button>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                          No notifications
-                        </div>
+                        <div className="px-4 py-10 text-center text-gray-400 text-sm italic">No new alerts</div>
                       )}
                     </div>
+<<<<<<< HEAD
 
                     {/* Footer */}
                     <div className="px-4 py-3 border-t border-gray-200 text-center">
@@ -350,43 +458,47 @@ export default function Navbar() {
                           }}
                       >
                         View all notifications
+=======
+                    <div className="p-3 bg-gray-50 text-center border-t border-gray-100">
+                      <button 
+                        onClick={() => window.location.href = "/notifications"} 
+                        className="text-gray-600 text-xs font-bold hover:text-orange-500 transition-colors w-full bg-transparent border-0 cursor-pointer"
+                      >
+                        View All Activity
+>>>>>>> origin/main
                       </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* User Profile */}
+              {/* User Profile Navigation Trigger */}
               <div className="relative" ref={profileMenuRef}>
                 <button
-                  className="flex items-center gap-3 py-2 px-3 rounded-full hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="flex items-center gap-3 py-1.5 px-2 rounded-full hover:bg-gray-700 transition-colors bg-transparent border-0 cursor-pointer"
                   onClick={() => {
                     setShowProfileMenu(!showProfileMenu);
                     setShowNotifications(false);
                   }}
-                  aria-label="User menu"
-                  aria-expanded={showProfileMenu}
-                  aria-haspopup="true"
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
-                    {userData.avatar ? (
-                      <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={24} className="text-orange-500" />
-                    )}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
+                    <User size={20} className="text-orange-500" />
                   </div>
+<<<<<<< HEAD
                   <div className="flex flex-col gap-0.5 text-left">
                     <div className="text-white text-sm font-semibold">{username}</div>
                     <div className="text-gray-400 text-xs">{userData.email}</div>
+=======
+                  <div className="flex flex-col text-left">
+                    <div className="text-white text-sm font-bold leading-none">{username || "User"}</div>
+>>>>>>> origin/main
                   </div>
-                  <ChevronDown 
-                    size={16} 
-                    className={`text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
-                  />
+                  <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile dropdown menu */}
+                {/* Profile Options Context Menu */}
                 {showProfileMenu && (
+<<<<<<< HEAD
                   <div 
                     className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl min-w-[200px] z-50 overflow-hidden"
                     role="menu"
@@ -421,11 +533,32 @@ export default function Navbar() {
                     >
                       Logout
                     </button>
+=======
+                  <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl min-w-[220px] z-50 overflow-hidden border border-gray-100">
+                    <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Logged in as</p>
+                      <p className="text-sm font-bold text-gray-800 truncate">{username || "Workspace Account"}</p>
+                    </div>
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/profile"}>My Profile</button>
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/settings"}>Settings</button>
+                    <div className="h-px bg-gray-100 mx-2"></div>
+                    <button className="w-full py-3 px-4 text-left hover:bg-red-50 text-sm text-red-500 font-bold bg-transparent border-0 cursor-pointer" onClick={handleLogout}>Logout</button>
+>>>>>>> origin/main
                   </div>
                 )}
               </div>
             </>
-          )} 
+          )}
+
+          {/* Desktop Hamburg Menu Icon for Mobile view scaling toggle */}
+          <button
+            onClick={toggleMenu}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="md:hidden text-white p-2 hover:bg-gray-700 rounded transition-colors bg-transparent border-0 cursor-pointer"
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
         </div>
       </div>
     </nav>

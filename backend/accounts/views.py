@@ -1,22 +1,40 @@
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+<<<<<<< HEAD
 from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer, ProfileSerializer, ProfileUpdateSerializer
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import UpdateAPIView
+=======
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.permissions import AllowAny, IsAuthenticated
+>>>>>>> origin/main
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from .models import Profile
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
+try:
+    from google.oauth2 import id_token
+except ImportError:
+    import sys
+    print("Current Python Executable:", sys.executable)
+    print("System Path:", sys.path)
+    raise
+
+from google.auth.transport import requests as google_requests
+
+from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer
 
 
 GOOGLE_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
 
-
+# ==========================================
+# AUTHENTICATION VIEWS
+# ==========================================
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -26,6 +44,13 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
+
+            # --- Trigger Welcome Notification ---
+            create_system_notification(
+                user=user,
+                title="Welcome to CEYNOA!",
+                message="Your account has been created successfully. Explore your dashboard to get started."
+            )
 
             return Response({
                 "user": {
@@ -59,7 +84,11 @@ class LoginAPIView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+<<<<<<< HEAD
                 "id": user.id,
+=======
+                "user_id": user.id,
+>>>>>>> origin/main
                 "username": user.username,
                 "email": user.email,
                 "is_staff": user.is_staff,
@@ -84,7 +113,7 @@ class GoogleLoginAPIView(APIView):
         try:
             idinfo = id_token.verify_oauth2_token(
                 token,
-                requests.Request(),
+                google_requests.Request(),
                 GOOGLE_CLIENT_ID
             )
 
@@ -96,6 +125,7 @@ class GoogleLoginAPIView(APIView):
                 defaults={"username": email}
             )
 
+<<<<<<< HEAD
             # Ensure a profile exists for Google users
             Profile.objects.get_or_create(user=user)
 
@@ -103,6 +133,14 @@ class GoogleLoginAPIView(APIView):
                 return Response(
                     {"detail": "This account has been suspended. Please contact support."},
                     status=status.HTTP_403_FORBIDDEN
+=======
+            if created:
+                # --- Trigger Welcome Notification for Google Login ---
+                create_system_notification(
+                    user=user,
+                    title="Welcome to CEYNOA!",
+                    message="Your Google account was linked successfully. Explore your dashboard to get started."
+>>>>>>> origin/main
                 )
 
             refresh = RefreshToken.for_user(user)
@@ -114,7 +152,11 @@ class GoogleLoginAPIView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+<<<<<<< HEAD
                 "id": user.id,
+=======
+                "user_id": user.id,
+>>>>>>> origin/main
                 "username": user.username,
                 "email": user.email,
                 "is_staff": user.is_staff,
@@ -130,6 +172,7 @@ class GoogleLoginAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+<<<<<<< HEAD
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -154,3 +197,6 @@ class ProfileUpdateView(UpdateAPIView):
     def get_object(self):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
         return profile
+=======
+
+>>>>>>> origin/main

@@ -1,10 +1,9 @@
-# accounts/serializers.py
-
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import Profile
+
 
 
 # -------------------------
@@ -175,8 +174,10 @@ class LoginSerializer(serializers.Serializer):
 
         data["user"] = user
         return data
-    
-from rest_framework import serializers
 
+# -------------------------
+# Google Auth Serializer
+# -------------------------
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
+

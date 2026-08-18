@@ -1,0 +1,31 @@
+# Packages identified from backend code (no pip freeze).
+#
+# settings.py: INSTALLED_APPS (daphne, rest_framework, jwt, cors, channels,
+#     django_extensions, storages, anymail), PostgreSQL DATABASES, S3 STORAGES,
+#     CHANNEL_LAYERS (channels_redis), ASGI_APPLICATION
+# Imports: dotenv, rest_framework*, channels*, requests, google (auth + genai), resend
+#
+# pip install -r requirements.txt
+# Services: PostgreSQL, Redis (for Django Channels)
+
+Django>=5.2,<5.3
+djangorestframework>=3.16,<4
+djangorestframework-simplejwt>=5.5,<6
+django-cors-headers>=4.9,<5
+python-dotenv>=1.0,<2
+psycopg2-binary>=2.9,<3
+
+requests>=2.32,<3
+google-auth>=2.48,<3
+google-genai>=2.0,<3
+resend>=2.0,<3
+
+daphne>=4.2,<5
+channels>=4.3,<5
+channels-redis>=4.2,<5
+redis>=5,<6
+
+django-extensions>=3.2,<4
+django-storages>=1.14,<2
+boto3>=1.35,<2
+django-anymail>=15.0,<16

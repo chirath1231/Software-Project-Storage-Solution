@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Camera, User } from 'lucide-react';
+<<<<<<< HEAD
 import { useAuth } from '../auth/AuthContext'; //Gets logged-in user data from authentication context.
+=======
+import { useAuth } from '../auth/AuthContext';
+>>>>>>> origin/main
 import api from '../api/axios';
 
 const AdminSettings = () => {
@@ -11,41 +15,68 @@ const AdminSettings = () => {
   const adminEmail = user?.email || "admin@storage-solution.com";
   const adminRole = user?.role || "Admin";
 
+<<<<<<< HEAD
   const [profilePic, setProfilePic] = useState(null); //Stores uploaded image preview.
   const [showCurrent, setShowCurrent] = useState(false); //These control show/hide password.
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   
   //store all inside one object
+=======
+  const [profilePic, setProfilePic] = useState(null);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  
+>>>>>>> origin/main
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
     confirm: ''
   });
 
+<<<<<<< HEAD
   // success popup
+=======
+>>>>>>> origin/main
   const [successMessage, setSuccessMessage] = useState(false);
   const [error, setError] = useState(null);
 
   const handlePasswordChange = async (e) => {
+<<<<<<< HEAD
     e.preventDefault(); //Stop page refresh
     setError(null); //Clears old error messages
 
     //Check password match
+=======
+    e.preventDefault();
+    setError(null);
+
+>>>>>>> origin/main
     if (passwords.new !== passwords.confirm) {
       setError("New passwords do not match!");
       return;
     }
     
+<<<<<<< HEAD
     //Check length
+=======
+>>>>>>> origin/main
     if (passwords.new.length < 8) { // Basic client-side validation for length
         setError("New password must be at least 8 characters long.");
         return;
     }
+<<<<<<< HEAD
    
     
     try {
       // API call to update the password in the database; Sends data to backend
+=======
+    // Add more client-side password strength validation here if desired
+    
+    try {
+      // API call to update the password in the database
+>>>>>>> origin/main
       const response = await api.post('/api/admin/change-password/', {
         email: adminEmail,
         current_password: passwords.current,
@@ -53,7 +84,11 @@ const AdminSettings = () => {
       });
 
       setSuccessMessage(true);
+<<<<<<< HEAD
       setPasswords({ current: '', new: '', confirm: '' });//Clears form after success
+=======
+      setPasswords({ current: '', new: '', confirm: '' });
+>>>>>>> origin/main
       setTimeout(() => setSuccessMessage(false), 4000);
     } catch (err) {
       console.error("Password update failed:", err.response || err);
@@ -66,7 +101,11 @@ const AdminSettings = () => {
           // Optionally, force logout and redirect
           // logout();
         } else if (err.response.data && err.response.data.error) {
+<<<<<<< HEAD
           msg = err.response.data.error; // e.g., "Current password is incorrect"
+=======
+          msg = err.response.data.error;
+>>>>>>> origin/main
         } else if (err.response.data && err.response.data.detail) {
           msg = err.response.data.detail; // e.g., "Given token not valid for any token type"
         }
@@ -76,8 +115,13 @@ const AdminSettings = () => {
   };
 
   const handleFileChange = (e) => {
+<<<<<<< HEAD
     const file = e.target.files[0]; //browser creates temporary preview URL
     if (file) setProfilePic(URL.createObjectURL(file)); //Updates profilePic state to show preview of uploaded image.
+=======
+    const file = e.target.files[0];
+    if (file) setProfilePic(URL.createObjectURL(file));
+>>>>>>> origin/main
   };
 
   return (
@@ -162,10 +206,17 @@ const AdminSettings = () => {
             <div className="md:col-span-2 relative">
               <label className="text-sm font-bold text-gray-600 block mb-2 ml-1">Current Password</label>
               <input 
+<<<<<<< HEAD
                 type={showCurrent ? "text" : "password"} // Toggles between showing and hiding the current password input.
                 className="w-full p-4 pr-14 border-2 border-gray-100 rounded-2xl bg-white focus:border-orange-500 outline-none transition-all font-mono"
                 value={passwords.current}
                 autoComplete="current-password" 
+=======
+                type={showCurrent ? "text" : "password"} 
+                className="w-full p-4 pr-14 border-2 border-gray-100 rounded-2xl bg-white focus:border-orange-500 outline-none transition-all font-mono"
+                value={passwords.current}
+                autoComplete="current-password"
+>>>>>>> origin/main
                 onChange={(e) => setPasswords({...passwords, current: e.target.value})}
                 required
               />

@@ -9,6 +9,7 @@ from .views import (
     admin_reports,
     update_subscription,
 )
+from . import views
 
 urlpatterns = [
     # --------------------------------------------------
@@ -36,7 +37,7 @@ urlpatterns = [
     # --------------------------------------------------
     path(
         "payhere/notify/",
-        payhere_notify,
+        views.payhere_notify,
         name="payhere-notify"
     ),
 
