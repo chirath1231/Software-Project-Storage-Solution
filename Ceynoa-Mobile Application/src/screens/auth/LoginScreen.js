@@ -22,6 +22,17 @@ const CLOUD_IMG = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?
 export default function LoginScreen({ navigation }) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
+<<<<<<< HEAD
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("jonas_kahnwald@gmail.com");
+  const [password, setPassword] = useState("");
+  const [keep, setKeep] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const onSignIn = () => {
+    setLoading(true);
+    setTimeout(() => signIn({ email }), 650); // auth swaps the navigator
+=======
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +52,7 @@ export default function LoginScreen({ navigation }) {
       setError(e.message);
       setLoading(false);
     }
+>>>>>>> main
   };
 
   return (
@@ -72,12 +84,15 @@ export default function LoginScreen({ navigation }) {
               <Input label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" secure icon="lock-closed-outline" />
             </View>
 
+<<<<<<< HEAD
+=======
             {error ? (
               <Text style={{ color: c.tones.danger, fontSize: 13, marginTop: 10, textAlign: "center" }}>
                 {error}
               </Text>
             ) : null}
 
+>>>>>>> main
             <Pressable style={styles.checkRow} onPress={() => setKeep((k) => !k)}>
               <View style={[styles.checkbox, { borderColor: keep ? c.accent.orange : c.borderStrong, backgroundColor: keep ? c.accent.orange : "transparent" }]}>
                 {keep ? <Ionicons name="checkmark" size={13} color="#fff" /> : null}
@@ -95,7 +110,11 @@ export default function LoginScreen({ navigation }) {
 
             <Pressable
               style={[styles.google, { borderColor: c.border, backgroundColor: c.bgSecondary }]}
+<<<<<<< HEAD
+              onPress={onSignIn}
+=======
               onPress={() => setError("Google sign-in is not available yet.")}
+>>>>>>> main
             >
               <Ionicons name="logo-google" size={18} color="#EA4335" />
               <Text style={[styles.googleText, { color: c.textPrimary }]}>Sign in with Google</Text>

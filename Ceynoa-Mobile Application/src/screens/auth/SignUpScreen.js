@@ -22,6 +22,18 @@ const CLOUD_IMG = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?
 export default function SignUpScreen({ navigation }) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
+<<<<<<< HEAD
+  const { signIn } = useAuth();
+  const [name, setName] = useState("Jonas Khanwald");
+  const [dob, setDob] = useState("11 December 1997");
+  const [email, setEmail] = useState("jonas_kahnwald@gmail.com");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const onSignUp = () => {
+    setLoading(true);
+    setTimeout(() => signIn({ name, email, dob }), 650);
+=======
   const { register } = useAuth();
   const [username, setUsername] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,6 +57,7 @@ export default function SignUpScreen({ navigation }) {
       setError(e.message);
       setLoading(false);
     }
+>>>>>>> main
   };
 
   return (
@@ -69,18 +82,26 @@ export default function SignUpScreen({ navigation }) {
             </Text>
 
             <View style={{ gap: 14, marginTop: 18 }}>
+<<<<<<< HEAD
+              <Input label="Your Name" value={name} onChangeText={setName} placeholder="Your full name" icon="person-outline" />
+              <Input label="Date of Birth" value={dob} onChangeText={setDob} placeholder="DD / MM / YYYY" icon="calendar-outline" />
+=======
               <Input label="Username" value={username} onChangeText={setUsername} placeholder="Your username" icon="person-outline" />
               <Input label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" secure icon="lock-closed-outline" />
+>>>>>>> main
               <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" icon="mail-outline" />
               <Input label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" secure icon="lock-closed-outline" />
             </View>
 
+<<<<<<< HEAD
+=======
             {error ? (
               <Text style={{ color: c.tones.danger, fontSize: 13, marginTop: 10, textAlign: "center" }}>
                 {error}
               </Text>
             ) : null}
 
+>>>>>>> main
             <Button label="Sign up" loading={loading} onPress={onSignUp} style={{ marginTop: 20 }} />
 
             <View style={styles.divider}>
@@ -89,7 +110,11 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.line, { backgroundColor: c.border }]} />
             </View>
 
+<<<<<<< HEAD
+            <Pressable style={[styles.google, { borderColor: c.border, backgroundColor: c.bgSecondary }]} onPress={onSignUp}>
+=======
             <Pressable style={[styles.google, { borderColor: c.border, backgroundColor: c.bgSecondary }]} onPress={() => setError("Google sign-up is not available yet.")}>
+>>>>>>> main
               <Ionicons name="logo-google" size={18} color="#EA4335" />
               <Text style={[styles.googleText, { color: c.textPrimary }]}>Continue with Google</Text>
             </Pressable>

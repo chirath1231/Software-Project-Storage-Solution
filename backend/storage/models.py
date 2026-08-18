@@ -1,15 +1,37 @@
-# models.py
 from django.db import models
 from django.contrib.auth.models import User
+
+
+def user_upload_path(instance, filename):
+    # stores each user's files under uploads/{user_id}/filename in DO Spaces
+    return f'{instance.user.id}/{filename}'
+
+
+class Folder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='folders')
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE, related_name='subfolders'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
 
 class File(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    file = models.FileField(upload_to='uploads/')
+    file = models.FileField(upload_to=user_upload_path)
     size = models.BigIntegerField(default=0)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    is_deleted = models.BooleanField(default=False)       # soft-delete flag
-    deleted_at = models.DateTimeField(null=True, blank=True)  # when trashed
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    folder = models.ForeignKey(
+        Folder, null=True, blank=True, on_delete=models.SET_NULL, related_name='files'
+    )
 
     def __str__(self):
         return self.name

@@ -55,6 +55,12 @@ INSTALLED_APPS = [
     "sharing",
     "notifications",
     "events",
+    "sharing",
+    'anymail',
+    'tickets',
+    'admin_management',
+    # 'assistant',
+    'sharing',  # the new sharing app
 ]
 
 # -----------------------------------------------------
@@ -227,8 +233,9 @@ AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "ceynoa-storage")
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "sfo3")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL", "https://sfo3.digitaloceanspaces.com")
 
-AWS_DEFAULT_ACL = "public-read"
-AWS_QUERYSTRING_AUTH = False
+AWS_DEFAULT_ACL = "private"
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = 300  # presigned URLs valid for 5 minutes
 AWS_S3_FILE_OVERWRITE = False
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
