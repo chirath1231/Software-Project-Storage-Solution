@@ -59,6 +59,8 @@ export default function DashboardHome() {
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
       const res = await api.get(`/api/?all=true`);
+      // Fetch from storage_file table filtered by user_id
+      const res = await api.get(`/api/files/?user_id=${userId}`);
       const data = res.data;
 
       // Sort by upload date descending for recent files
@@ -144,7 +146,7 @@ export default function DashboardHome() {
       const formData = new FormData();
       formData.append("file", file);
 
-      await api.post("/api/upload/", formData);
+      await api.post("/api/files/upload/", formData);
 
       setUploadStatus("success");
       setUploadMessage(`"${file.name}" uploaded successfully!`);

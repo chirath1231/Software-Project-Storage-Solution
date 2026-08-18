@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,69 +8,37 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as WebBrowser from "expo-web-browser";
-import { useAuthRequest, ResponseType, makeRedirectUri } from "expo-auth-session";
 import { useTheme } from "../../theme/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_WEB_CLIENT_ID = "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com";
 
 const CLOUD_IMG = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1000&q=80";
 
 export default function LoginScreen({ navigation }) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
-  const { login, loginWithGoogle } = useAuth();
+<<<<<<< HEAD
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("jonas_kahnwald@gmail.com");
+  const [password, setPassword] = useState("");
+  const [keep, setKeep] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const onSignIn = () => {
+    setLoading(true);
+    setTimeout(() => signIn({ email }), 650); // auth swaps the navigator
+=======
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keep, setKeep] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const GOOGLE_DISCOVERY = {
-    authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-  };
-
-  const [_request, googleResponse, promptGoogleAsync] = useAuthRequest(
-    {
-      clientId: GOOGLE_WEB_CLIENT_ID,
-      redirectUri: makeRedirectUri(),
-      scopes: ["openid", "profile", "email"],
-      responseType: ResponseType.Token,
-      usePKCE: false,
-    },
-    GOOGLE_DISCOVERY
-  );
-
-  useEffect(() => {
-    if (googleResponse?.type === "success") {
-      const accessToken = googleResponse.params.access_token;
-      handleGoogleToken(accessToken);
-    } else if (googleResponse?.type === "error") {
-      setError("Google sign-in failed. Please try again.");
-    }
-  }, [googleResponse]);
-
-  const handleGoogleToken = async (accessToken) => {
-    setGoogleLoading(true);
-    setError("");
-    try {
-      await loginWithGoogle(accessToken);
-    } catch (e) {
-      setError(e.message || "Google sign-in failed.");
-      setGoogleLoading(false);
-    }
-  };
 
   const onSignIn = async () => {
     if (!email.trim()) { setError("Email is required."); return; }
@@ -84,6 +52,7 @@ export default function LoginScreen({ navigation }) {
       setError(e.message);
       setLoading(false);
     }
+>>>>>>> main
   };
 
   return (
@@ -115,12 +84,15 @@ export default function LoginScreen({ navigation }) {
               <Input label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" secure icon="lock-closed-outline" />
             </View>
 
+<<<<<<< HEAD
+=======
             {error ? (
               <Text style={{ color: c.tones.danger, fontSize: 13, marginTop: 10, textAlign: "center" }}>
                 {error}
               </Text>
             ) : null}
 
+>>>>>>> main
             <Pressable style={styles.checkRow} onPress={() => setKeep((k) => !k)}>
               <View style={[styles.checkbox, { borderColor: keep ? c.accent.orange : c.borderStrong, backgroundColor: keep ? c.accent.orange : "transparent" }]}>
                 {keep ? <Ionicons name="checkmark" size={13} color="#fff" /> : null}
@@ -138,17 +110,14 @@ export default function LoginScreen({ navigation }) {
 
             <Pressable
               style={[styles.google, { borderColor: c.border, backgroundColor: c.bgSecondary }]}
-              onPress={() => promptGoogleAsync()}
-              disabled={googleLoading}
+<<<<<<< HEAD
+              onPress={onSignIn}
+=======
+              onPress={() => setError("Google sign-in is not available yet.")}
+>>>>>>> main
             >
-              {googleLoading ? (
-                <ActivityIndicator size="small" color="#EA4335" />
-              ) : (
-                <Ionicons name="logo-google" size={18} color="#EA4335" />
-              )}
-              <Text style={[styles.googleText, { color: c.textPrimary }]}>
-                {googleLoading ? "Signing in…" : "Continue with Google"}
-              </Text>
+              <Ionicons name="logo-google" size={18} color="#EA4335" />
+              <Text style={[styles.googleText, { color: c.textPrimary }]}>Sign in with Google</Text>
             </Pressable>
 
             <Text style={[styles.foot, { color: c.textSecondary }]}>

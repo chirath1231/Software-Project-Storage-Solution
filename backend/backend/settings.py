@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
-
+import sys
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,21 +35,24 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "subscriptions",
-    "core",
     # THIRD-PARTY APPS
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
     'django.contrib.postgres',
-    "storages",
-    'anymail',  
     # YOUR APPS
     "accounts",  # your authentication app
     "channels", # for WebSocket support
     'chat', # your chat app
     "django_extensions",
+    "storages",
     "storage",
     "sharing",
+    'anymail',
+    'tickets',
+    'admin_management',
+    # 'assistant',
+    'sharing',  # the new sharing app
 ]
 
 
@@ -207,8 +210,15 @@ REST_FRAMEWORK = {
     ),
         "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-    ]
+    ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+
 }
+
+
+
 
 DOMAIN = 'http://localhost:3000'
 
@@ -220,8 +230,8 @@ SIMPLE_JWT = {
 
 
 
-AWS_ACCESS_KEY_ID = "DO00MW3XMARTXWCD4MYG"
-AWS_SECRET_ACCESS_KEY = "defc57w1u/Srqn9woBTVJJ7yOpWmuKLigyADf/HuyrU"
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 AWS_STORAGE_BUCKET_NAME = "ceynoa-storage"
 AWS_S3_REGION_NAME = "sfo3"
@@ -247,7 +257,16 @@ STORAGES = {
     },
 }
 
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
 
+    def __getitem__(self, item):
+        return None
+
+
+if "test" in sys.argv:
+    MIGRATION_MODULES = DisableMigrations()
 
 
 CSRF_TRUSTED_ORIGINS = [

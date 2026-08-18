@@ -14,6 +14,11 @@ urlpatterns = [
     path("api/", include("chat.api_urls")),
     path("api/", include("storage.urls")),
     path("api/", include("sharing.urls")),
+     path('api/', include('tickets.urls')),
+     path('api/', include('admin_management.urls')),
+     path("api/files/", include("storage.urls")),  # was: path("api/", include("storage.urls"))
+    path('api/assistant/', include('assistant.urls')),
+    path('api/', include('sharing.urls')),  # add this line for sharing API
 ]
 
 # Serve media files locally in development
