@@ -28,6 +28,7 @@ MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 # GET ALL SUBSCRIPTIONS
 # --------------------------------------------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def subscription_list(request):
     subs = Subscription.objects.all()
     serializer = SubscriptionSerializer(subs, many=True)
