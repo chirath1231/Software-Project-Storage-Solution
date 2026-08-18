@@ -77,19 +77,8 @@ export default function Navbar({ isDashboard = false }) {
     logout();
     setShowProfileMenu(false);
     setShowNotifications(false);
+    navigate("/login");
   };
-const handleLogin = () => {
-  login("dummy-token", "Natasha Avory"); // replace with real login response
-  setMenuOpen(false);
-};
-
-const handleLogout = () => {
-  logout();
-  setShowProfileMenu(false);
-  setShowNotifications(false);
-  navigate("/login");
-};
-
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -203,15 +192,10 @@ const handleLogout = () => {
               {/* User Identity Info */}
               <div className="flex items-center gap-3 px-2">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-700 flex-shrink-0">
-                  {userData.avatar ? (
-                    <img src={userData.avatar} alt={username} className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={20} className="text-orange-500" />
-                  )}
+                  <User size={20} className="text-orange-500" />
                 </div>
                 <div className="flex flex-col gap-0.5 text-left">
-                  <div className="text-white text-sm font-semibold">{username || userData.name}</div>
-                  <div className="text-gray-400 text-xs">{userData.email}</div>
+                  <div className="text-white text-sm font-semibold">{username || "User"}</div>
                 </div>
               </div>
 

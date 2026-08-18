@@ -7,7 +7,8 @@ import { useAuth } from "../auth/AuthContext";
 import UpcomingMeetingsWidget from "../components/UpcomingMeetingsWidget";
 
 export default function DashboardHome() {
-  const { user } = useAuth();
+  const { username } = useAuth();
+  const displayName = username || "User";
   const [files, setFiles] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [storageUsed, setStorageUsed] = useState(0);
@@ -24,10 +25,10 @@ export default function DashboardHome() {
   const userEmail = localStorage.getItem("username");
 
   useEffect(() => {
-    if (user?.id) {
+    if (userEmail) {
       initDashboard();
     }
-  }, [user]);
+  }, [userEmail]);
 
   const initDashboard = async () => {
     setLoading(true);
@@ -39,7 +40,7 @@ export default function DashboardHome() {
 
   const fetchUserSubscription = async () => {
     try {
-      const res = await api.get(`/api/subscriptions/user-subscriptions/${user.id}/`);
+      const res = await api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`);
       const payments = res.data;
       const latest = payments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
       const gb = latest?.storage || 5;
@@ -53,10 +54,7 @@ export default function DashboardHome() {
 
   const fetchFiles = async (storageGB = totalStorageGB) => {
     try {
-      const res = await api.get(`/api/files/?user_id=${user.id}`);
-      const res = await api.get(`/api/?all=true`);
-      // Fetch from storage_file table filtered by user_id
-      const res = await api.get(`/api/files/?user_id=${userId}`);
+      const res = await api.get(`/api/files/?all=true`);
       const data = res.data;
       const sorted = [...data].sort((a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at));
       setFiles(sorted);
@@ -148,7 +146,7 @@ export default function DashboardHome() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, <span className="text-orange-500">{user?.username || "User"}</span> 👋
+          Welcome back, <span className="text-orange-500">{displayName}</span> 👋
         </h1>
         <p className="text-gray-500 mt-1">Here's a quick look at your storage and recent activity</p>
       </div>

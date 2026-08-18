@@ -55,12 +55,7 @@ INSTALLED_APPS = [
     "sharing",
     "notifications",
     "events",
-    "sharing",
-    'anymail',
-    'tickets',
-    'admin_management',
     # 'assistant',
-    'sharing',  # the new sharing app
 ]
 
 # -----------------------------------------------------
@@ -127,14 +122,21 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 ASGI_APPLICATION = 'backend.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+if DEBUG:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
         },
-    },
-}
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [('127.0.0.1', 6379)],
+            },
+        },
+    }
 
 # -----------------------------------------------------
 # DATABASE (POSTGRESQL)

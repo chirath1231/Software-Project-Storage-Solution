@@ -12,5 +12,3 @@ urlpatterns = [
     path("folders/", views.folder_list),
     path("folders/<int:id>/", views.folder_detail),
 ]
-    path("trash/<int:id>/", views.permanent_delete_file),  # ✅ FIXED
-]
