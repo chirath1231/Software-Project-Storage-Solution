@@ -16,12 +16,15 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchGlobalNotifications = async (sortBy = "newest", pageUrl = null) => {
     try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
       const url = pageUrl
         ? pageUrl // FULL URL from Django pagination
-        : `/api/auth/notifications/?sort=${sortBy}`;
+        : `/api/accounts/notifications/?sort=${sortBy}`;
 
       const res = await api.get(url);
-
+      
       setNotifications(res.data.results || []);
       setUnreadCount(res.data.unread_count || 0);
       setNextPageUrl(res.data.next);
@@ -32,7 +35,10 @@ export const NotificationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchGlobalNotifications();
+    // Only fetch if a token exists to avoid unnecessary 401s on mount
+    if (localStorage.getItem("access_token")) {
+      fetchGlobalNotifications();
+    }
   }, []);
 
   return (

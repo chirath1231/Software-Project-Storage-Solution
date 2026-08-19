@@ -260,6 +260,9 @@ def ask_gemini(user_message: str):
     if key in CACHE:
         return CACHE[key]
 
+    # Use a supported model name
+    MODEL_NAME = "gemini-2.0-flash"
+
     # Only here do we build the full prompt for Gemini
     full_prompt = f"""
     {SYSTEM_PROMPT}
@@ -272,12 +275,10 @@ def ask_gemini(user_message: str):
 
     for attempt in range(2):
         try:
-            print("CALLING GEMINI API")
+            print(f"CALLING GEMINI API with model: {MODEL_NAME}")
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                # model = "gemini-3.1-flash-lite",
-                # model = "gemini-3-flash",
-                contents=[full_prompt]  # single assembled string
+                model=MODEL_NAME,
+                contents=[full_prompt]
             )
             answer = response.text
             CACHE[key] = answer
@@ -286,9 +287,13 @@ def ask_gemini(user_message: str):
         except ServerError:
             return "AI is currently busy. Please try again in a few seconds."
         except ClientError as e:
+            # Handle rate limiting
             if "429" in str(e):
                 time.sleep(2)
                 continue
             return f"AI error: {str(e)}"
+        except Exception as e:
+            # Catching generic exceptions to identify configuration issues
+            return f"Unexpected error: {str(e)}"
 
     return "AI is busy. Please retry after a few seconds."
