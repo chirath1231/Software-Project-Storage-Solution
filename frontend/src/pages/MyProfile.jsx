@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
   const [profilePicURL, setProfilePicURL] = useState(null);
   const [user, setUser] = useState(null);
   const [storage, setStorage] = useState({
@@ -17,13 +17,16 @@ export default function ProfilePage() {
 useEffect(() => {
   // Fetch profile
   api.get("/api/accounts/profile/")
-    .then((res) => {
-      setUser(res.data);
-      if (res.data.profile_picture) {
-        setProfilePicURL(res.data.profile_picture);
-      }
-    })
-    .catch((err) => console.error("Error fetching profile:", err));
+  .then((res) => {
+
+    setUser(res.data);
+    updateUser(res.data); // <-- THIS updates Navbar too
+
+    if (res.data.profile_picture) {
+      setProfilePicURL(res.data.profile_picture);
+    }
+  })
+  .catch((err) => console.error("Error fetching profile:", err));
 
   // Fetch actual files to calculate real storage 
   const userEmail = localStorage.getItem("username");

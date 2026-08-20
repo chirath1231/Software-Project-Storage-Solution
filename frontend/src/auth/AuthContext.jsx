@@ -50,6 +50,20 @@ useEffect(() => {
     setUser(null);
   };
 
+  const updateUser = (updatedUser) => {
+    const storage = localStorage.getItem("token")
+      ? localStorage
+      : sessionStorage;
+
+    const currentUser = {
+      ...user,
+      ...updatedUser,
+    };
+
+    storage.setItem("user", JSON.stringify(currentUser));
+    setUser(currentUser);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -59,6 +73,7 @@ useEffect(() => {
         isAuthenticated: !!token,
         login,
         logout,
+        updateUser,
         loading,
       }}
     >

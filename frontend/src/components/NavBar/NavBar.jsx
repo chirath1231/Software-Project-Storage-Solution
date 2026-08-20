@@ -338,11 +338,11 @@ const handleLogout = () => {
                 >
 
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600">
-                    {user?.avatar ? (
-                      <img 
-                        src={user?.avatar} 
-                        alt={user?.username} 
-                        className="w-full h-full object-cover" 
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.username}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="text-white font-semibold text-lg">
