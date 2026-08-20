@@ -3,57 +3,46 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 urlpatterns = [
     # Admin Panel
-    path('admin/', admin.site.urls),
-<<<<<<< HEAD
-    path('api/accounts/', include('accounts.urls')),
-    path('api/subscriptions/', include('subscriptions.urls')),
-    path('api/', include('admin_management.urls')),
-    path("api/", include("storage.urls")),
-=======
+    path("admin/", admin.site.urls),
 
     # Accounts & Authentication
-    path('api/auth/', include('accounts.urls')),
-    path('api/accounts/', include('accounts.urls')),
+    path("api/auth/", include("accounts.urls")),
+    path("api/accounts/", include("accounts.urls")),
 
-    # Notifications App
-    path('api/accounts/notifications/', include('notifications.urls')),
+    # Notifications
+    path("api/accounts/notifications/", include("notifications.urls")),
 
-    # Calendar Events App
-    path('api/accounts/events/', include('events.urls')),
+    # Calendar Events
+    path("api/accounts/events/", include("events.urls")),
 
     # Subscriptions
-    path('api/subscriptions/', include('subscriptions.urls')),
+    path("api/subscriptions/", include("subscriptions.urls")),
 
     # Chat System
-    path('api/chat/', include('chat.urls')),
-    path('api/', include('chat.api_urls')),
+    path("api/chat/", include("chat.urls")),
+    path("api/", include("chat.api_urls")),
 
     # Storage & File Management
-    # Mounted at both prefixes: frontend calls hit "/api/files/..." and bare "/api/..."
-    path('api/files/', include('storage.urls')),
-    path('api/', include('storage.urls')),
+    path("api/files/", include("storage.urls")),
+    path("api/", include("storage.urls")),
 
     # Sharing API
-    path('api/', include('sharing.urls')),
-
-    # AI Assistant
-    path('api/assistant/', include('assistant.urls')),
+    path("api/", include("sharing.urls")),
 
     # Support Tickets
-    path('api/', include('tickets.urls')),
+    path("api/", include("tickets.urls")),
 
     # Admin Management
-    path('api/', include('admin_management.urls')),
->>>>>>> origin/main
+    path("api/", include("admin_management.urls")),
 ]
+
 
 # Serve media files locally in development
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-<<<<<<< HEAD
-
-   
-=======
->>>>>>> origin/main
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )
