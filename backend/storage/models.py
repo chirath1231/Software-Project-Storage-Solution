@@ -20,6 +20,15 @@ class Folder(models.Model):
     def __str__(self):
         return self.name
 
+<<<<<<< HEAD
+# 🔥 ShareLink model for generatin
+class ShareLink(models.Model):
+    file = models.ForeignKey(File, on_delete=models.CASCADE, related_name="share_links")
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    expiry = models.DateTimeField()  # ← uncomment this
+    created_at = models.DateTimeField(auto_now_add=True)
+=======
+>>>>>>> origin/main
 
 class File(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

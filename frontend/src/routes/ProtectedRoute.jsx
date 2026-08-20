@@ -1,22 +1,16 @@
+import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
-
-  // ✅ Bypass authentication in development
-  if (process.env.NODE_ENV === "development") {
-    return <Outlet />;
-  }
+  const { user, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ textAlign: "center", marginTop: "50px" }}>
-      Checking authentication...
-    </div>;
+    // You might want a loading spinner or a more sophisticated loading indicator here
+    return <div>Loading authentication...</div>;
   }
 
-  if (!isAuthenticated) {
-    alert("Please login first!");
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

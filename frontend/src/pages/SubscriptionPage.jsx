@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from "react";
+import api from "../api/axios";
 import buynow from "../assets/buy_now.png";
+import { useAuth } from "../auth/AuthContext";
 
 export default function SubscriptionPage() {
+  const { email: userEmail } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
+
+  useEffect(() => {
+    const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data);
+
+    const fetchUserActive = userEmail
+      ? api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
+          .then((res) => res.data)
+          .catch(() => [])
+=======
 
   const userEmail = localStorage.getItem("username");
   const token = localStorage.getItem("access_token"); // change key if needed
@@ -44,6 +57,7 @@ export default function SubscriptionPage() {
           }
           return res.json();
         })
+>>>>>>> origin/main
       : Promise.resolve([]);
 
     Promise.all([fetchPlans, fetchUserActive])
@@ -77,8 +91,20 @@ export default function SubscriptionPage() {
       alert("Please login first");
       return;
     }
+    
 
     try {
+<<<<<<< HEAD
+      const res = await api.post("/api/subscriptions/create-payment/", {
+        subscription_id: sub.id,
+        email: userEmail,
+        amount: Number(sub.price).toFixed(2),
+        first_name: userEmail.split("@")[0],
+      });
+
+      const data = res.data;
+      if (!data.success) return alert("Payment failed");
+=======
       const res = await fetch(
         "http://127.0.0.1:8000/api/subscriptions/create-payment/",
         {
@@ -102,6 +128,7 @@ export default function SubscriptionPage() {
         alert("Payment failed");
         return;
       }
+>>>>>>> origin/main
 
       const form = document.createElement("form");
       form.method = "POST";

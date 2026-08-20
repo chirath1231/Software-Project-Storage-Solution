@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
 import {
   LayoutDashboard,
   Folder,
@@ -14,14 +15,16 @@ import {
   BarChart2,
   TrendingUp,
   FileText,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function Sidebar({ isAdmin = false }) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate = useNavigate(); // For programmatic navigation
+  const location = useLocation(); // Gets current URL path
+  const { hasPermission } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const [activeItem, setActiveItem] = useState("dashboard"); // State to store currently active menu item
 
   // 🔹 Menu config with ROUTES
   const userMenuItems = [
@@ -36,22 +39,24 @@ export default function Sidebar({ isAdmin = false }) {
   ];
 
   const adminMenuItems = [
-    { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard />, path: "/admin-dashboard" },
-    { id: "users", label: "User Management", icon: <Users />, path: "/admin/users" },
-    { id: "reports", label: "Reports and Analytics", icon: <BarChart2 />, path: "/admin/reports" },
-    { id: "subs_analytics", label: "Subscription Analytics", icon: <TrendingUp />, path: "/admin/subscription-analytics" },
-    { id: "tickets", label: "Ticket Submissions", icon: <FileText />, path: "/admin/tickets" },
-    { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings" },
+    { id: "overview", label: "Admin Overview", icon: <LayoutDashboard />, path: "/admin/overview" },
+    { id: "tickets", label: "Ticket Submissions", icon: <FileText />, path: "/admin/tickets", requiredPermission: "support.view" },
+    { id: "admin_settings", label: "Admin Settings", icon: <Settings />, path: "/admin/settings", requiredPermission: "settings.view" },
+    { id: "admin_permissions", label: "Admin Permissions", icon: <ShieldCheck />, path: "/admin/permissions", requiredPermission: "admin_permissions.manage" },
   ];
 
-  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
+  const menuItems = isAdmin
+    ? adminMenuItems.filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission))
+    : userMenuItems;
 
   // 🔥 FIXED LOGIC HERE (longest path match first)
+  // Sort menu items by longest path first
   useEffect(() => {
     const sortedMenu = [...menuItems].sort(
       (a, b) => b.path.length - a.path.length
     );
 
+     // Find matching menu item based on current URL path
     const current = sortedMenu.find((item) =>
       location.pathname.startsWith(item.path)
     );
@@ -61,6 +66,7 @@ export default function Sidebar({ isAdmin = false }) {
     }
   }, [location.pathname, menuItems]);
 
+  // Function to handle sidebar click and navigate to the corresponding route
   const handleMenuClick = (item) => {
     navigate(item.path);
 
@@ -94,8 +100,13 @@ export default function Sidebar({ isAdmin = false }) {
       <div className="flex">
         <div
           className={`
+<<<<<<< HEAD
+            w-[280px] min-h-screen
+            bg-gradient-to-b from-white via-orange-50 to-orange-200 
+=======
             w-[280px] h-screen md:h-auto md:min-h-[calc(100vh-120px)]
             bg-gradient-to-b from-white via-orange-50 to-orange-200
+>>>>>>> origin/main
             flex flex-col py-6
             transition-all duration-300 ease-in-out
             z-40
@@ -125,6 +136,7 @@ export default function Sidebar({ isAdmin = false }) {
                   min-h-[48px]
                   
                   ${
+                    // Active state with gradient and shadow
                     activeItem === item.id
                       ? "bg-gradient-to-b from-orange-500 to-amber-400 text-white font-semibold shadow-lg shadow-orange-500/30 scale-[1.02]"
                       : "text-gray-700 hover:bg-orange-500/10 hover:text-orange-600 hover:scale-[1.01]"
@@ -141,24 +153,7 @@ export default function Sidebar({ isAdmin = false }) {
             ))}
           </nav>
 
-          {/* Switch Account Button */}
-          <div className="px-4 pt-4 mt-2 border-t border-orange-200/50">
-            <button
-              className="
-                w-full py-4 px-5
-                text-base font-semibold text-white
-                bg-gradient-to-b from-orange-500 to-amber-400
-                shadow-lg shadow-orange-500/30
-                transition-all duration-300
-                hover:shadow-xl hover:shadow-orange-500/40
-                hover:scale-105
-                active:scale-100
-                rounded-3xl
-              "
-            >
-              Switch Account
-            </button>
-          </div>
+
         </div>
       </div>
     </div>

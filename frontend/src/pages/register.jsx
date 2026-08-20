@@ -1,7 +1,8 @@
 // src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google"; // ✅ ADD
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../auth/AuthContext";
 import "../auth.css";
 import myImage from "../assets/tech.png";
 import googleLogo from "../assets/plus.png";
@@ -9,6 +10,7 @@ import logo from "../assets/logo.png";
 
 function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -48,9 +50,14 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Use the login function from AuthContext to store token and user data
+      login(data.access, { // Pass access token
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        is_staff: data.user.is_staff,
+        role: data.user.is_staff ? "admin" : "user"
+      }, true); // Assuming registration implies "remember me"
 
       setLoading(false);
       navigate("/dashboard");
@@ -78,11 +85,16 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data));
+      // Determine role and update context
+      const userData = data.user || data;
+      const role = userData.is_staff ? "admin" : "user";
+      login(data.access, { // Pass access token
+        ...userData,
+        role
+      }, true); // Google login usually implies "remember me"
 
-      navigate("/dashboard");
+
+      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
     } catch (error) {
       alert("Google signup error");
     }

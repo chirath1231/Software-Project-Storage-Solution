@@ -6,6 +6,12 @@ from django.conf.urls.static import static
 urlpatterns = [
     # Admin Panel
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
+    path('api/accounts/', include('accounts.urls')),
+    path('api/subscriptions/', include('subscriptions.urls')),
+    path('api/', include('admin_management.urls')),
+    path("api/", include("storage.urls")),
+=======
 
     # Accounts & Authentication
     path('api/auth/', include('accounts.urls')),
@@ -40,8 +46,14 @@ urlpatterns = [
 
     # Admin Management
     path('api/', include('admin_management.urls')),
+>>>>>>> origin/main
 ]
 
 # Serve media files locally in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+<<<<<<< HEAD
+
+   
+=======
+>>>>>>> origin/main

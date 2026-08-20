@@ -2,13 +2,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../auth/AuthContext";
 import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import UpcomingMeetingsWidget from "../components/UpcomingMeetingsWidget";
 
 export default function DashboardHome() {
+<<<<<<< HEAD
+  const { email: userEmail, userId } = useAuth();
+=======
   const { username } = useAuth();
   const displayName = username || "User";
+>>>>>>> origin/main
   const [files, setFiles] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [storageUsed, setStorageUsed] = useState(0);
@@ -22,6 +27,11 @@ export default function DashboardHome() {
   const [uploadMessage, setUploadMessage] = useState("");
   const fileInputRef = useRef(null);
 
+<<<<<<< HEAD
+  useEffect(() => {
+    initDashboard();
+  }, [userId, userEmail]);
+=======
   const userEmail = localStorage.getItem("username");
 
   useEffect(() => {
@@ -29,6 +39,7 @@ export default function DashboardHome() {
       initDashboard();
     }
   }, [userEmail]);
+>>>>>>> origin/main
 
   const initDashboard = async () => {
     setLoading(true);

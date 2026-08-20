@@ -8,6 +8,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+<<<<<<< HEAD
+
+# ---------------- UPLOAD FILE ----------------
+=======
 from .models import File
 from sharing.models import FileShare
 from notifications.utils import create_system_notification
@@ -16,6 +20,7 @@ from .glacier import upload_to_glacier
 
 logger = logging.getLogger(__name__)
 
+>>>>>>> origin/main
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def upload_file(request):
@@ -23,6 +28,15 @@ def upload_file(request):
     if not uploaded_file:
         return Response({"error": "No file uploaded"}, status=400)
 
+<<<<<<< HEAD
+    # Save file only — no share link created here
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upload_file(request):
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return Response({"error": "No file uploaded"}, status=400)
+=======
     # 1. Save file to the database
     folder = None
     folder_id = request.data.get("folder_id")
@@ -31,6 +45,7 @@ def upload_file(request):
             folder = Folder.objects.get(id=folder_id, user=request.user, is_deleted=False)
         except Folder.DoesNotExist:
             return Response({"error": "Folder not found"}, status=404)
+>>>>>>> origin/main
 
     file_obj = File.objects.create(
         user=request.user,
@@ -40,6 +55,15 @@ def upload_file(request):
         folder=folder,
     )
 
+<<<<<<< HEAD
+    return Response({
+        "message": "Uploaded successfully",
+        "id": file_obj.id,
+        "name": file_obj.name,
+        "size": file_obj.size,
+        "uploaded_at": file_obj.uploaded_at,
+    }, status=201)
+=======
     # 2. Trigger Upload Success Notification
     create_system_notification(
         user=request.user,
@@ -94,11 +118,29 @@ def upload_file(request):
         "message": "Uploaded successfully",
         "url": request.build_absolute_uri(file_obj.file.url)
     })
+>>>>>>> origin/main
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_files(request):
+<<<<<<< HEAD
+    files = File.objects.filter(user=request.user)
+    data = []
+    for f in files:
+        shares = ShareLink.objects.filter(file=f)
+        share_links = [
+            request.build_absolute_uri(f"/api/share/{s.token}/") for s in shares
+        ]
+        data.append({
+            "id": f.id,
+            "name": f.name,
+            "size": f.size,
+            "uploaded_at": f.uploaded_at,
+            "url": request.build_absolute_uri(f.file.url),
+            "share_links": share_links,
+        })
+=======
     folder_id = request.query_params.get("folder")
     all_files = request.query_params.get("all")
     if all_files:
@@ -116,6 +158,7 @@ def list_files(request):
         "url": request.build_absolute_uri(f.file.url),
         "folder_id": f.folder_id,
     } for f in files]
+>>>>>>> origin/main
     return Response(data)
 
 
@@ -149,7 +192,19 @@ def list_trash(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+<<<<<<< HEAD
+def generate_share_link(request, file_id):
+    expiry_str = request.data.get("expiry_date")
+    if not expiry_str:
+        return Response({"error": "Expiry date required"}, status=400)
+
+    expiry_date = parse_datetime(expiry_str)
+    if not expiry_date:
+        return Response({"error": "Invalid expiry date format"}, status=400)
+
+=======
 def restore_file(request, id):
+>>>>>>> origin/main
     try:
         file = File.objects.get(id=id, user=request.user, is_deleted=True)
         file.is_deleted = False
@@ -209,12 +264,19 @@ def permanent_delete_file(request, id):
 @api_view(["GET"])
 def access_shared_file(request, token):
     try:
+<<<<<<< HEAD
+        share = ShareLink.objects.get(token=token)
+=======
         share = FileShare.objects.get(token=token)
 
+>>>>>>> origin/main
         if timezone.now() > share.expiry:
             return Response({"error": "This link has expired"}, status=403)
-
         return redirect(share.file.file.url)
+<<<<<<< HEAD
+    except ShareLink.DoesNotExist:
+        return Response({"error": "Invalid link"}, status=404)
+=======
 
     except FileShare.DoesNotExist:
         return Response({"error": "Invalid link"}, status=404)
@@ -272,3 +334,4 @@ def folder_detail(request, id):
     folder.deleted_at = timezone.now()
     folder.save()
     return Response({"message": "Folder deleted"})
+>>>>>>> origin/main

@@ -1,0 +1,4 @@
+/* Hide the top navigation search bar in Jazzmin */
+.navbar-search {
+    display: none !important;
+}

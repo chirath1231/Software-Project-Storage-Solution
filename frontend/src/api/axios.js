@@ -1,13 +1,28 @@
-import axios from "axios";
+import axios from 'axios';
 
+const getStoredToken = () => {
+  const token =
+    localStorage.getItem('access') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('access') ||
+    sessionStorage.getItem('accessToken');
+
+  if (token === 'undefined' || token === 'null') {
+    return null;
+  }
+
+  return token;
+};
+
+// Create an Axios instance
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: 'http://127.0.0.1:8000'
 });
 
-// Attach token automatically
+// Request interceptor to add the JWT token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = getStoredToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -18,13 +33,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle expired token
+// Response interceptor to handle token expiration
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = "/login";
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.removeItem('access');
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('accessToken');
     }
     return Promise.reject(error);
   }

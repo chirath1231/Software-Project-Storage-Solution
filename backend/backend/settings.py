@@ -29,8 +29,12 @@ ALLOWED_HOSTS = ["*", "192.168.8.101"]
 # -----------------------------------------------------
 
 INSTALLED_APPS = [
+<<<<<<< HEAD
+    "jazzmin",
+=======
     "daphne",
     # Django Core Apps
+>>>>>>> origin/main
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -44,6 +48,10 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_extensions",
     "storages",
+<<<<<<< HEAD
+    "storage",
+    "admin_management",
+=======
     "anymail",
     "channels",
     # Local Apps
@@ -57,6 +65,7 @@ INSTALLED_APPS = [
     "notifications",
     "events",
     # 'assistant',
+>>>>>>> origin/main
 ]
 
 # -----------------------------------------------------
@@ -85,6 +94,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://192.168.8.105:8081",
     "http://127.0.0.1:8081"
 ]
@@ -277,6 +287,13 @@ if DEBUG:
     # Local Storage Engine Configuration (Wipes dependencies on third-party cloud SDKs)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+<<<<<<< HEAD
+
+JAZZMIN_SETTINGS = {
+    # Setting search_model to None removes the search bar from the header
+    "search_model": None,
+}
+=======
     
     STORAGES = {
         "default": {
@@ -315,3 +332,4 @@ else:
 # EXTERNAL INTEGRATIONS CONFIGURATION
 # ==============================================================================
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+>>>>>>> origin/main
