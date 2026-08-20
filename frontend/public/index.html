@@ -27,8 +27,9 @@
     <title>CEYNOA</title>
     <!-- PayHere Payment Gateway SDK -->
     <script type="text/javascript">
-      window.payhere = window.payhere || {};
-      window.payhere.M_ID = window.payhere.M_ID || "1233030";
+      var payhere = window.payhere = window.payhere || {};
+      payhere.M_ID = payhere.M_ID || "1233030";
+      window.payhere = payhere;
     </script>
     <script type="text/javascript" src="https://www.payhere.lk/lib/payhere.js"></script>
   </head>
