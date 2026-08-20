@@ -77,7 +77,9 @@ export default function Navbar({ isDashboard = false }) {
     logout();
     setShowProfileMenu(false);
     setShowNotifications(false);
-    navigate("/login");
+    setSearchQuery("");
+    setMenuOpen(false);
+    navigate("/");
   };
 
   const handleSearch = () => {

@@ -252,13 +252,13 @@ DO_LOCATION = "uploads"
 # Kept separate from the DO_* names above so this never collides with the
 # DigitalOcean Spaces credentials used for normal uploads.
 
-AWS_GLACIER_ACCESS_KEY_ID = config("AWS_GLACIER_ACCESS_KEY_ID")
-AWS_GLACIER_SECRET_ACCESS_KEY = config("AWS_GLACIER_SECRET_ACCESS_KEY")
+AWS_GLACIER_ACCESS_KEY_ID = config("AWS_GLACIER_ACCESS_KEY_ID", default="")
+AWS_GLACIER_SECRET_ACCESS_KEY = config("AWS_GLACIER_SECRET_ACCESS_KEY", default="")
 AWS_GLACIER_REGION = config(
     "AWS_GLACIER_REGION",
     default="eu-north-1"
 )
-AWS_GLACIER_BUCKET_NAME = config("AWS_GLACIER_BUCKET_NAME")
+AWS_GLACIER_BUCKET_NAME = config("AWS_GLACIER_BUCKET_NAME", default="")
 
 class DisableMigrations:
     def __contains__(self, item):

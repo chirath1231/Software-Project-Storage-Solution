@@ -6,6 +6,8 @@ import React, {
 } from "react";
 import api from "../api/axios";
 
+import { useAuth } from "../auth/AuthContext";
+
 const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
@@ -14,10 +16,16 @@ export const NotificationProvider = ({ children }) => {
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [prevPageUrl, setPrevPageUrl] = useState(null);
 
+  const { token } = useAuth();
+
   const fetchGlobalNotifications = async (sortBy = "newest", pageUrl = null) => {
     try {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
+      const currentToken = token || localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+      if (!currentToken) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
 
       const url = pageUrl
         ? pageUrl // FULL URL from Django pagination
@@ -35,11 +43,16 @@ export const NotificationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Only fetch if a token exists to avoid unnecessary 401s on mount
-    if (localStorage.getItem("access_token")) {
+    const currentToken = token || localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+    if (currentToken) {
       fetchGlobalNotifications();
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
+      setNextPageUrl(null);
+      setPrevPageUrl(null);
     }
-  }, []);
+  }, [token]);
 
   return (
     <NotificationContext.Provider

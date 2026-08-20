@@ -103,6 +103,12 @@ export default function SubscriptionPage() {
         return;
       }
 
+      // Safely ensure window.payhere is defined with M_ID to prevent extension errors
+      window.payhere = window.payhere || {};
+      if (data.paymentData?.merchant_id) {
+        window.payhere.M_ID = data.paymentData.merchant_id;
+      }
+
       const form = document.createElement("form");
       form.method = "POST";
       form.action = "https://sandbox.payhere.lk/pay/checkout";

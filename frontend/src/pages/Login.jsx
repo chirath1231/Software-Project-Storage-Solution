@@ -59,6 +59,7 @@ function Login() {
 
       if (data.role === "admin") {
         // Redirect to admin dashboard
+        login(data.access, data.username);
         navigate("/admin-dashboard");
         return;
       } else if (data.role === "user") {
