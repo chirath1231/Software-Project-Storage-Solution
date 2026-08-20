@@ -16,6 +16,7 @@ from .models import File
 from sharing.models import FileShare
 from notifications.utils import create_system_notification
 from .models import File, Folder
+from .glacier import upload_to_glacier
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ def upload_file(request):
 
     return Response({
         "message": "Uploaded successfully",
-        "url": file_obj.file.url
+        "url": request.build_absolute_uri(file_obj.file.url)
     })
 >>>>>>> origin/main
 
@@ -154,7 +155,7 @@ def list_files(request):
         "name": f.name,
         "size": f.size,
         "uploaded_at": f.uploaded_at,
-        "url": f.file.url,
+        "url": request.build_absolute_uri(f.file.url),
         "folder_id": f.folder_id,
     } for f in files]
 >>>>>>> origin/main
@@ -184,7 +185,7 @@ def list_trash(request):
         "size": f.size,
         "uploaded_at": f.uploaded_at,
         "deleted_at": f.deleted_at,
-        "url": f.file.url,
+        "url": request.build_absolute_uri(f.file.url),
     } for f in files]
     return Response(data)
 
@@ -220,23 +221,43 @@ def restore_file(request, id):
 @permission_classes([IsAuthenticated])
 def permanent_delete_file(request, id):
     try:
-        file = File.objects.get(id=id, user=request.user, is_deleted=True)
-        file_name = file.name
-        file.file.delete()  # removes from Digital Ocean Spaces
-        file.file.delete()
-        file.delete()
-
-        # Trigger Delete Notification
-        create_system_notification(
+        file = File.objects.get(
+            id=id,
             user=request.user,
-            title="File Deleted 🗑️",
-            message=f"'{file_name}' has been permanently removed from your storage.",
-            notification_type='WARNING'
+            is_deleted=True
         )
 
-        return Response({"message": "Permanently deleted"})
+        file_name = file.name
+
+        # Upload to AWS Glacier
+        upload_to_glacier(file)
+
+        # Remove from DigitalOcean Spaces
+        file.file.delete(save=False)
+
+        # Remove database record
+        file.delete()
+
+        create_system_notification(
+            user=request.user,
+            title="File Archived 📦",
+            message=f"'{file_name}' was archived to AWS Glacier and removed from active storage.",
+            notification_type="INFO",
+        )
+
+        return Response({
+            "message": "Archived successfully"
+        })
+
     except File.DoesNotExist:
-        return Response({"error": "Not found"}, status=404)
+        return Response({"error": "File not found"}, status=404)
+
+    except Exception as e:
+        logger.exception(e)
+        return Response(
+            {"error": str(e)},
+            status=500
+        )
 
 
 # ---------------- ACCESS SHARE LINK ----------------

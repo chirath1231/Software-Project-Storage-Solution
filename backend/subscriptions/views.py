@@ -1,517 +1,1209 @@
-<<<<<<< HEAD
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth, TruncDay
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from django.apps import apps
-from datetime import timedelta
-from .models import Subscription, Payment, SubscriptionPayment
-from .serializers import SubscriptionSerializer
-from admin_management.permissions import admin_permission_required
-=======
->>>>>>> origin/main
-import uuid
 import hashlib
 import logging
-import os
+import uuid
+from datetime import timedelta
+
 import resend
-import traceback
-from django.contrib.auth.models import User
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+
+from django.apps import apps
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDay, TruncMonth
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 
 from .models import Subscription, Payment, SubscriptionPayment
 from .serializers import SubscriptionSerializer
+
+from admin_management.permissions import admin_permission_required
 from notifications.utils import create_system_notification
 
-# Setup logger
+
+# ========================================================
+# LOGGER
+# ========================================================
+
 logger = logging.getLogger(__name__)
+
 User = get_user_model()
 
-# PayHere Config
+
+# ========================================================
+# PAYHERE CONFIGURATION
+# ========================================================
+
 MERCHANT_ID = "1233030"
 MERCHANT_SECRET = "MTQwNDg3NDkzNDQ0MjE4MTIyMDE5MzI2ODUwMjAxMTE4MDk2NTY2"
-MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 
-# --------------------------------------------------------
+MERCHANT_SECRET_MD5 = hashlib.md5(
+    MERCHANT_SECRET.encode()
+).hexdigest().upper()
+
+
+# ========================================================
 # GET ALL SUBSCRIPTIONS
-# --------------------------------------------------------
-@api_view(["GET"])
-<<<<<<< HEAD
-def subscription_list(request): #This endpoint simply fetches all subscription plans from the database and returns them to the frontend.
-    """
-    Returns all available subscription plans
-    """
-    subs = Subscription.objects.all() ## Get all subscription plans from DB
-    serializer = SubscriptionSerializer(subs, many=True) #Convert to JSON
-    return Response(serializer.data) #Send to frontend
+# ========================================================
 
-# --------------------------------------------------------
-# UPDATE SUBSCRIPTION (ADMIN ONLY)
-# --------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def subscription_list(request):
+    """
+    Returns all available subscription plans.
+    """
+
+    subscriptions = Subscription.objects.all()
+
+    serializer = SubscriptionSerializer(
+        subscriptions,
+        many=True
+    )
+
+    return Response(serializer.data)
+
+
+# ========================================================
+# UPDATE SUBSCRIPTION - ADMIN ONLY
+# ========================================================
+
 @api_view(["PUT"])
 @admin_permission_required("payments.manage")
 def update_subscription(request, subscription_id):
     """
-    Admin can update a subscription plan
+    Admin can update a subscription plan.
     """
 
     try:
-        subscription = Subscription.objects.get(id=subscription_id)  # Get subscription object from DB
+        subscription = Subscription.objects.get(
+            id=subscription_id
+        )
+
     except Subscription.DoesNotExist:
         return Response(
-            #handle invalid data
-            {"error": "Subscription not found"},
+            {
+                "success": False,
+                "error": "Subscription not found"
+            },
             status=404
         )
-    #Bind incoming data to existing object
-    #Take old object and update using new data. Partial=True allows updating only some fields without requiring all fields to be sent.
+
     serializer = SubscriptionSerializer(
         subscription,
         data=request.data,
         partial=True
     )
-    #Validate data
+
     if serializer.is_valid():
-        serializer.save() #Update DB
-        return Response({ #Return success response
-            "success": True,
-            "message": "Subscription updated successfully",
-            "data": serializer.data
-        })
+        serializer.save()
 
-    return Response(serializer.errors, status=400)
-=======
-def subscription_list(request):
-    subs = Subscription.objects.all()
-    serializer = SubscriptionSerializer(subs, many=True)
-    return Response(serializer.data)
+        return Response(
+            {
+                "success": True,
+                "message": "Subscription updated successfully",
+                "data": serializer.data
+            },
+            status=200
+        )
 
->>>>>>> origin/main
-# --------------------------------------------------------
+    return Response(
+        serializer.errors,
+        status=400
+    )
+
+
+# ========================================================
 # GET USER'S ACTIVE SUBSCRIPTIONS
-# --------------------------------------------------------
+# ========================================================
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def user_subscriptions(request, email):
-    records = SubscriptionPayment.objects.filter(
-        user_email=email,
-        status="ACTIVE" #Expired/cancelled ignored.
-    ).select_related("subscription") #To improve performance by reducing extra database queries.
+    """
+    Returns active subscriptions belonging to the given email.
+    """
+
+    records = (
+        SubscriptionPayment.objects
+        .filter(
+            user_email__iexact=email,
+            status="ACTIVE"
+        )
+        .select_related("subscription")
+    )
 
     data = [
         {
-            "subscription_id": r.subscription.id,
-            "subscription_name": r.subscription.name,
-            "storage": r.subscription.storage,
-            "amount": str(r.amount),
-            "order_id": r.order_id,
-            "payment_id": r.payment_id,
-            "date": r.created_at.isoformat(),
+            "subscription_id": record.subscription.id,
+            "subscription_name": record.subscription.name,
+            "storage": record.subscription.storage,
+            "amount": str(record.amount),
+            "order_id": record.order_id,
+            "payment_id": record.payment_id,
+            "date": record.created_at.isoformat(),
         }
-        for r in records
+        for record in records
     ]
+
     return Response(data)
 
 
+# ========================================================
+# CREATE PAYHERE PAYMENT
+# ========================================================
 
-# --------------------------------------------------------
-# CREATE PAYMENT
-# --------------------------------------------------------
 @api_view(["POST"])
-<<<<<<< HEAD
 @permission_classes([IsAuthenticated])
-def create_payhere_payment(request):# Ensure only authenticated users can create payments
-    """
-    Creates a payment record and returns PayHere checkout data
-    Frontend will use this data to redirect user to PayHere payment gateway
-    """
-=======
 def create_payhere_payment(request):
->>>>>>> origin/main
+    """
+    Creates a pending payment record and returns
+    PayHere checkout data to the frontend.
+    """
+
     subscription_id = request.data.get("subscription_id")
-    email = request.user.email # Use the email of the authenticated user
     amount = request.data.get("amount")
 
-<<<<<<< HEAD
-    # Validate required fields
-    if not all([subscription_id, amount]): # 'email' is now guaranteed from request.user
+    # User email comes from authenticated user
+    email = request.user.email
+
+    if not subscription_id or not amount:
         return Response(
-            {"success": False, "error": "Missing required fields"},
+            {
+                "success": False,
+                "error": "Missing required fields"
+            },
             status=400
         )
-=======
-    if not all([subscription_id, email, amount]):
-        return Response({"success": False, "error": "Missing fields"}, status=400)
->>>>>>> origin/main
 
-    amount = f"{float(amount):.2f}"
-    order_id = "ORDER_" + str(uuid.uuid4())
+    if not email:
+        return Response(
+            {
+                "success": False,
+                "error": "Authenticated user does not have an email"
+            },
+            status=400
+        )
+
+    # Validate subscription
+    try:
+        subscription = Subscription.objects.get(
+            id=subscription_id
+        )
+    except Subscription.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "error": "Subscription not found"
+            },
+            status=404
+        )
+
+    # Format amount
+    try:
+        amount = f"{float(amount):.2f}"
+    except (TypeError, ValueError):
+        return Response(
+            {
+                "success": False,
+                "error": "Invalid amount"
+            },
+            status=400
+        )
+
+    order_id = f"ORDER_{uuid.uuid4()}"
+
     currency = "LKR"
 
+    # Create pending payment
     Payment.objects.create(
         order_id=order_id,
-        subscription_id=subscription_id,
+        subscription=subscription,
         amount=amount,
         status="PENDING",
         payer_email=email,
     )
 
-    string_to_hash = f"{MERCHANT_ID}{order_id}{amount}{currency}{MERCHANT_SECRET_MD5}"
-    md5sig = hashlib.md5(string_to_hash.encode()).hexdigest().upper()
+    # PayHere hash
+    string_to_hash = (
+        f"{MERCHANT_ID}"
+        f"{order_id}"
+        f"{amount}"
+        f"{currency}"
+        f"{MERCHANT_SECRET_MD5}"
+    )
 
-    paymentData = {
+    md5sig = hashlib.md5(
+        string_to_hash.encode()
+    ).hexdigest().upper()
+
+    # ----------------------------------------------------
+    # IMPORTANT:
+    # Change this URL to your current ngrok URL.
+    # ----------------------------------------------------
+
+    notify_url = (
+        "https://vest-guileless-overshot.ngrok-free.dev"
+        "/api/subscriptions/payhere/notify/"
+    )
+
+    payment_data = {
         "sandbox": True,
+
         "merchant_id": MERCHANT_ID,
-        "return_url": "http://localhost:3000/dashboard/payment-success", 
-        "cancel_url": "http://localhost:3000/payment-cancel",
-<<<<<<< HEAD
-        "notify_url": "https://ungladly-paraphrasable-sherwood.ngrok-free.dev/api/subscriptions/payhere/notify/",
-=======
-        "notify_url": "https://vest-guileless-overshot.ngrok-free.dev/api/subscriptions/payhere/notify/",
->>>>>>> origin/main
+
+        "return_url": (
+            "http://localhost:3000/dashboard/payment-success"
+        ),
+
+        "cancel_url": (
+            "http://localhost:3000/payment-cancel"
+        ),
+
+        "notify_url": notify_url,
+
         "order_id": order_id,
+
         "items": f"Subscription-{subscription_id}",
+
         "currency": currency,
+
         "amount": amount,
+
         "first_name": email.split("@")[0],
+
         "last_name": "User",
+
         "email": email,
+
         "phone": "0700000000",
+
         "address": "N/A",
+
         "city": "Colombo",
+
         "country": "Sri Lanka",
+
         "hash": md5sig,
+
         "custom_1": str(subscription_id),
     }
 
-    return Response({"success": True, "paymentData": paymentData})
+    return Response(
+        {
+            "success": True,
+            "paymentData": payment_data
+        },
+        status=200
+    )
 
-# --------------------------------------------------------
-# PAYHERE WEBHOOK (NOTIFY)
-# --------------------------------------------------------
+
+# ========================================================
+# PAYHERE WEBHOOK / NOTIFY
+# ========================================================
+
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def payhere_notify(request):
-    data = request.POST.dict() if request.POST else request.data
-    
-    merchant_id = data.get("merchant_id")
-    order_id = data.get("order_id")
-    pay_amount = data.get("payhere_amount")
-    pay_currency = data.get("payhere_currency")
-    status_code = data.get("status_code")
-    received_md5 = data.get("md5sig")
+    """
+    Receives payment status notifications from PayHere.
+    """
 
-    # Hash Verification
-    # Note: Ensure MERCHANT_SECRET_MD5 is defined globally at the top of your views file
-    verify_string = f"{merchant_id}{order_id}{pay_amount}{pay_currency}{status_code}{MERCHANT_SECRET_MD5}"
-    computed_md5 = hashlib.md5(verify_string.encode()).hexdigest().upper()
+    try:
 
-    if computed_md5 != received_md5:
-        return Response({"message": "Invalid hash"}, status=400)
+        # PayHere usually sends form-encoded POST data
+        data = request.POST.dict()
 
-    status_map = {"2": "SUCCESS", "0": "PENDING", "-1": "CANCELED", "-2": "FAILED"}
-    payment_status = status_map.get(status_code, "UNKNOWN")
+        if not data:
+            data = request.data
 
-    # Update Payment
-    Payment.objects.filter(order_id=order_id).update(
-        status=payment_status,
-        payment_id=data.get("payment_id"),
-    )
+        merchant_id = data.get("merchant_id")
+        order_id = data.get("order_id")
+        pay_amount = data.get("payhere_amount")
+        pay_currency = data.get("payhere_currency")
+        status_code = data.get("status_code")
+        received_md5 = data.get("md5sig")
+        payment_id = data.get("payment_id")
 
-    if payment_status == "SUCCESS":
-        try:
-            payment = Payment.objects.select_related('subscription').get(order_id=order_id)
-            
-            # Create or fetch SubscriptionPayment record safely
-            sub_payment, created = SubscriptionPayment.objects.get_or_create(
-                order_id=order_id,
-                defaults={
-                    'user_email': payment.payer_email,
-                    'subscription': payment.subscription,
-                    'payment_id': data.get("payment_id"),
-                    'amount': payment.amount,
-                    'status': "ACTIVE"
-                }
+        # ------------------------------------------------
+        # Validate required webhook fields
+        # ------------------------------------------------
+
+        required_fields = [
+            merchant_id,
+            order_id,
+            pay_amount,
+            pay_currency,
+            status_code,
+            received_md5,
+        ]
+
+        if not all(required_fields):
+            logger.warning(
+                "PayHere webhook missing required fields"
             )
 
-            # --- IMPROVED USER LOOKUP ---
-            target_email = payment.payer_email.strip().lower()
-            
-            # Try to find by exact email, or fallback to username matching
-            user = User.objects.filter(email__iexact=target_email).first()
+            return Response(
+                {
+                    "success": False,
+                    "message": "Missing required fields"
+                },
+                status=400
+            )
+
+        # ------------------------------------------------
+        # Verify merchant ID
+        # ------------------------------------------------
+
+        if str(merchant_id) != str(MERCHANT_ID):
+
+            logger.warning(
+                "Invalid PayHere merchant ID"
+            )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid merchant ID"
+                },
+                status=400
+            )
+
+        # ------------------------------------------------
+        # Verify PayHere MD5 signature
+        # ------------------------------------------------
+
+        verify_string = (
+            f"{merchant_id}"
+            f"{order_id}"
+            f"{pay_amount}"
+            f"{pay_currency}"
+            f"{status_code}"
+            f"{MERCHANT_SECRET_MD5}"
+        )
+
+        computed_md5 = hashlib.md5(
+            verify_string.encode()
+        ).hexdigest().upper()
+
+        if computed_md5 != str(received_md5).upper():
+
+            logger.warning(
+                f"Invalid PayHere hash for order {order_id}"
+            )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid hash"
+                },
+                status=400
+            )
+
+        # ------------------------------------------------
+        # Map PayHere status
+        # ------------------------------------------------
+
+        status_map = {
+            "2": "SUCCESS",
+            "0": "PENDING",
+            "-1": "CANCELED",
+            "-2": "FAILED",
+        }
+
+        payment_status = status_map.get(
+            str(status_code),
+            "UNKNOWN"
+        )
+
+        # ------------------------------------------------
+        # Get Payment
+        # ------------------------------------------------
+
+        try:
+            payment = (
+                Payment.objects
+                .select_related("subscription")
+                .get(order_id=order_id)
+            )
+
+        except Payment.DoesNotExist:
+
+            logger.error(
+                f"Payment not found for order {order_id}"
+            )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Payment not found"
+                },
+                status=404
+            )
+
+        # ------------------------------------------------
+        # Update payment
+        # ------------------------------------------------
+
+        payment.status = payment_status
+
+        if payment_id:
+            payment.payment_id = payment_id
+
+        payment.save(
+            update_fields=[
+                "status",
+                "payment_id"
+            ]
+        )
+
+        # ------------------------------------------------
+        # SUCCESS PAYMENT
+        # ------------------------------------------------
+
+        if payment_status == "SUCCESS":
+
+            # Prevent duplicate SubscriptionPayment records
+            sub_payment, created = (
+                SubscriptionPayment.objects.get_or_create(
+                    order_id=order_id,
+                    defaults={
+                        "user_email": payment.payer_email,
+                        "subscription": payment.subscription,
+                        "payment_id": payment_id,
+                        "amount": payment.amount,
+                        "status": "ACTIVE",
+                    }
+                )
+            )
+
+            # If record already exists, make sure status
+            # and payment ID are updated.
+            if not created:
+
+                sub_payment.status = "ACTIVE"
+
+                if payment_id:
+                    sub_payment.payment_id = payment_id
+
+                sub_payment.save(
+                    update_fields=[
+                        "status",
+                        "payment_id"
+                    ]
+                )
+
+            # ------------------------------------------------
+            # Find User
+            # ------------------------------------------------
+
+            target_email = (
+                payment.payer_email.strip().lower()
+            )
+
+            user = (
+                User.objects
+                .filter(email__iexact=target_email)
+                .first()
+            )
+
+            # Fallback username lookup
             if not user and "@" not in target_email:
-                user = User.objects.filter(username__iexact=target_email).first()
+
+                user = (
+                    User.objects
+                    .filter(username__iexact=target_email)
+                    .first()
+                )
+
+            # ------------------------------------------------
+            # USER FOUND
+            # ------------------------------------------------
 
             if user:
-                # 1. Create Internal Dashboard Notification
-                create_system_notification(
-                    user=user,
-                    title="Subscription Upgraded! 🎉",
-                    message=f"Success! You are now on the {payment.subscription.name} plan.",
-                    notification_type='SUBSCRIPTION'
+
+                # --------------------------------------------
+                # Create dashboard notification
+                # --------------------------------------------
+
+                try:
+
+                    create_system_notification(
+                        user=user,
+                        title="Subscription Upgraded! 🎉",
+                        message=(
+                            f"Success! You are now on the "
+                            f"{payment.subscription.name} plan."
+                        ),
+                        notification_type="SUBSCRIPTION"
+                    )
+
+                except Exception as notification_error:
+
+                    logger.error(
+                        "Notification creation failed: "
+                        f"{notification_error}"
+                    )
+
+                # --------------------------------------------
+                # Send email using Resend
+                # --------------------------------------------
+
+                resend.api_key = getattr(
+                    settings,
+                    "RESEND_API_KEY",
+                    None
                 )
-                print(f"✅ SubscriptionPayment created: {sub_payment}")
-                print(f"✅ Notification created for user: {user.username}")
 
-                # 2. Resend Email System Integration
-                resend.api_key = getattr(settings, "RESEND_API_KEY", None)
-                
                 if resend.api_key:
+
                     try:
-                        resend.Emails.send({
-                            "from": "CEYNOA Billing <onboarding@resend.dev>",
-                            "to": [user.email],
-                            "subject": f"Welcome to CEYNOA {payment.subscription.name}!",
-                            "html": f"""
-                                <div style="font-family: sans-serif; border: 1px solid #eee; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto;">
-                                    <h2 style="color: #f97316; border-bottom: 1px solid #eee; padding-bottom: 10px;">Payment Successful</h2>
-                                    <p>Hi {user.username},</p>
-                                    <p>Your workspace account has been successfully upgraded to the <strong>{payment.subscription.name}</strong> plan.</p>
-                                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                        <p style="margin: 5px 0;"><strong>Order ID:</strong> {order_id}</p>
-                                        <p style="margin: 5px 0;"><strong>Amount Paid:</strong> LKR {payment.amount}</p>
-                                        <p style="margin: 5px 0;"><strong>Status:</strong> Activated</p>
+
+                        resend.Emails.send(
+                            {
+                                "from": (
+                                    "CEYNOA Billing "
+                                    "<onboarding@resend.dev>"
+                                ),
+
+                                "to": [user.email],
+
+                                "subject": (
+                                    f"Welcome to CEYNOA "
+                                    f"{payment.subscription.name}!"
+                                ),
+
+                                "html": f"""
+                                <div style="
+                                    font-family: sans-serif;
+                                    border: 1px solid #eee;
+                                    padding: 20px;
+                                    border-radius: 10px;
+                                    max-width: 500px;
+                                    margin: 0 auto;
+                                ">
+
+                                    <h2 style="
+                                        color: #f97316;
+                                        border-bottom:
+                                        1px solid #eee;
+                                        padding-bottom: 10px;
+                                    ">
+                                        Payment Successful
+                                    </h2>
+
+                                    <p>
+                                        Hi {user.username},
+                                    </p>
+
+                                    <p>
+                                        Your workspace account has
+                                        been successfully upgraded
+                                        to the
+                                        <strong>
+                                            {payment.subscription.name}
+                                        </strong>
+                                        plan.
+                                    </p>
+
+                                    <div style="
+                                        background-color: #f9f9f9;
+                                        padding: 15px;
+                                        border-radius: 8px;
+                                        margin: 20px 0;
+                                    ">
+
+                                        <p>
+                                            <strong>
+                                                Order ID:
+                                            </strong>
+                                            {order_id}
+                                        </p>
+
+                                        <p>
+                                            <strong>
+                                                Amount Paid:
+                                            </strong>
+                                            LKR {payment.amount}
+                                        </p>
+
+                                        <p>
+                                            <strong>
+                                                Status:
+                                            </strong>
+                                            Activated
+                                        </p>
+
                                     </div>
-                                    <p>Your expanded limits and storage adjustments are now active.</p>
-                                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-                                    <p style="font-size: 12px; color: #666;">Thank you for choosing CEYNOA.</p>
+
+                                    <p>
+                                        Your expanded limits and
+                                        storage adjustments are
+                                        now active.
+                                    </p>
+
+                                    <hr style="
+                                        border: 0;
+                                        border-top:
+                                        1px solid #eee;
+                                        margin: 20px 0;
+                                    " />
+
+                                    <p style="
+                                        font-size: 12px;
+                                        color: #666;
+                                    ">
+                                        Thank you for choosing CEYNOA.
+                                    </p>
+
                                 </div>
-                            """
-                        })
-                        print(f"📧 Resend: Transaction receipt sent to {user.email}")
-                    except Exception as resend_err:
-                        print("=" * 40)
-                        print("🚨 RESEND API DISPATCH ERROR DETECTED")
-                        print(f"Error Message: {str(resend_err)}")
-                        if hasattr(resend_err, 'body'):
-                            print(f"Error Body: {resend_err.body}")
-                        print("=" * 40)
+                                """
+                            }
+                        )
+
+                        logger.info(
+                            f"Receipt email sent to {user.email}"
+                        )
+
+                    except Exception as email_error:
+
+                        logger.error(
+                            "Resend email error: "
+                            f"{email_error}"
+                        )
+
                 else:
-                    print("❌ CRITICAL: RESEND_API_KEY could not be read out of your configuration settings.")
+
+                    logger.warning(
+                        "RESEND_API_KEY is not configured."
+                    )
+
             else:
-                print(f"⚠️ Webhook warning: Could not link payment '{target_email}' to a User account.")
 
-        except Exception as general_err:
-            print(f"❌ Webhook Exception occurred: {str(general_err)}")
+                logger.warning(
+                    "Could not find user for payment: "
+                    f"{target_email}"
+                )
 
-    return Response({"message": "OK"}, status=200)
+        return Response(
+            {
+                "success": True,
+                "message": "OK"
+            },
+            status=200
+        )
+
+    except Exception as error:
+
+        logger.exception(
+            f"PayHere webhook error: {error}"
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Internal server error"
+            },
+            status=500
+        )
 
 
-# --------------------------------------------------------
-# FRONTEND CHECK STATUS ENDPOINT
-# --------------------------------------------------------
+# ========================================================
+# CHECK PAYMENT STATUS
+# ========================================================
+
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def check_payment_status(request, order_id):
+    """
+    Returns the current status of a payment.
+    """
+
     try:
-        payment = Payment.objects.get(order_id=order_id)
-        return JsonResponse({
-            "status": payment.status,
-            "order_id": payment.order_id,
-            "amount": str(payment.amount),
-            "payment_id": payment.payment_id
-        }, status=200)
+
+        payment = Payment.objects.get(
+            order_id=order_id
+        )
+
+        # Optional security check:
+        # Only allow the payment owner to check status.
+        if (
+            payment.payer_email
+            and request.user.email
+            and payment.payer_email.lower()
+            != request.user.email.lower()
+        ):
+            return Response(
+                {
+                    "error": "You do not have permission "
+                             "to view this payment."
+                },
+                status=403
+            )
+
+        return Response(
+            {
+                "status": payment.status,
+                "order_id": payment.order_id,
+                "amount": str(payment.amount),
+                "payment_id": payment.payment_id,
+            },
+            status=200
+        )
+
     except Payment.DoesNotExist:
-        return JsonResponse({"error": "Order not found"}, status=404)
+
+        return Response(
+            {
+                "error": "Order not found"
+            },
+            status=404
+        )
 
 
-# --------------------------------------------------------
-# ADMIN ANALYTICS ENDPOINT
-# --------------------------------------------------------
+# ========================================================
+# ADMIN SUBSCRIPTION ANALYTICS
+# ========================================================
+
 @api_view(["GET"])
 @admin_permission_required("payments.view")
 def subscription_analytics(request):
     """
     Aggregates data for the Admin Subscription Analytics dashboard.
     """
-    # 1. Package Overview Table & Revenue Distribution
-    # We group by subscription ID and name to get counts and revenue
-    package_data = SubscriptionPayment.objects.values(
-        'subscription__id', 
-        'subscription__name',
-        'subscription__price'
-    ).annotate(
-        user_count=Count('id'),
-        total_revenue=Sum('amount')
-    ).order_by('-user_count')
 
-    # 2. Web vs Mobile Popularity
-    # As requested: Mobile is null/0 until the app is created.
-    total_web_users = SubscriptionPayment.objects.count()
+    # ----------------------------------------------------
+    # Package overview
+    # ----------------------------------------------------
+
+    package_data = (
+        SubscriptionPayment.objects
+        .values(
+            "subscription__id",
+            "subscription__name",
+            "subscription__price"
+        )
+        .annotate(
+            user_count=Count("id"),
+            total_revenue=Sum("amount")
+        )
+        .order_by("-user_count")
+    )
+
+    # ----------------------------------------------------
+    # Web vs Mobile
+    # ----------------------------------------------------
+
+    total_web_users = (
+        SubscriptionPayment.objects
+        .count()
+    )
+
     popularity = {
         "web": total_web_users,
-        "mobile": 0  # Placeholder for future mobile app data
+        "mobile": 0
     }
 
-    # 3. Revenue Distribution (Formatted for charts)
+    # ----------------------------------------------------
+    # Revenue distribution
+    # ----------------------------------------------------
+
     revenue_dist = [
-        {"name": item['subscription__name'], "value": float(item['total_revenue'] or 0)}
+        {
+            "name": item["subscription__name"],
+            "value": float(
+                item["total_revenue"] or 0
+            )
+        }
         for item in package_data
     ]
 
-    # 4. Top Paying Users
-    # Grouping by email to find who has spent the most across all their subscriptions
-    top_users = SubscriptionPayment.objects.values(
-        'user_email'
-    ).annotate(
-        total_spent=Sum('amount')
-    ).order_by('-total_spent')[:10]  # Top 10 users
+    # ----------------------------------------------------
+    # Top paying users
+    # ----------------------------------------------------
 
-    return Response({
-        "package_overview": list(package_data),
-        "popularity": popularity,
-        "revenue_distribution": revenue_dist,
-        "top_users": list(top_users)
-    })
+    top_users = (
+        SubscriptionPayment.objects
+        .values("user_email")
+        .annotate(
+            total_spent=Sum("amount")
+        )
+        .order_by("-total_spent")[:10]
+    )
+
+    return Response(
+        {
+            "package_overview": list(package_data),
+
+            "popularity": popularity,
+
+            "revenue_distribution": revenue_dist,
+
+            "top_users": list(top_users),
+        }
+    )
 
 
-# --------------------------------------------------------
-# ADMIN REPORTS ENDPOINT
-# --------------------------------------------------------
+# ========================================================
+# ADMIN REPORTS
+# ========================================================
+
 @api_view(["GET"])
 @admin_permission_required("reports.view")
-def admin_reports(request): #This endpoint generates ALL analytics data for admin dashboard
+def admin_reports(request):
     """
-    Aggregates data for the Reports & Analytics tab.
-    Fixes the 'System Error' on the frontend.
+    Generates analytics data for the admin dashboard.
     """
+
     try:
+
         today = timezone.now().date()
-        start_of_week = today - timedelta(days=6)  # Last 7 days including today
+
+        # Last 7 days including today
+        start_of_week = today - timedelta(days=6)
+
+        # ------------------------------------------------
+        # TOTAL USERS
+        # ------------------------------------------------
 
         total_users = User.objects.count()
 
-        # total_income = Payment.objects.filter(status="SUCCESS").aggregate(total=Sum('amount'))['total'] or 0
-        total_income = SubscriptionPayment.objects.aggregate(
-        total=Sum('amount')
-        )['total'] or 0
-        
-        # 1. Weekly New Users (from auth_user table)
-        #Gets users who joined in last 7 days
+        # ------------------------------------------------
+        # TOTAL INCOME
+        # ------------------------------------------------
+
+        total_income = (
+            SubscriptionPayment.objects
+            .filter(status="ACTIVE")
+            .aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
+
+        # ------------------------------------------------
+        # DAILY NEW USERS
+        # ------------------------------------------------
+
         users_daily = (
-    User.objects
-    .filter(date_joined__date__gte=start_of_week)
-    .annotate(day=TruncDay('date_joined'))
-    .values('day')
-    .annotate(count=Count('id'))
-)
-            
-        # 2. Weekly Income (from Payment table)
+            User.objects
+            .filter(
+                date_joined__date__gte=start_of_week
+            )
+            .annotate(
+                day=TruncDay("date_joined")
+            )
+            .values("day")
+            .annotate(
+                count=Count("id")
+            )
+        )
+
+        # ------------------------------------------------
+        # DAILY INCOME
+        # ------------------------------------------------
+
         income_daily = (
-    Payment.objects
-    .filter(created_at__date__gte=start_of_week, status="SUCCESS")
-    .annotate(day=TruncDay('created_at'))
-    .values('day')
-    .annotate(total=Sum('amount'))
-)
-        
-        # 3. Weekly Storage Utilization (from storage_file table)
-        FileModel = apps.get_model('storage', 'File')
-        #gets uploaded files from last 7 days, groups by day, and sums their sizes to get total storage used each day; also handles date/datetime formats for compatibility with different databases
+            Payment.objects
+            .filter(
+                created_at__date__gte=start_of_week,
+                status="SUCCESS"
+            )
+            .annotate(
+                day=TruncDay("created_at")
+            )
+            .values("day")
+            .annotate(
+                total=Sum("amount")
+            )
+        )
+
+        # ------------------------------------------------
+        # DAILY STORAGE
+        # ------------------------------------------------
+
+        FileModel = apps.get_model(
+            "storage",
+            "File"
+        )
+
         storage_daily = (
             FileModel.objects
-            .filter(uploaded_at__date__gte=start_of_week)
-            .annotate(day=TruncDay('uploaded_at'))
-            .values('day')
-            .annotate(total_size=Sum('size')))
+            .filter(
+                uploaded_at__date__gte=start_of_week
+            )
+            .annotate(
+                day=TruncDay("uploaded_at")
+            )
+            .values("day")
+            .annotate(
+                total_size=Sum("size")
+            )
+        )
 
-        weekly_new_users = [0] * 7 # Initialize with zeros for 7 days
-        weekly_income = [0.0] * 7 #[0,0,0,0,0,0,0] Because some days may have no data.
+        # ------------------------------------------------
+        # INITIALIZE 7 DAYS
+        # ------------------------------------------------
+
+        weekly_new_users = [0] * 7
+
+        weekly_income = [0.0] * 7
+
         weekly_storage = [0.0] * 7
+
         labels = []
-        
-        for i in range(7): #builds data day-by-day for the last 7 days, generating labels and mapping counts/sums to the correct day
-            target_date = start_of_week + timedelta(days=i)
-            labels.append(target_date.strftime('%a')) # Dynamically generates 'Tue', 'Wed', etc.
-            
-            # Helper for date comparison (handling SQLite strings vs objects)
-            def get_date(val):
-                if not val: return None
-                if isinstance(val, str):
-                    return timezone.datetime.strptime(val.split(' ')[0], '%Y-%m-%d').date()
-                return val.date() if hasattr(val, 'date') else val
 
-            # Map Users
-            for u in users_daily:
-                if get_date(u['day']) == target_date: #checks if record belongs to that day; Compares the target date with the date from the query, handling both string and date formats for compatibility across databases
-                    weekly_new_users[i] = u['count'] #maps the count of new users to the correct day index in the weekly_new_users list
-                    break
-            
-            # Map Income
-            for inc in income_daily:
-                if get_date(inc['day']) == target_date:
-                    weekly_income[i] = float(inc['total'] or 0.0)
+        # ------------------------------------------------
+        # Helper
+        # ------------------------------------------------
+
+        def get_date(value):
+
+            if not value:
+                return None
+
+            if isinstance(value, str):
+
+                return timezone.datetime.strptime(
+                    value.split(" ")[0],
+                    "%Y-%m-%d"
+                ).date()
+
+            if hasattr(value, "date"):
+                return value.date()
+
+            return value
+
+        # ------------------------------------------------
+        # Build daily data
+        # ------------------------------------------------
+
+        for i in range(7):
+
+            target_date = (
+                start_of_week
+                + timedelta(days=i)
+            )
+
+            labels.append(
+                target_date.strftime("%a")
+            )
+
+            # ----------------------------
+            # Users
+            # ----------------------------
+
+            for user_data in users_daily:
+
+                if (
+                    get_date(user_data["day"])
+                    == target_date
+                ):
+
+                    weekly_new_users[i] = (
+                        user_data["count"]
+                    )
+
                     break
 
-            # Map Storage (Converted from Bytes to GB)
-            for s in storage_daily:
-                if get_date(s['day']) == target_date:
-                    weekly_storage[i] = round(float(s['total_size'] or 0.0) / (1024**3), 4)
+            # ----------------------------
+            # Income
+            # ----------------------------
+
+            for income_data in income_daily:
+
+                if (
+                    get_date(income_data["day"])
+                    == target_date
+                ):
+
+                    weekly_income[i] = float(
+                        income_data["total"] or 0
+                    )
+
                     break
 
-        # 2. Yearly Analytics (Monthly Breakdown)
+            # ----------------------------
+            # Storage
+            # ----------------------------
+
+            for storage_data in storage_daily:
+
+                if (
+                    get_date(storage_data["day"])
+                    == target_date
+                ):
+
+                    # Bytes -> GB
+                    weekly_storage[i] = round(
+                        float(
+                            storage_data["total_size"]
+                            or 0
+                        )
+                        / (1024 ** 3),
+                        4
+                    )
+
+                    break
+
+        # =================================================
+        # YEARLY ANALYTICS
+        # =================================================
+
         current_year = today.year
-        #Get current year data grouped by month, summing income and counting subscriptions for each month; also handles date/datetime formats for compatibility with different databases
-        monthly_qs = SubscriptionPayment.objects.filter(created_at__year=current_year)\
-        .annotate(month=TruncMonth('created_at'))\
-        .values('month')\
-        .annotate(income=Sum('amount'), count=Count('id'))
-    
-        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        yearly_data = []
-        
-        for i, name in enumerate(month_names):
-            month_num = i + 1
-            match = next((m for m in monthly_qs if m['month'].month == month_num), None) #Match DB data to month
-            
-            # This generates the peak in May if data exists only there
-            yearly_data.append({
-                "month": name,
-                "web": match['count'] if match else 0,
-                "mobile": 0, 
-                "income": float(match['income'] or 0) if match else 0
-            })
 
-        # 3. Final Aggregated Response
-        return Response({
-            "total_users": total_users,
-            "total_income": float(total_income),
-            "weekly_new_users": weekly_new_users,
-            "weekly_income": weekly_income,
-            "labels": labels,
-            "weekly_storage": weekly_storage,
-            "comparison": {
-                "users": {
-                    "current": sum(weekly_new_users),
-                    "last": 0, #Since previous-week analytics were not implemented yet, it was temporarily set to 0 as a placeholder to keep the comparison cards working without causing frontend errors
-                    "diff": sum(weekly_new_users),
-                    "weekLabel": "This Week"
-                },
-                "income": {
-                    "current": sum(weekly_income),
-                    "last": 0,
-                    "diff": sum(weekly_income),
-                    "weekLabel": "This Week"
-                },
-                "storage": { 
-                    "current": round(sum(weekly_storage), 3), 
-                    "last": 0, 
-                    "diff": round(sum(weekly_storage), 3),
-                    "weekLabel": "This Week"
+        monthly_qs = (
+            SubscriptionPayment.objects
+            .filter(
+                created_at__year=current_year,
+                status="ACTIVE"
+            )
+            .annotate(
+                month=TruncMonth("created_at")
+            )
+            .values("month")
+            .annotate(
+                income=Sum("amount"),
+                count=Count("id")
+            )
+        )
+
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        yearly_data = []
+
+        for i, month_name in enumerate(
+            month_names
+        ):
+
+            month_number = i + 1
+
+            match = next(
+                (
+                    item
+                    for item in monthly_qs
+                    if item["month"]
+                    and item["month"].month
+                    == month_number
+                ),
+                None
+            )
+
+            yearly_data.append(
+                {
+                    "month": month_name,
+
+                    "web": (
+                        match["count"]
+                        if match
+                        else 0
+                    ),
+
+                    "mobile": 0,
+
+                    "income": (
+                        float(
+                            match["income"] or 0
+                        )
+                        if match
+                        else 0
+                    ),
                 }
+            )
+
+        # =================================================
+        # RESPONSE
+        # =================================================
+
+        current_users = sum(
+            weekly_new_users
+        )
+
+        current_income = sum(
+            weekly_income
+        )
+
+        current_storage = round(
+            sum(weekly_storage),
+            3
+        )
+
+        return Response(
+            {
+                "total_users": total_users,
+
+                "total_income": float(
+                    total_income
+                ),
+
+                "weekly_new_users":
+                    weekly_new_users,
+
+                "weekly_income":
+                    weekly_income,
+
+                "labels":
+                    labels,
+
+                "weekly_storage":
+                    weekly_storage,
+
+                "comparison": {
+
+                    "users": {
+                        "current": current_users,
+                        "last": 0,
+                        "diff": current_users,
+                        "weekLabel": "This Week",
+                    },
+
+                    "income": {
+                        "current": current_income,
+                        "last": 0,
+                        "diff": current_income,
+                        "weekLabel": "This Week",
+                    },
+
+                    "storage": {
+                        "current": current_storage,
+                        "last": 0,
+                        "diff": current_storage,
+                        "weekLabel": "This Week",
+                    },
+                },
+
+                "yearly_data":
+                    yearly_data,
+            }
+        )
+
+    except Exception as error:
+
+        logger.exception(
+            f"Error in admin_reports: {error}"
+        )
+
+        return Response(
+            {
+                "error":
+                    "Internal server error while "
+                    "generating reports."
             },
-            "yearly_data": yearly_data
-        })
-    except Exception as e:
-        logger.error(f"Error in admin_reports: {str(e)}")
-        return Response({"error": "Internal server error while generating reports."}, status=500)
+            status=500
+        )

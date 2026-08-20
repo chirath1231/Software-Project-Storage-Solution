@@ -82,7 +82,8 @@ export default function DashboardHome() {
   const fetchNotifications = async () => {
     try {
       const res = await api.get("/api/accounts/notifications/");
-      setNotifications(res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      const list = Array.isArray(res.data) ? res.data : res.data.results || [];
+      setNotifications([...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (error) {
       console.error("Failed to fetch notifications", error);
     }
@@ -288,18 +289,20 @@ export default function DashboardHome() {
                 {files.slice(0, 5).map((file) => (
                   <div key={file.id} className="py-4 flex items-center justify-between hover:bg-gray-50 rounded-lg px-2 transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{getFileIcon(file.file_name)}</span>
+                      <span className="text-2xl">{getFileIcon(file.name)}</span>
                       <div>
-                        <p className="font-bold text-gray-800 truncate max-w-[200px]">{file.file_name}</p>
+                        <p className="font-bold text-gray-800 truncate max-w-[200px]">{file.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     </div>
-                    <Link
-                      to={`/file/${file.id}`}
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
                       className="text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
                     >
                       View
-                    </Link>
+                    </a>
                   </div>
                 ))}
               </div>
