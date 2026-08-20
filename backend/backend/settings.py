@@ -198,7 +198,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 PAYHERE_MERCHANT_ID = "1233030"  # Your Merchant ID
 PAYHERE_MERCHANT_SECRET = "MTI2ODEyMjAxMzM4NDgyNjQ1NTUyNjI1NTk0MjY1MTQ0MzE3OTY0MA=="
-PAYHERE_SANDBOX = True 
+PAYHERE_SANDBOX = True # Reload trigger
 
 # -----------------------------------------------------
 # REST FRAMEWORK + JWT SETTINGS

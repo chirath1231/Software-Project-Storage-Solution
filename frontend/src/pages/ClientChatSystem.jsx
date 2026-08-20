@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Search, Paperclip, Send, X, ArrowLeft, Info } from "lucide-react";
+import { Search, Paperclip, Send, X, ArrowLeft, Info, Trash2 } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
@@ -258,6 +258,24 @@ const ClientChatSystem = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    if (!messageId || String(messageId).startsWith("temp-")) {
+      alert("Please wait a moment for the message to sync before deleting.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await api.delete(`/messages/${messageId}/delete/`);
+      setMessages((prev) =>
+        prev.filter((m) => String(m.id) !== String(messageId))
+      );
+      loadConversations();
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+      alert(err.response?.data?.detail || "Failed to delete message");
+    }
+  };
+
   useEffect(() => {
     loadConversations();
     loadUsers();
@@ -311,6 +329,18 @@ const ClientChatSystem = () => {
           return;
         }
 
+        // 4. Handle message deletion
+        if (data.type === "message_deleted") {
+          const deletedId = data.message_id;
+          if (deletedId) {
+            setMessages((prev) =>
+              prev.filter((m) => String(m.id) !== String(deletedId))
+            );
+          }
+          loadConversations();
+          return;
+        }
+
         // 2. Handle chat messages
         if (data.type === "chat_message") {
           const incomingText = (data.text || "").trim();
@@ -330,14 +360,14 @@ const ClientChatSystem = () => {
           if (isMsgForActive) {
             setMessages((prev) => {
               if (data.client_id) {
-                const idx = prev.findIndex((m) => m.id === data.client_id);
+                const idx = prev.findIndex((m) => String(m.id) === String(data.client_id));
                 if (idx !== -1) {
                   const copy = [...prev];
-                  copy[idx] = incoming;
+                  copy[idx] = { ...incoming, id: data.id || incoming.id };
                   return copy;
                 }
               }
-              if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+              if (incoming.id && prev.some((m) => String(m.id) === String(incoming.id))) return prev;
               return [...prev, incoming];
             });
           }
@@ -682,18 +712,29 @@ const ClientChatSystem = () => {
                   (m.sender_username && m.sender_username === currentUsername);
 
                 return (
-                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`} >
+                  <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`} >
 
                     <div
-                      className={`max-w-md rounded-2xl p-4 ${isMine
+                      className={`max-w-md rounded-2xl p-4 relative ${isMine
                         ? "bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg"
                         : "bg-white shadow-lg text-gray-900"
                         }`}
                     >
                       <p className={isMine ? "text-white" : "text-gray-900"}>{m.text}</p>
-                      <p className={`text-xs mt-2 ${isMine ? "text-white/80" : "text-gray-500"} text-right`}>
-                        {formatTime(m.timestamp)}
-                      </p>
+                      <div className="flex items-center justify-between gap-3 mt-2">
+                        {isMine && m.id && !String(m.id).startsWith("temp-") && (
+                          <button
+                            onClick={() => handleDeleteMessage(m.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-white/80 hover:text-red-200 p-0.5 rounded cursor-pointer"
+                            title="Delete message"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <p className={`text-xs ${isMine ? "text-white/80" : "text-gray-500"} ml-auto`}>
+                          {formatTime(m.timestamp)}
+                        </p>
+                      </div>
 
                     </div>
 
@@ -714,12 +755,6 @@ const ClientChatSystem = () => {
                   className="flex-1 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
 
                 />
-
-                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-
-                <button onClick={() => fileInputRef.current.click()} className="p-3 text-gray-500 hover:text-gray-700">
-                  <Paperclip className="w-6 h-6" />
-                </button>
 
                 <button
                   onClick={handleSendMessage}
@@ -816,9 +851,7 @@ const ClientChatSystem = () => {
                     </p>
                   ) : (
                     <>
-                      {selectedClient.username && <p className="text-sm text-gray-600 mt-1">{selectedClient.username}</p>}
-                      {selectedClient.email && <p className="text-sm text-gray-600">{selectedClient.email}</p>}
-                      {selectedClient.phone && <p className="text-sm text-gray-600">{selectedClient.phone}</p>}
+                      {selectedClient.phone && <p className="text-sm text-gray-600 mt-1">{selectedClient.phone}</p>}
                       {selectedClient.language && <p className="text-sm text-gray-600 mt-2">{selectedClient.language}</p>}
                     </>
                   )}
@@ -919,28 +952,6 @@ const ClientChatSystem = () => {
                         <p className="text-gray-700">
                           {selectedClient.online ? "Online" : "Offline"}
                         </p>
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-3">Recent Shared:</h3>
-                        <div className="space-y-2">
-                          {(selectedClient.recentFiles || []).map((file, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 p-2 bg-white rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                            >
-                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                                <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                                </svg>
-                              </div>
-                              <span className="text-sm text-gray-700">{file}</span>
-                            </div>
-                          ))}
-                          {(!selectedClient.recentFiles || selectedClient.recentFiles.length === 0) && (
-                            <p className="text-sm text-gray-600">No recent files</p>
-                          )}
-                        </div>
                       </div>
                     </>
                   )}
