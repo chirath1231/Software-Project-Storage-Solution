@@ -22,7 +22,7 @@ export default function DashboardHome() {
   const [uploadMessage, setUploadMessage] = useState("");
   const fileInputRef = useRef(null);
 
-  const userEmail = localStorage.getItem("username");
+  const userEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
 
   useEffect(() => {
     if (userEmail) {

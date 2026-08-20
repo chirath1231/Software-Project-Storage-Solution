@@ -96,7 +96,7 @@ export default function Navbar({ isDashboard = false }) {
   // Handle marking notification as read
   const handleMarkRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
       await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: { 

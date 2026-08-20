@@ -105,9 +105,9 @@ function Login() {
         return;
       }
 
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
-      localStorage.setItem("username", data.username);
+      sessionStorage.setItem("access_token", data.access);
+      sessionStorage.setItem("refresh_token", data.refresh);
+      sessionStorage.setItem("username", data.username);
 
       login(data.access, data.username);
       navigate("/dashboard");

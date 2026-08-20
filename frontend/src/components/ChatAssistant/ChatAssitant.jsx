@@ -22,7 +22,7 @@ export default function ChatAssistant() {
   
 
  const sendMessage = async (message) => {
-  const token = localStorage.getItem("access_token");
+  const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
   let response = await fetch(
     "http://localhost:8000/api/assistant/chat/",

@@ -50,7 +50,7 @@ export default function MyFiles() {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const navigate = useNavigate();
-  const userEmail = localStorage.getItem("username");
+  const userEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
 
   useEffect(() => { initPage(); }, []);
 
@@ -111,7 +111,7 @@ export default function MyFiles() {
       setStorageUsed(Math.min(Math.round((usedGB / storageGB) * 100), 100));
       setIsStorageFull(usedGB >= storageGB * 0.99);
     } catch (err) {
-      if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
+      if (err.response?.status === 401) { sessionStorage.clear(); localStorage.clear(); navigate("/login"); }
       else alert("Failed to fetch files.");
     }
   };
@@ -122,7 +122,7 @@ export default function MyFiles() {
       const res = await api.get(`/api/folders/${params}`);
       setFolders(res.data);
     } catch (err) {
-      if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
+      if (err.response?.status === 401) { sessionStorage.clear(); localStorage.clear(); navigate("/login"); }
     }
   };
 
@@ -207,7 +207,7 @@ export default function MyFiles() {
       await fetchFiles(planGB, currentFolderId);
       if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
-      if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
+      if (err.response?.status === 401) { sessionStorage.clear(); localStorage.clear(); navigate("/login"); }
       else {
         const serverMsg = err.response?.data?.detail || err.response?.data?.error;
         setUploadError(serverMsg || "Upload failed. Please try again.");
@@ -225,7 +225,7 @@ export default function MyFiles() {
       await fetchFiles(planGB, currentFolderId);
       if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
-      if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
+      if (err.response?.status === 401) { sessionStorage.clear(); localStorage.clear(); navigate("/login"); }
       else alert("Delete failed.");
     }
   };

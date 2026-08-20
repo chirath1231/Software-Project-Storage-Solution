@@ -12,7 +12,7 @@ export default function UpcomingMeetingsWidget() {
 
   const fetchUpcomingMeetings = async () => {
     try {
-      const token = localStorage.getItem("access_token"); 
+      const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
       
       const response = await fetch("http://localhost:8000/api/accounts/events/", {
         method: "GET",

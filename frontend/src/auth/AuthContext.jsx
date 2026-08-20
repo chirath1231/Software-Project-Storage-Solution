@@ -7,18 +7,17 @@ export const AuthProvider = ({ children }) => {
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load session on page refresh ONLY
+  // Load session on page refresh
   useEffect(() => {
     const savedToken =
       sessionStorage.getItem("token") ||
-      localStorage.getItem("access_token") ||
       sessionStorage.getItem("access_token") ||
+      localStorage.getItem("access_token") ||
       localStorage.getItem("access");
 
     const savedUsername =
       sessionStorage.getItem("username") ||
-      localStorage.getItem("username") ||
-      sessionStorage.getItem("username");
+      localStorage.getItem("username");
 
     if (savedToken) {
       setToken(savedToken);
@@ -32,14 +31,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (newToken, newUsername) => {
+    // Clear old user storage first to prevent leftover email/data leakage
+    sessionStorage.clear();
+    localStorage.clear();
+
     if (newToken) {
       sessionStorage.setItem("token", newToken);
       sessionStorage.setItem("access_token", newToken);
-      localStorage.setItem("access_token", newToken);
     }
     if (newUsername) {
       sessionStorage.setItem("username", newUsername);
-      localStorage.setItem("username", newUsername);
     }
     setToken(newToken);
     setUsername(newUsername);

@@ -19,7 +19,7 @@ export default function DeleteAccount() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
       const res = await fetch("http://localhost:8000/api/accounts/delete-account/", {
         method: "DELETE",
@@ -33,6 +33,7 @@ export default function DeleteAccount() {
       if (res.ok) {
         alert("Account scheduled for deletion");
 
+        sessionStorage.clear();
         localStorage.clear();
         window.location.href = "/login";
       } else {

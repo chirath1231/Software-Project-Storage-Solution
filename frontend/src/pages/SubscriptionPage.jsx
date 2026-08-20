@@ -6,8 +6,8 @@ export default function SubscriptionPage() {
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
-  const userEmail = localStorage.getItem("username");
-  const token = localStorage.getItem("access_token"); // change key if needed
+  const userEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
+  const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
   useEffect(() => {
     const authHeaders = token

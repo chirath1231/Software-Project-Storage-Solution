@@ -7,7 +7,10 @@ const api = axios.create({
 // Attach token automatically
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token =
+      sessionStorage.getItem("access_token") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("access_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -23,6 +26,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      sessionStorage.clear();
       localStorage.clear();
       window.location.href = "/login";
     }

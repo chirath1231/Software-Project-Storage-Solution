@@ -33,7 +33,7 @@ export default function SecuritySettings() {
     setErrorMsg("");
 
     try {
-        const token = localStorage.getItem("access_token");
+        const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
         const res = await fetch("http://localhost:8000/api/accounts/change-password/", {
         method: "POST",

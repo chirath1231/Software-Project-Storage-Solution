@@ -19,7 +19,7 @@ export default function Notifications() {
 
   const markAsRead = async (id) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
       
       // --- FIX 2: Correct endpoint path and trailing slash ---
       const response = await fetch(`${BASE_URL}${id}/read/`, {

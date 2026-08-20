@@ -48,9 +48,10 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("access", data.access);
+      sessionStorage.setItem("access_token", data.access);
+      sessionStorage.setItem("refresh", data.refresh);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
 
       setLoading(false);
       navigate("/dashboard");
@@ -78,9 +79,10 @@ function Register() {
         return;
       }
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data));
+      sessionStorage.setItem("access", data.access);
+      sessionStorage.setItem("access_token", data.access);
+      sessionStorage.setItem("refresh", data.refresh);
+      sessionStorage.setItem("user", JSON.stringify(data));
 
       navigate("/dashboard");
     } catch (error) {

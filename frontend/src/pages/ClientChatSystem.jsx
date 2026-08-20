@@ -13,7 +13,10 @@ const api = axios.create({
 
 // ✅ AUTO attach JWT token to every API request (SESSION STORAGE)
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token"); // saved after login
+  const token =
+    sessionStorage.getItem("access_token") ||
+    sessionStorage.getItem("token") ||
+    localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -77,7 +80,7 @@ const ClientChatSystem = () => {
   const currentUsername =
     sessionStorage.getItem("username") || localStorage.getItem("username") || "";
 
-  const currentUserId = localStorage.getItem("user_id") || "";
+  const currentUserId = sessionStorage.getItem("user_id") || localStorage.getItem("user_id") || "";
 
   // ================= AUTO SCROLL FIX =================
   const messagesContainerRef = useRef(null);
