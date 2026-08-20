@@ -1,59 +1,33 @@
-from django.contrib import admin
-from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+from django.urls import path
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
+from .views import (
+    RegisterView,
+    LoginAPIView,
+    GoogleLoginAPIView,
+    ProfileView,
+    ProfileUpdateView,
+)
+
 
 urlpatterns = [
-    # Admin Panel
-    path('admin/', admin.site.urls),
-<<<<<<< HEAD
-    path('api/accounts/', include('accounts.urls')),
-    path('api/subscriptions/', include('subscriptions.urls')),
-    path('api/', include('admin_management.urls')),
-    path("api/", include("storage.urls")),
-=======
+    # Authentication
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", LoginAPIView.as_view(), name="login"),
+    path("google/", GoogleLoginAPIView.as_view(), name="google_login"),
 
-    # Accounts & Authentication
-    path('api/auth/', include('accounts.urls')),
-    path('api/accounts/', include('accounts.urls')),
+    # JWT
+    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # Notifications App
-    path('api/accounts/notifications/', include('notifications.urls')),
-
-    # Calendar Events App
-    path('api/accounts/events/', include('events.urls')),
-
-    # Subscriptions
-    path('api/subscriptions/', include('subscriptions.urls')),
-
-    # Chat System
-    path('api/chat/', include('chat.urls')),
-    path('api/', include('chat.api_urls')),
-
-    # Storage & File Management
-    # Mounted at both prefixes: frontend calls hit "/api/files/..." and bare "/api/..."
-    path('api/files/', include('storage.urls')),
-    path('api/', include('storage.urls')),
-
-    # Sharing API
-    path('api/', include('sharing.urls')),
-
-    # AI Assistant
-    path('api/assistant/', include('assistant.urls')),
-
-    # Support Tickets
-    path('api/', include('tickets.urls')),
-
-    # Admin Management
-    path('api/', include('admin_management.urls')),
->>>>>>> origin/main
+    # Profile
+    path("profile/", ProfileView.as_view(), name="profile"),
+    path(
+        "profile-update/",
+        ProfileUpdateView.as_view(),
+        name="profile-update",
+    ),
 ]
-
-# Serve media files locally in development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-<<<<<<< HEAD
-
-   
-=======
->>>>>>> origin/main

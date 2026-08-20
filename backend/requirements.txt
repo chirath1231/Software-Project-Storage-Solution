@@ -38,7 +38,6 @@ boto3>=1.35,<2
 
 # Production server for Render
 gunicorn>=23.0,<24
-
 # Admin interface
 django-jazzmin>=3.0,<4
 
