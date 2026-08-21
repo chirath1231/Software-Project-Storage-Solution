@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Android emulator → 10.0.2.2 maps to your PC's localhost
-// Physical device  → use your PC's LAN IP (currently 10.11.117.33)
-export const BASE_URL = "http://10.0.2.2:8000";
+// For Physical Mobile Devices (Expo Go) & Emulators on same Wi-Fi:
+// Uses your PC's Wi-Fi IP address (192.168.8.158:8000)
+export const BASE_URL = "http://192.168.8.158:8000";
 
 async function getToken() {
   try {

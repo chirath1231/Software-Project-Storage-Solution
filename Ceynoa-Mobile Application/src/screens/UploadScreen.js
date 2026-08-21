@@ -1,32 +1,7 @@
-<<<<<<< HEAD
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../theme/ThemeContext";
-import { folders } from "../data/mock";
-import GradientHeader from "../components/GradientHeader";
-import Input from "../components/Input";
-import Button from "../components/Button";
-
-export default function UploadScreen({ navigation }) {
-  const { c } = useTheme();
-  const insets = useSafeAreaInsets();
-  const [picked, setPicked] = useState(false);
-  const [fileName, setFileName] = useState("");
-  const [shareWith, setShareWith] = useState("");
-  const [expire, setExpire] = useState("");
-  const [folder, setFolder] = useState(folders[0]);
-  const [openFolder, setOpenFolder] = useState(false);
-
-  const pickFile = () => {
-    setPicked(true);
-    setFileName("Proposal-v2.pdf");
-=======
-import React, { useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,8 +11,6 @@ import { useAuth } from "../context/AuthContext";
 import { getFiles, getSubscription, uploadFile } from "../api/filesApi";
 import GradientHeader from "../components/GradientHeader";
 import Button from "../components/Button";
-
-// Upload status: null | "uploading" | "success" | "error" | "limit"
 
 function StatusIcon({ status, c }) {
   if (status === "uploading") return <ActivityIndicator size="large" color={c.accent.deep} />;
@@ -58,116 +31,81 @@ export default function UploadScreen({ navigation }) {
 
   const pickFile = async () => {
     if (status === "uploading") return;
-    setStatus(null);
-    setMessage("");
-
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled) return;
-
-      const asset = result.assets?.[0] || result;
-      setPicked({
-        uri: asset.uri,
-        name: asset.name,
-        size: asset.size || 0,
-        mimeType: asset.mimeType || "application/octet-stream",
-      });
-    } catch (err) {
-      Alert.alert("File Picker Error", err.message || "Could not open file picker.");
+      const res = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+      if (!res.canceled && res.assets && res.assets.length > 0) {
+        const asset = res.assets[0];
+        setPicked({
+          uri: asset.uri,
+          name: asset.name,
+          size: asset.size || 0,
+          mimeType: asset.mimeType || "application/octet-stream",
+        });
+        setStatus(null);
+        setMessage("");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Could not pick file");
     }
   };
-
-  const checkStorageLimit = useCallback(async (file) => {
-    const MAX = 2 * 1024 * 1024 * 1024; // 2 GB
-    if (file.size > MAX) {
-      return { allowed: false, message: "File exceeds the 2GB single-file limit." };
-    }
-
-    try {
-      const [fileData, storageGB] = await Promise.all([
-        getFiles(),
-        user?.email ? getSubscription(user.email) : Promise.resolve(5),
-      ]);
-      const usedBytes = fileData.reduce((s, f) => s + (f.size || 0), 0);
-      const planBytes = storageGB * 1024 * 1024 * 1024;
-      const remaining = planBytes - usedBytes;
-
-      if (remaining <= 0) {
-        return { allowed: false, message: `Your ${storageGB}GB storage is full. Please upgrade your plan.`, isLimit: true };
-      }
-      if (file.size > remaining) {
-        const remMB = (remaining / 1024 / 1024).toFixed(1);
-        const fileMB = (file.size / 1024 / 1024).toFixed(1);
-        return {
-          allowed: false,
-          message: `Not enough space. File needs ${fileMB} MB but only ${remMB} MB remaining.`,
-          isLimit: true,
-        };
-      }
-      return { allowed: true };
-    } catch {
-      return { allowed: true }; // Optimistic if check fails
-    }
-  }, [user?.email]);
 
   const handleUpload = async () => {
     if (!picked) return;
 
-    const check = await checkStorageLimit(picked);
-    if (!check.allowed) {
-      setStatus("limit");
-      setMessage(check.message);
-      return;
-    }
-
     setStatus("uploading");
-    setMessage(`Uploading "${picked.name}"…`);
+    setMessage("Checking storage capacity…");
 
     try {
+      const subKey = user?.username || user?.email;
+      const [existingFiles, storageGB] = await Promise.all([
+        getFiles(),
+        subKey ? getSubscription(subKey) : Promise.resolve(5),
+      ]);
+
+      const currentUsedBytes = existingFiles.reduce((sum, f) => sum + (f.size || 0), 0);
+      const totalCapacityBytes = storageGB * 1024 * 1024 * 1024;
+      const fileSizeBytes = picked.size;
+
+      if (currentUsedBytes + fileSizeBytes > totalCapacityBytes) {
+        setStatus("limit");
+        setMessage("Storage limit reached for your plan");
+        return;
+      }
+
+      setMessage("Uploading file…");
       await uploadFile(picked.uri, picked.name, picked.mimeType);
+
       setStatus("success");
       setMessage(`"${picked.name}" uploaded successfully!`);
-      setPicked(null);
 
       setTimeout(() => {
-        setStatus(null);
-        setMessage("");
-        navigation.goBack();
-      }, 2000);
+        navigation.navigate("Files");
+      }, 1200);
     } catch (err) {
-      const msg = err.data?.detail || err.data?.error || err.message || "Upload failed. Please try again.";
-      const isLimit = err.status === 413 || msg.toLowerCase().includes("storage");
-      setStatus(isLimit ? "limit" : "error");
-      setMessage(msg);
+      console.error("Upload error:", err);
+      setStatus("error");
+      setMessage(err.message || "Failed to upload file. Check your connection.");
     }
   };
 
   const reset = () => {
-    if (status === "uploading") return;
     setPicked(null);
     setStatus(null);
     setMessage("");
   };
 
   const formatSize = (bytes) => {
-    if (!bytes) return "0 B";
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
     return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
->>>>>>> main
   };
 
   return (
     <View style={[styles.root, { backgroundColor: c.bgApp }]}>
-<<<<<<< HEAD
-      <GradientHeader title="Upload Files" onBack={() => navigation.goBack()} />
-=======
       <GradientHeader title="Upload File" onBack={() => navigation.goBack()} />
->>>>>>> main
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
         <ScrollView
@@ -176,68 +114,6 @@ export default function UploadScreen({ navigation }) {
           contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 30 }}
         >
           <Text style={[styles.lead, { color: c.textSecondary }]}>
-<<<<<<< HEAD
-            Here's a quick look at your storage and recent activity.
-          </Text>
-
-          {/* Dropzone */}
-          <Pressable
-            onPress={pickFile}
-            style={[
-              styles.dropzone,
-              { borderColor: picked ? c.accent.orange : c.borderStrong, backgroundColor: picked ? c.bgSoftOrange : c.bgSecondary },
-            ]}
-          >
-            <View style={[styles.dropIcon, { backgroundColor: c.bgSoftOrange }]}>
-              <Ionicons name={picked ? "checkmark-circle" : "cloud-upload-outline"} size={28} color={c.accent.deep} />
-            </View>
-            <Text style={[styles.dropTitle, { color: c.textPrimary }]}>
-              {picked ? fileName : "Tap to select files"}
-            </Text>
-            <Text style={[styles.dropHint, { color: c.textMuted }]}>JPEG, PNG, PDF and MP4 · up to 1 GB</Text>
-          </Pressable>
-
-          <Input label="File name" value={fileName} onChangeText={setFileName} placeholder="Untitled file" />
-
-          {/* Upload to dropdown */}
-          <Pressable
-            onPress={() => setOpenFolder((o) => !o)}
-            style={[styles.select, { backgroundColor: c.bgPrimary, borderColor: c.border, marginTop: 14 }]}
-          >
-            <View style={[styles.folderDot, { backgroundColor: folder.color }]} />
-            <Text style={[styles.selectText, { color: c.textPrimary }]}>{folder.name}</Text>
-            <Ionicons name={openFolder ? "chevron-up" : "chevron-down"} size={18} color={c.textMuted} />
-            <View style={[styles.selectLabel, { backgroundColor: c.bgApp }]}>
-              <Text style={[styles.selectLabelText, { color: c.textMuted }]}>Upload to</Text>
-            </View>
-          </Pressable>
-          {openFolder ? (
-            <View style={[styles.dropdown, { backgroundColor: c.bgSecondary, borderColor: c.border }]}>
-              {folders.map((f) => (
-                <Pressable
-                  key={f.id}
-                  style={styles.dropItem}
-                  onPress={() => {
-                    setFolder(f);
-                    setOpenFolder(false);
-                  }}
-                >
-                  <View style={[styles.folderDot, { backgroundColor: f.color }]} />
-                  <Text style={[styles.selectText, { color: c.textPrimary }]}>{f.name}</Text>
-                  {folder.id === f.id ? <Ionicons name="checkmark" size={16} color={c.accent.deep} /> : null}
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-
-          <Input label="Share with" value={shareWith} onChangeText={setShareWith} placeholder="Add people by email" icon="people-outline" style={{ marginTop: 14 }} />
-          <Input label="Expire date" value={expire} onChangeText={setExpire} placeholder="DD / MM / YYYY" icon="calendar-outline" style={{ marginTop: 14 }} />
-
-          <View style={styles.actions}>
-            <Button label="Cancel" variant="secondary" full={false} style={{ flex: 1 }} onPress={() => navigation.goBack()} />
-            <Button label="Upload" icon="cloud-upload-outline" full={false} style={{ flex: 1.4 }} disabled={!picked} onPress={() => navigation.goBack()} />
-          </View>
-=======
             Select any file to upload to your Ceynoa cloud storage.
           </Text>
 
@@ -339,7 +215,6 @@ export default function UploadScreen({ navigation }) {
               <Text style={[styles.clearBtnText, { color: c.textMuted }]}>Clear selection</Text>
             </Pressable>
           )}
->>>>>>> main
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -349,38 +224,6 @@ export default function UploadScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-<<<<<<< HEAD
-  lead: { fontSize: 14, lineHeight: 20, marginBottom: 16 },
-  dropzone: {
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 30,
-    gap: 8,
-    marginBottom: 8,
-  },
-  dropIcon: { width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-  dropTitle: { fontSize: 15.5, fontWeight: "700", marginTop: 4 },
-  dropHint: { fontSize: 12.5 },
-  select: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  folderDot: { width: 14, height: 14, borderRadius: 4 },
-  selectText: { flex: 1, fontSize: 15, fontWeight: "500" },
-  selectLabel: { position: "absolute", top: -8, left: 12, paddingHorizontal: 6 },
-  selectLabelText: { fontSize: 11.5, fontWeight: "600" },
-  dropdown: { borderWidth: 1, borderRadius: 12, marginTop: 8, overflow: "hidden" },
-  dropItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 13 },
-  actions: { flexDirection: "row", gap: 12, marginTop: 26 },
-=======
   lead: { fontSize: 14, lineHeight: 20, marginBottom: 20 },
 
   dropzone: {
@@ -418,5 +261,4 @@ const styles = StyleSheet.create({
 
   clearBtn: { alignItems: "center", marginTop: 14, paddingVertical: 8 },
   clearBtnText: { fontSize: 13 },
->>>>>>> main
 });
