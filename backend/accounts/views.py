@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,8 +33,9 @@ except ImportError:
 from google.auth.transport import requests as google_requests
 
 
-GOOGLE_CLIENT_ID = (
-    "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = os.getenv(
+    "GOOGLE_CLIENT_ID",
+    "781385776424-n8823en67ojbuq8jnhjude79pq9jl7c5.apps.googleusercontent.com",
 )
 
 
