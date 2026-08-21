@@ -1,4 +1,5 @@
 from django.urls import path
+from .views import UserListView
 from .api_views import (
     ConversationListView, 
     MessageListView, 
@@ -12,6 +13,8 @@ from .api_views import (
 )
 
 urlpatterns = [
+    path("chat/users/", UserListView.as_view()),
+    path("conversations/users/", UserListView.as_view()),
     path("conversations/", ConversationListView.as_view()),
     path("conversations/start/", StartConversationView.as_view()),  # ✅ must be here
     path("conversations/group/create/", CreateGroupConversationView.as_view()),

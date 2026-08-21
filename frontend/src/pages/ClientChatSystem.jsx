@@ -155,11 +155,15 @@ const ClientChatSystem = () => {
     }
   };
 
-  // ----------------- New Chat: Load users -----------------
   const loadUsers = async () => {
     setUsersLoading(true);
     try {
-      const res = await api.get("/chat/users/");
+      let res;
+      try {
+        res = await api.get("/chat/users/");
+      } catch {
+        res = await api.get("/conversations/users/");
+      }
       setUsers(res.data || []);
     } catch (err) {
       console.error("Failed to load users:", err);
