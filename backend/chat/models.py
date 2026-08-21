@@ -10,6 +10,7 @@ class Conversation(models.Model):
 class ConversationParticipant(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="participants")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    last_read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ("conversation", "user")

@@ -65,6 +65,18 @@ class ConversationListView(APIView):
                     "is_admin": (c.is_group and c.admin_id == p_user.id)
                 })
 
+            # Calculate real unread count for user 'me'
+            my_part = next((p for p in part_qs if p.user_id == me.id), None)
+            if my_part and my_part.last_read_at:
+                unread_cnt = Message.objects.filter(
+                    conversation=c,
+                    created_at__gt=my_part.last_read_at
+                ).exclude(sender=me).count()
+            else:
+                unread_cnt = Message.objects.filter(
+                    conversation=c
+                ).exclude(sender=me).count()
+
             if c.is_group:
                 data.append({
                     "id": c.id,
@@ -77,7 +89,7 @@ class ConversationListView(APIView):
                         "text": c.last_text or "",
                         "timestamp": c.last_time.isoformat() if c.last_time else "",
                     },
-                    "unread_count": 0,
+                    "unread_count": unread_cnt,
                     "recent_files": [],
                     "preview": c.last_text or "",
                 })
@@ -125,7 +137,7 @@ class ConversationListView(APIView):
                         "text": c.last_text or "",
                         "timestamp": c.last_time.isoformat() if c.last_time else "",
                     },
-                    "unread_count": 0,
+                    "unread_count": unread_cnt,
                     "recent_files": [],
                     "preview": c.last_text or "",
                 })
@@ -143,6 +155,12 @@ class MessageListView(APIView):
     def get(self, request, conversation_id: int):
         if not _is_participant(request.user, conversation_id):
             return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Mark conversation as read for requesting user
+        from django.utils import timezone
+        ConversationParticipant.objects.filter(
+            conversation_id=conversation_id, user=request.user
+        ).update(last_read_at=timezone.now())
 
         msgs = Message.objects.filter(conversation_id=conversation_id).select_related("sender").order_by("created_at")
 
