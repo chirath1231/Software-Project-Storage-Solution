@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function DeleteAccount() {
   const [password, setPassword] = useState("");
@@ -21,7 +22,7 @@ export default function DeleteAccount() {
     try {
       const token = localStorage.getItem("access_token");
 
-      const res = await fetch("http://localhost:8000/api/accounts/delete-account/", {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/delete-account/`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

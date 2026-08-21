@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { X, Bell, ChevronLeft, ChevronRight } from "lucide-react"; 
 import EventCalendar from "../components/EventCalendar"; 
 import { useNotifications } from '../context/NotificationContext';
+import { API_BASE_URL } from '../config';
 
 export default function Notifications() {
   const { notifications, fetchGlobalNotifications, nextPageUrl, prevPageUrl } = useNotifications();
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [currentSort, setCurrentSort] = useState("newest");
 
-  // --- FIX 1: Updated Base URL ---
-  const BASE_URL = "http://localhost:8000/api/accounts/notifications/";
+  const BASE_URL = `${API_BASE_URL}/api/accounts/notifications/`;
 
   const handleSortChange = (e) => {
     const newSort = e.target.value;

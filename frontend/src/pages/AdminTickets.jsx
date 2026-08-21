@@ -225,8 +225,4 @@ const AdminTickets = () => {
   );
 };
 
-<<<<<<< HEAD
 export default AdminTickets;
-=======
-export default AdminTickets;
->>>>>>> origin/main

@@ -7,6 +7,7 @@ import "../auth.css";
 import myImage from "../assets/tech.png";
 import googleLogo from "../assets/plus.png";
 import logo from "../assets/logo.png";
+import { API_BASE_URL } from "../config";
 
 function Register() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ function Register() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/accounts/register/", {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -70,7 +71,7 @@ function Register() {
   // 🔵 GOOGLE REGISTER / LOGIN
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await fetch("http://localhost:8000/api/accounts/google/", {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/google/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
-import { useAuth } from "../auth/AuthContext";
 import {
   FileText, Image as ImageIcon, Video, File, Trash2, AlertTriangle,
   Upload, X, Download, ExternalLink, Music, Code, Grid, List, Share2,
@@ -12,51 +11,21 @@ import {
 import { useNotifications } from '../context/NotificationContext';
 
 export default function MyFiles() {
-<<<<<<< HEAD
-  const { email: userEmail, userId, isAuthenticated, loading } = useAuth();
-=======
   const { fetchGlobalNotifications } = useNotifications();
 
->>>>>>> origin/main
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: "My Files" }]);
 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [pageLoading, setPageLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [totalStorageGB, setTotalStorageGB] = useState(5);
   const [storageUsed, setStorageUsed] = useState(0);
   const [totalUsedGB, setTotalUsedGB] = useState(0);
   const [isStorageFull, setIsStorageFull] = useState(false);
-<<<<<<< HEAD
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [shareExpiry, setShareExpiry] = useState("");
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (loading) return;
-    initPage();
-  }, [isAuthenticated, userEmail, loading]);
-
-  // ==========================
-  // INIT
-  // ==========================
-  const initPage = async () => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-    if (!userEmail) {
-      console.warn("User email missing, cannot fetch data");
-      return;
-    }
-    const planGB = await fetchSubscription();
-    await fetchFiles(planGB);
-=======
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
 
   // New folder modal
@@ -117,7 +86,6 @@ export default function MyFiles() {
     const planGB = await fetchSubscription();
     await Promise.all([fetchFiles(planGB, null), fetchFolders(null)]);
     setLoading(false);
->>>>>>> origin/main
   };
 
   const fetchSubscription = async () => {

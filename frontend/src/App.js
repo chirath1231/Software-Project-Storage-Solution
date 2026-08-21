@@ -6,16 +6,9 @@ import { NotificationProvider } from './context/NotificationContext';
 
 // Layouts & Protection
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminRoute from "./routes/AdminRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AdminLayout from "./layouts/AdminLayout";
-<<<<<<< HEAD
-import AdminReports from "./pages/AdminReports";
-import AdminUsers from "./pages/AdminUsers"; // Import the new page
-import AdminSettings from "./pages/AdminSettings";
-import AdminTickets from "./pages/AdminTickets";
-import AdminSubscriptionAnalytics from "./pages/AdminSubscriptionAnalytics";
-=======
->>>>>>> origin/main
 
 // Public Pages
 import Landing from "./pages/landing.jsx";
@@ -36,13 +29,6 @@ import Notifications from "./pages/Notifications.jsx";
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
-<<<<<<< HEAD
-import AdminOverview from "./pages/AdminOverview.jsx";
-import AdminPermissionsManager from "./pages/AdminPermissionsManager";
-import AdminUnauthorized from "./pages/AdminUnauthorized";
-import AdminRoute from "./routes/AdminRoute";
-import MyFiles from "./pages/MyFiles";
-=======
 import SecuritySettings from "./pages/SecuritySettings.jsx";
 import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
@@ -50,13 +36,15 @@ import TicketSubmission from "./pages/TicketSubmission.jsx";
 import DeleteAccount from "./pages/DeleteAccount.jsx";
 
 // Admin Pages
+import AdminOverview from "./pages/AdminOverview.jsx";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 import AdminTickets from "./pages/AdminTickets";
 import AdminSubscriptionAnalytics from "./pages/AdminSubscriptionAnalytics";
->>>>>>> origin/main
+import AdminPermissionsManager from "./pages/AdminPermissionsManager";
+import AdminUnauthorized from "./pages/AdminUnauthorized";
 
 function App() {
   return (
@@ -76,40 +64,17 @@ function App() {
             <Route path="/shared/:token" element={<SharedFile />} />
             <Route path="/shared/folder/:token" element={<SharedFolder />} />
 
-<<<<<<< HEAD
-          {/* ADMIN RBAC PROTECTED ROUTES */}
-          <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-            <Route path="/admin/overview" element={<AdminOverview />} />
-            <Route path="/admin-dashboard" element={<AdminRoute requiredPermission="reports.view"><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute requiredPermission="users.view"><AdminUsers /></AdminRoute>} />
-            <Route path="/admin/reports" element={<AdminRoute requiredPermission="reports.view"><AdminReports /></AdminRoute>} />
-            <Route path="/admin/subscription-analytics" element={<AdminRoute requiredPermission="payments.view"><AdminSubscriptionAnalytics /></AdminRoute>} />
-            <Route path="/admin/tickets" element={<AdminRoute requiredPermission="support.view"><AdminTickets /></AdminRoute>} />
-            <Route path="/admin/settings" element={<AdminRoute requiredPermission="settings.view"><AdminSettings /></AdminRoute>} />
-            <Route path="/admin/permissions" element={<AdminRoute requiredPermission="admin_permissions.manage"><AdminPermissionsManager /></AdminRoute>} />
-            <Route path="/admin/unauthorized" element={<AdminUnauthorized />} />
-          </Route>
-
-          {/* PROTECTED */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="files" element={<MyFiles />} />
-              <Route index element={<DashboardHome />} />
-              <Route path="support" element={<DashboardSupport />} />
-              <Route path="settings" element={<DashboardSettings />} />
-              <Route path="subscription" element={<SubscriptionPage />} />
-              <Route path="payment-success" element={<PaymentSuccess />} />
-              <Route path="settings/profile" element={<ProfileSettings />} />
-=======
-            {/* 2. ADMIN ROUTES (Public for development) */}
-            <Route element={<AdminLayout />}>
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<AdminUsers />} />
-              <Route path="/admin/reports" element={<AdminReports />} />
-              <Route path="/admin/subscription-analytics" element={<AdminSubscriptionAnalytics />} />
-              <Route path="/admin/tickets" element={<AdminTickets />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
->>>>>>> origin/main
+            {/* 2. ADMIN RBAC PROTECTED ROUTES */}
+            <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route path="/admin/overview" element={<AdminOverview />} />
+              <Route path="/admin-dashboard" element={<AdminRoute requiredPermission="reports.view"><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute requiredPermission="users.view"><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/reports" element={<AdminRoute requiredPermission="reports.view"><AdminReports /></AdminRoute>} />
+              <Route path="/admin/subscription-analytics" element={<AdminRoute requiredPermission="payments.view"><AdminSubscriptionAnalytics /></AdminRoute>} />
+              <Route path="/admin/tickets" element={<AdminRoute requiredPermission="support.view"><AdminTickets /></AdminRoute>} />
+              <Route path="/admin/settings" element={<AdminRoute requiredPermission="settings.view"><AdminSettings /></AdminRoute>} />
+              <Route path="/admin/permissions" element={<AdminRoute requiredPermission="admin_permissions.manage"><AdminPermissionsManager /></AdminRoute>} />
+              <Route path="/admin/unauthorized" element={<AdminUnauthorized />} />
             </Route>
 
             {/* 3. PROTECTED USER DASHBOARD ROUTES */}

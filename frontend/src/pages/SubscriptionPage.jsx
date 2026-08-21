@@ -8,7 +8,6 @@ export default function SubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
 
   useEffect(() => {
     const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data);
@@ -17,47 +16,6 @@ export default function SubscriptionPage() {
       ? api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
           .then((res) => res.data)
           .catch(() => [])
-=======
-
-  const userEmail = localStorage.getItem("username");
-  const token = localStorage.getItem("access_token"); // change key if needed
-
-  useEffect(() => {
-    const authHeaders = token
-      ? {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        }
-      : {
-          "Content-Type": "application/json",
-        };
-
-    const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/", {
-      headers: authHeaders,
-    }).then(async (res) => {
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Plans request failed: ${res.status} ${text}`);
-      }
-      return res.json();
-    });
-
-    const fetchUserActive = userEmail
-      ? fetch(
-          `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
-            userEmail
-          )}/`,
-          {
-            headers: authHeaders,
-          }
-        ).then(async (res) => {
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`User subscriptions request failed: ${res.status} ${text}`);
-          }
-          return res.json();
-        })
->>>>>>> origin/main
       : Promise.resolve([]);
 
     Promise.all([fetchPlans, fetchUserActive])
@@ -79,7 +37,7 @@ export default function SubscriptionPage() {
         setPaidSubs(new Set());
       })
       .finally(() => setLoading(false));
-  }, [userEmail, token]);
+  }, [userEmail]);
 
   const handleSubscribe = async (sub) => {
     if (paidSubs.has(sub.id)) {
@@ -94,7 +52,6 @@ export default function SubscriptionPage() {
     
 
     try {
-<<<<<<< HEAD
       const res = await api.post("/api/subscriptions/create-payment/", {
         subscription_id: sub.id,
         email: userEmail,
@@ -104,31 +61,6 @@ export default function SubscriptionPage() {
 
       const data = res.data;
       if (!data.success) return alert("Payment failed");
-=======
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/subscriptions/create-payment/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            subscription_id: sub.id,
-            email: userEmail,
-            amount: Number(sub.price).toFixed(2),
-            first_name: userEmail.split("@")[0],
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!data.success) {
-        alert("Payment failed");
-        return;
-      }
->>>>>>> origin/main
 
       const form = document.createElement("form");
       form.method = "POST";

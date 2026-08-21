@@ -100,13 +100,8 @@ export default function Sidebar({ isAdmin = false }) {
       <div className="flex">
         <div
           className={`
-<<<<<<< HEAD
-            w-[280px] min-h-screen
-            bg-gradient-to-b from-white via-orange-50 to-orange-200 
-=======
             w-[280px] h-screen md:h-auto md:min-h-[calc(100vh-120px)]
             bg-gradient-to-b from-white via-orange-50 to-orange-200
->>>>>>> origin/main
             flex flex-col py-6
             transition-all duration-300 ease-in-out
             z-40

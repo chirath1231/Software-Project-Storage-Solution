@@ -5,10 +5,11 @@ import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
 import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL, WS_BASE_URL } from "../config";
 
 // ✅ one axios client (avoid URL mistakes)
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 // ✅ AUTO attach JWT token to every API request (SESSION STORAGE)
@@ -272,7 +273,7 @@ const ClientChatSystem = () => {
       return;
     }
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/?token=${encodeURIComponent(token)}`;
+    const wsUrl = `${WS_BASE_URL}/ws/chat/?token=${encodeURIComponent(token)}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

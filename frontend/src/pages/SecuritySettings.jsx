@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 export default function SecuritySettings() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function SecuritySettings() {
     try {
         const token = localStorage.getItem("access_token");
 
-        const res = await fetch("http://localhost:8000/api/accounts/change-password/", {
+        const res = await fetch(`${API_BASE_URL}/api/accounts/change-password/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

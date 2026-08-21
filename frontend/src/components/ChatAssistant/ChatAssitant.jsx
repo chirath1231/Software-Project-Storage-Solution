@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Bot } from "lucide-react";
+import { API_BASE_URL } from "../../config";
 
 export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +26,7 @@ export default function ChatAssistant() {
   const token = localStorage.getItem("access_token");
 
   let response = await fetch(
-    "http://localhost:8000/api/assistant/chat/",
+    `${API_BASE_URL}/api/assistant/chat/`,
     {
       method: "POST",
       headers: {

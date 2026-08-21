@@ -6,6 +6,7 @@ import "../auth.css";
 import myImage from "../assets/tech.png";
 import logo from "../assets/logo.png";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 function Login() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ function Login() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/accounts/google-login/", {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/google-login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
@@ -60,7 +61,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const checkAdminRes = await fetch("http://localhost:8000/api/check-admin/", {
+      const checkAdminRes = await fetch(`${API_BASE_URL}/api/check-admin/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
@@ -68,8 +69,8 @@ function Login() {
       const checkAdminData = await checkAdminRes.json();
 
       const endpoint = checkAdminData.is_admin
-        ? "http://localhost:8000/api/admin/login/"
-        : "http://localhost:8000/api/accounts/login/";
+        ? `${API_BASE_URL}/api/admin/login/`
+        : `${API_BASE_URL}/api/accounts/login/`;
 
       const res = await fetch(endpoint, {
         method: "POST",

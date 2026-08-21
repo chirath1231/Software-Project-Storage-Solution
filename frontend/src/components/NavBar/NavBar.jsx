@@ -2,32 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, User, ChevronDown, Bell } from "lucide-react";
 import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
-<<<<<<< HEAD
+import { useNotifications } from "../../context/NotificationContext.jsx";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/axios";
-=======
-import { useNotifications } from "../../context/NotificationContext.jsx"; 
-import { useNavigate } from "react-router-dom";
->>>>>>> origin/main
 
 const LogoDark = () => (
-<<<<<<< HEAD
-  <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-    <div className="flex-none mr-auto">
-      <img
-        src={logo_dark}
-        alt="CEYNOA Logo"
-        className="h-10 w-auto"
-      />
-    </div>
-=======
   <div className="flex items-center">
     <img
       src={logo_dark}
       alt="CEYNOA Logo"
       className="h-10 w-auto"
     />
->>>>>>> origin/main
   </div>
 );
 
@@ -41,55 +25,19 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
   </button>
 );
 
-<<<<<<< HEAD
-export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, user, username, logout } = useAuth();
-=======
 export default function Navbar({ isDashboard = false }) {
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, username, logout } = useAuth();
->>>>>>> origin/main
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([]);
-  
+
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
-<<<<<<< HEAD
-  const userData = {
-    name: user?.username || user?.email || "User",
-    email: user?.email || "user@example.com",
-    avatar: null
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await api.get("/api/accounts/notifications/");
-      if (response.ok) {
-        setNotifications(response.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
-
-  // Run fetch when user is authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchNotifications();
-    }
-  }, [isAuthenticated]);
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-=======
   // Fetch real notifications from backend context
   const { notifications, unreadCount, fetchGlobalNotifications } = useNotifications();
->>>>>>> origin/main
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -123,22 +71,11 @@ export default function Navbar({ isDashboard = false }) {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-<<<<<<< HEAD
-  const handleLogin = () => {
-    navigate("/login");
-    setMenuOpen(false);
-  };
-
-=======
->>>>>>> origin/main
   const handleLogout = () => {
     logout();
     setShowProfileMenu(false);
     setShowNotifications(false);
-<<<<<<< HEAD
-=======
     navigate("/login");
->>>>>>> origin/main
   };
 
   const handleSearch = () => {
@@ -152,41 +89,15 @@ export default function Navbar({ isDashboard = false }) {
     console.log("Navigate to:", href);
   };
 
-<<<<<<< HEAD
-  // Hit the API to mark a specific notification as read
-  const markAsRead = async (notificationId) => {
-    try {
-      await api.patch(`/api/accounts/notifications/${notificationId}/read/`);
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((n) =>
-          n.id === notificationId ? { ...n, is_read: true } : n
-        )
-      );
-    } catch (err) {
-      console.error("Failed to mark as read:", err);
-    }
-  };
-
-  // Marks all unread as read
-  const markAllAsRead = () => {
-    notifications.forEach(n => {
-      if (!n.is_read) markAsRead(n.id);
-    });
-  };
-
-  // Locally hides the notification (since we don't have a delete API yet)
-  const clearNotification = (notificationId) => {
-    setNotifications(notifications.filter(n => n.id !== notificationId));
-=======
   // Handle marking notification as read
   const handleMarkRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("access_token");
       await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json" 
+          "Content-Type": "application/json"
         }
       });
       // Refresh notifications after marking as read
@@ -207,13 +118,12 @@ export default function Navbar({ isDashboard = false }) {
   const handleClearNotification = (notificationId) => {
     // For now, we'll just mark it as read. You can extend this to delete if needed.
     handleMarkRead(notificationId);
->>>>>>> origin/main
   };
 
   return (
     <nav className="py-4 relative shadow-lg bg-[#323D41]">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        
+
         {/* Left Side: Logo */}
         <div className="flex-none">
           <LogoDark />
@@ -226,15 +136,9 @@ export default function Navbar({ isDashboard = false }) {
           md:relative absolute top-full left-0 right-0 bg-[#323D41] md:bg-transparent
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
-<<<<<<< HEAD
           {!isAuthenticated ? (
-            // Navigation links (before login)
-            <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20 ">
-=======
-          {!showDashboardView ? (
             // Public Navigation links (Before Login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
->>>>>>> origin/main
               {[
                 { href: "#home", label: "Home" },
                 { href: "#features", label: "Features" },
@@ -255,9 +159,9 @@ export default function Navbar({ isDashboard = false }) {
           ) : (
             // Main App Search bar (After Login)
             <div className="relative w-full max-w-xl">
-              <Search 
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-                size={18} 
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                size={18}
                 aria-hidden="true"
               />
               <input
@@ -272,13 +176,8 @@ export default function Navbar({ isDashboard = false }) {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/* Mobile auth buttons (only when logged out) */}
-          {!isAuthenticated && (
-=======
           {/* Mobile Auth Buttons Toggle */}
-          {!showDashboardView && (
->>>>>>> origin/main
+          {!isAuthenticated && (
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
               <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
               <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
@@ -286,7 +185,7 @@ export default function Navbar({ isDashboard = false }) {
           )}
 
           {/* Mobile user profile, settings, notifications, and logout (only when logged in) */}
-          {showDashboardView && (
+          {isAuthenticated && (
             <div className="flex md:hidden gap-4 mt-5 w-full flex-col border-t border-gray-750 pt-4">
               {/* User Identity Info */}
               <div className="flex items-center gap-3 px-2">
@@ -299,7 +198,7 @@ export default function Navbar({ isDashboard = false }) {
               </div>
 
               {/* Notification Link */}
-              <button 
+              <button
                 className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
                 onClick={() => {
                   window.location.href = "/dashboard/notifications";
@@ -318,7 +217,7 @@ export default function Navbar({ isDashboard = false }) {
               </button>
 
               {/* Settings Link */}
-              <button 
+              <button
                 className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
                 onClick={() => {
                   window.location.href = "/dashboard/settings";
@@ -330,7 +229,7 @@ export default function Navbar({ isDashboard = false }) {
               </button>
 
               {/* Logout Button */}
-              <button 
+              <button
                 onClick={() => {
                   handleLogout();
                   setMenuOpen(false);
@@ -343,21 +242,14 @@ export default function Navbar({ isDashboard = false }) {
           )}
         </div>
 
-<<<<<<< HEAD
-        {/* Right section - Auth buttons or Profile */}
-        <div className="hidden md:flex gap-3 items-center relative">
-          {!isAuthenticated ? (
-            // Auth buttons (before login)
-=======
         {/* Right Section: Actions Panel (Auth Controls or Profile Context) */}
         <div className="flex gap-3 items-center relative">
-          {!showDashboardView ? (
+          {!isAuthenticated ? (
             <div className="hidden md:flex gap-3">
               <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
               <GradientButton title="Login" onClick={() => window.location.href = "/login"} />
             </div>
           ) : (
->>>>>>> origin/main
             <>
               {/* Notification Center Trigger */}
               <div className="relative" ref={notificationRef}>
@@ -367,7 +259,7 @@ export default function Navbar({ isDashboard = false }) {
                     setShowNotifications(!showNotifications);
                     setShowProfileMenu(false);
                     // Fetch fresh notifications when opening the dropdown
-                    if (!showNotifications) fetchNotifications(); 
+                    if (!showNotifications) fetchGlobalNotifications();
                   }}
                   aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
                 >
@@ -396,37 +288,15 @@ export default function Navbar({ isDashboard = false }) {
                         notifications.slice(0, 5).map((notification) => (
                           <div
                             key={notification.id}
-<<<<<<< HEAD
-                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                              !notification.is_read ? 'bg-orange-50/50' : ''
-                            }`}
-                            onClick={() => markAsRead(notification.id)}
-=======
                             className={`px-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.is_read ? 'bg-orange-50/30' : ''}`}
                             onClick={() => handleMarkRead(notification.id)}
->>>>>>> origin/main
                           >
                             <div className="flex items-start gap-3">
                               <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`} />
                               <div className="flex-1">
-<<<<<<< HEAD
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-gray-800 font-medium text-sm">
-                                    {notification.title}
-                                  </h4>
-                                  {!notification.is_read && (
-                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                  )}
-                                </div>
-                                <p className="text-gray-600 text-xs mt-1 line-clamp-2">
-                                  {notification.message}
-                                </p>
-                                <p className="text-gray-400 text-xs mt-1">
-=======
                                 <h4 className={`text-gray-800 text-sm leading-tight ${!notification.is_read ? 'font-bold' : 'font-medium'}`}>{notification.title}</h4>
                                 <p className="text-gray-500 text-xs mt-1 line-clamp-2">{notification.message}</p>
                                 <p className="text-gray-400 text-[10px] mt-2 font-semibold uppercase">
->>>>>>> origin/main
                                   {new Date(notification.created_at).toLocaleDateString()}
                                 </p>
                               </div>
@@ -446,26 +316,15 @@ export default function Navbar({ isDashboard = false }) {
                         <div className="px-4 py-10 text-center text-gray-400 text-sm italic">No new alerts</div>
                       )}
                     </div>
-<<<<<<< HEAD
-
-                    {/* Footer */}
-                    <div className="px-4 py-3 border-t border-gray-200 text-center">
-                      <button
-                        className="text-orange-500 text-sm hover:text-orange-600 focus:outline-none font-medium"
-                          onClick={() => {
-                            setShowNotifications(false);
-                            navigate("/dashboard/notifications");
-                          }}
-                      >
-                        View all notifications
-=======
                     <div className="p-3 bg-gray-50 text-center border-t border-gray-100">
-                      <button 
-                        onClick={() => window.location.href = "/notifications"} 
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          navigate("/dashboard/notifications");
+                        }}
                         className="text-gray-600 text-xs font-bold hover:text-orange-500 transition-colors w-full bg-transparent border-0 cursor-pointer"
                       >
                         View All Activity
->>>>>>> origin/main
                       </button>
                     </div>
                   </div>
@@ -484,66 +343,23 @@ export default function Navbar({ isDashboard = false }) {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
                     <User size={20} className="text-orange-500" />
                   </div>
-<<<<<<< HEAD
-                  <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-white text-sm font-semibold">{username}</div>
-                    <div className="text-gray-400 text-xs">{userData.email}</div>
-=======
                   <div className="flex flex-col text-left">
                     <div className="text-white text-sm font-bold leading-none">{username || "User"}</div>
->>>>>>> origin/main
                   </div>
                   <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Profile Options Context Menu */}
                 {showProfileMenu && (
-<<<<<<< HEAD
-                  <div 
-                    className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl min-w-[200px] z-50 overflow-hidden"
-                    role="menu"
-                    aria-orientation="vertical"
-                  >
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Profile");
-                        setShowProfileMenu(false);
-                        navigate("/dashboard/profile");
-                      }}
-                      role="menuitem"
-                    >
-                      My Profile
-                    </button>
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-gray-100 transition-colors text-sm text-gray-800 focus:outline-none focus:bg-gray-100"
-                      onClick={() => {
-                        console.log("Settings");
-                        setShowProfileMenu(false);
-                      }}
-                      role="menuitem"
-                    >
-                      Settings
-                    </button>
-                    <div className="h-px bg-gray-200 my-1" role="separator"></div>
-                    <button
-                      className="w-full py-3 px-4 text-left hover:bg-red-50 transition-colors text-sm text-red-500 font-medium focus:outline-none focus:bg-red-50"
-                      onClick={handleLogout}
-                      role="menuitem"
-                    >
-                      Logout
-                    </button>
-=======
                   <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl min-w-[220px] z-50 overflow-hidden border border-gray-100">
                     <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Logged in as</p>
                       <p className="text-sm font-bold text-gray-800 truncate">{username || "Workspace Account"}</p>
                     </div>
-                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/profile"}>My Profile</button>
-                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => window.location.href="/settings"}>Settings</button>
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => { setShowProfileMenu(false); navigate("/dashboard/profile"); }}>My Profile</button>
+                    <button className="w-full py-3 px-4 text-left hover:bg-gray-50 text-sm text-gray-700 font-medium bg-transparent border-0 cursor-pointer" onClick={() => { setShowProfileMenu(false); navigate("/dashboard/settings"); }}>Settings</button>
                     <div className="h-px bg-gray-100 mx-2"></div>
                     <button className="w-full py-3 px-4 text-left hover:bg-red-50 text-sm text-red-500 font-bold bg-transparent border-0 cursor-pointer" onClick={handleLogout}>Logout</button>
->>>>>>> origin/main
                   </div>
                 )}
               </div>

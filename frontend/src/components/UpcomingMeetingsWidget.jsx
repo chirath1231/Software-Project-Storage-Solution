@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Clock, Video } from "lucide-react";
-import { Link } from "react-router-dom"; 
+import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 export default function UpcomingMeetingsWidget() {
   const [meetings, setMeetings] = useState([]);
@@ -14,7 +15,7 @@ export default function UpcomingMeetingsWidget() {
     try {
       const token = localStorage.getItem("access_token"); 
       
-      const response = await fetch("http://localhost:8000/api/accounts/events/", {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/events/`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,

@@ -52,15 +52,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-<<<<<<< HEAD
     const storedUser = parseJSON(localStorage.getItem(STORAGE_KEYS.user)) ||
       parseJSON(sessionStorage.getItem(STORAGE_KEYS.user));
     const storedAccess = getStoredToken();
     const storedRefresh = getStoredRefresh();
-=======
-    const savedToken = sessionStorage.getItem("token") || localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
-    const savedUsername = sessionStorage.getItem("username") || localStorage.getItem("username") || sessionStorage.getItem("username");
->>>>>>> origin/main
 
     if (storedUser && storedAccess) {
       setUser(storedUser);
@@ -102,7 +97,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-<<<<<<< HEAD
   const login = useCallback((token, userData, remember = true, refresh = null) => {
     if (!token || !userData) return;
 
@@ -160,14 +154,6 @@ export const AuthProvider = ({ children }) => {
     }
     return Boolean(user.permissions && user.permissions.includes(permissionCode));
   }, [user]);
-=======
-  const logout = () => {
-    sessionStorage.clear();
-    localStorage.clear();
-    setToken(null);
-    setUsername(null);
-  };
->>>>>>> origin/main
 
   return (
     <AuthContext.Provider

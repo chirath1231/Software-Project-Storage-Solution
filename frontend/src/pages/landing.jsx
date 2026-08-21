@@ -8,6 +8,7 @@ import Navbar from "../components/NavBar/NavBar.jsx";
 import Footer from "../components/Footer/Footer.jsx";
 import GradientButton from "../components/GradientButton/GradientButton.jsx";
 import "../styles/fonts.css";
+import { API_BASE_URL } from "../config";
 import "../styles/variables.css";
 
 
@@ -26,7 +27,7 @@ function Landing() {
   const [loading, setLoading] = useState(true);
   
 useEffect(() => {
-  fetch("http://127.0.0.1:8000/api/subscriptions/")
+  fetch(`${API_BASE_URL}/api/subscriptions/`)
     .then((res) => {
       if (!res.ok) {
         throw new Error("Failed to fetch plans");

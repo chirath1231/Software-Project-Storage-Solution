@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const getStoredToken = () => {
   const token =
@@ -16,7 +17,7 @@ const getStoredToken = () => {
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000'
+  baseURL: API_BASE_URL
 });
 
 // Request interceptor to add the JWT token to headers

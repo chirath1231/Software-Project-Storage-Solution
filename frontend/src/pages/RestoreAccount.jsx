@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function RestoreAccount() {
   const [email, setEmail] = useState(
@@ -15,7 +16,7 @@ export default function RestoreAccount() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/accounts/restore-account/", {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/restore-account/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
