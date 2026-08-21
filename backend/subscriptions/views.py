@@ -12,11 +12,13 @@ import logging
 # Setup logger
 logger = logging.getLogger(__name__)
 
+import os
+
 # --------------------------------------------------------
-# PAYHERE CONFIG  (USE YOUR REAL SANDBOX CREDENTIALS)
+# PAYHERE CONFIG  (LOAD FROM ENV OR FALLBACK TO SANDBOX)
 # --------------------------------------------------------
-MERCHANT_ID = "1233030"
-MERCHANT_SECRET = "MTQwNDg3NDkzNDQ0MjE4MTIyMDE5MzI2ODUwMjAxMTE4MDk2NTY2"
+MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "1233030")
+MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "MTQwNDg3NDkzNDQ0MjE4MTIyMDE5MzI2ODUwMjAxMTE4MDk2NTY2")
 
 # PayHere requires md5(secret)
 MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
@@ -69,7 +71,6 @@ def user_subscriptions(request, email):
     return Response(data)
 
 
-
 # --------------------------------------------------------
 # CREATE PAYMENT → FRONTEND REDIRECTS TO PAYHERE
 # --------------------------------------------------------
@@ -110,13 +111,15 @@ def create_payhere_payment(request):
     string_to_hash = f"{MERCHANT_ID}{order_id}{amount}{currency}{MERCHANT_SECRET_MD5}"
     md5sig = hashlib.md5(string_to_hash.encode()).hexdigest().upper()
 
+    origin = request.headers.get("origin") or "http://localhost:3000"
+
     # Prepare payment data for PayHere checkout
     paymentData = {
         "sandbox": True,
         "merchant_id": MERCHANT_ID,
-        "return_url": "http://localhost:3000/payment-success",
-        "cancel_url": "http://localhost:3000/payment-cancel",
-        "notify_url": "https://parolable-superbeloved-isaac.ngrok-free.dev/api/subscriptions/payhere/notify/",
+        "return_url": f"{origin}/dashboard/payment-success",
+        "cancel_url": f"{origin}/dashboard/subscription",
+        "notify_url": f"{origin}/api/subscriptions/payhere/notify/",
         "order_id": order_id,
         "items": f"Subscription-{subscription_id}",
         "currency": currency,
