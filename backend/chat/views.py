@@ -10,10 +10,13 @@ from .serializers import UserSerializer, MessageSerializer
 User = get_user_model()
 
 class UserListView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        users = User.objects.exclude(id=request.user.id).order_by("username")
+        if request.user and request.user.is_authenticated:
+            users = User.objects.exclude(id=request.user.id).order_by("username")
+        else:
+            users = User.objects.all().order_by("username")
         return Response(UserSerializer(users, many=True).data)
 
 class GetOrCreateConversationView(APIView):
