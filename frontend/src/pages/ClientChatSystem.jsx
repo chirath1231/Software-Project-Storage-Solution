@@ -147,12 +147,6 @@ const ClientChatSystem = () => {
       }
       const list = res.data || [];
       setConversations(list);
-
-      // auto-select first if none selected
-      if (!selectedConversationId && list.length) {
-        setSelectedConversationId(list[0].id);
-      }
-
       return list;
     } catch (err) {
       console.error("Failed to load conversations:", err);
