@@ -563,49 +563,88 @@ const ClientChatSystem = () => {
                   </button>
                 )}
               </div>
-              {/* Search Results Panel */}
-              {search.length > 0 && (
-                <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto z-20">
-
-                  {filteredConversations.length > 0 && (
-                    <div className="p-2 border-b">
-                      <p className="px-2 text-xs text-gray-400 font-bold uppercase mb-1">Existing Chats</p>
-                      {filteredConversations.map((c) => (
-                        <div key={c.id} onClick={() => { setSelectedConversationId(c.id); setSearch(""); }} className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm font-medium text-gray-800">
-                          💬 {c.is_group ? (c.name || "Group Chat") : (c.other_user?.username || c.name || "Chat")}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {filteredUsers.length > 0 ? (
-                    <div className="p-2">
-                      <p className="px-2 text-xs text-gray-400 font-bold uppercase mb-1">All Registered Users</p>
-                      {filteredUsers.map((u) => (
-                        <div
-                          key={u.id}
-                          onClick={() => { startChatWithUser(u.id); }}
-                          className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium flex justify-between items-center"
-                        >
-                          <span>+ Start chat with <strong className="text-gray-900">{u.username}</strong></span>
-                          {u.email && <span className="text-xs text-gray-400 font-normal ml-2">{u.email}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    filteredConversations.length === 0 && (
-                      <div className="p-4 text-center text-sm text-gray-400">
-                        No registered users found matching "{search}"
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* Conversations */}
-            {search.length === 0 && (
-              <div className="flex-1 overflow-y-auto">
-                {filteredConversations.map((conv) => {
+            {/* Conversations & Search Results List */}
+            <div className="flex-1 overflow-y-auto">
+              {search.trim().length > 0 ? (
+                <>
+                  {/* 1. Matching Existing Chats */}
+                  {filteredConversations.length > 0 && (
+                    <div className="p-3 border-b border-gray-100">
+                      <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Existing Chats</p>
+                      {filteredConversations.map((conv) => {
+                        const other = conv.other_user || {};
+                        const isSelected = selectedConversationId === conv.id;
+                        const name = conv.is_group
+                          ? (conv.name || "Group Chat")
+                          : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
+                        const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
+                        const online = !conv.is_group && Boolean(other.is_online);
+                        const preview = conv.last_message?.text || "";
+
+                        return (
+                          <div
+                            key={conv.id}
+                            onClick={() => { setSelectedConversationId(conv.id); setSearch(""); }}
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50 text-gray-800"}`}
+                          >
+                            <div className="relative">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-xl">
+                                {avatar}
+                              </div>
+                              {online && (
+                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h3 className={`font-semibold text-sm truncate ${isSelected ? "text-white" : "text-gray-900"}`}>{name}</h3>
+                              <p className={`text-xs truncate ${isSelected ? "text-white/80" : "text-gray-500"}`}>{preview}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* 2. All Matching Registered Database Users */}
+                  <div className="p-3">
+                    <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Global Registered Users</p>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((u) => (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            startChatWithUser(u.id);
+                            setSearch("");
+                          }}
+                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-50/70 transition-colors group border border-transparent hover:border-orange-200 mb-1"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
+                            {u.username?.[0]?.toUpperCase() || "👤"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
+                            <p className="text-xs text-gray-500 truncate">{u.email || "Registered User"}</p>
+                          </div>
+                          <span className="text-xs font-bold text-orange-500 bg-orange-100 group-hover:bg-orange-500 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
+                            + Chat
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      filteredConversations.length === 0 && (
+                        <div className="p-8 text-center text-gray-400">
+                          <p className="text-sm font-medium">No registered users found</p>
+                          <p className="text-xs mt-1">Try searching with a different name or email.</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </>
+              ) : (
+                conversations.map((conv) => {
                   const other = conv.other_user || {};
                   const isSelected = selectedConversationId === conv.id;
 
@@ -621,8 +660,7 @@ const ClientChatSystem = () => {
                     <div
                       key={conv.id}
                       onClick={() => setSelectedConversationId(conv.id)}
-                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"
-                        }`}
+                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"}`}
                     >
                       <div className="relative">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
@@ -634,18 +672,8 @@ const ClientChatSystem = () => {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3
-                          className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"
-                            }`}
-                        >
-                          {name}
-                        </h3>
-                        <p
-                          className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"
-                            }`}
-                        >
-                          {preview}
-                        </p>
+                        <h3 className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"}`}>{name}</h3>
+                        <p className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"}`}>{preview}</p>
                       </div>
 
                       {unread > 0 && (
@@ -655,9 +683,9 @@ const ClientChatSystem = () => {
                       )}
                     </div>
                   );
-                })}
-              </div>
-            )}
+                })
+              )}
+            </div>
           </div>
 
 
