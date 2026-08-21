@@ -4,6 +4,7 @@ import logo_dark from "../../assets/Logo_on_Dark.png";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { useNotifications } from "../../context/NotificationContext.jsx";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config";
 
 const LogoDark = () => (
   <div className="flex items-center">
@@ -93,7 +94,7 @@ export default function Navbar({ isDashboard = false }) {
   const handleMarkRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("access_token");
-      await fetch(`http://localhost:8000/api/accounts/notifications/${notificationId}/read/`, {
+      await fetch(`${API_BASE_URL}/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
