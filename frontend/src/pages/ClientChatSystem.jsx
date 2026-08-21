@@ -525,28 +525,17 @@ const ClientChatSystem = () => {
             <div className="p-7 border-b border-gray-200 shadow-lg">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Chats</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setShowNewChat(!showNewChat);
-                      loadUsers();
-                    }}
-                    className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1 shadow-sm cursor-pointer"
-                  >
-                    💬 New Chat
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowNewGroupModal(true);
-                      setSelectedGroupMembers([]);
-                      setNewGroupName("");
-                      setGroupSearchQuery("");
-                    }}
-                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition flex items-center gap-1 shadow-sm cursor-pointer"
-                  >
-                    👥 Group
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setShowNewGroupModal(true);
+                    setSelectedGroupMembers([]);
+                    setNewGroupName("");
+                    setGroupSearchQuery("");
+                  }}
+                  className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1 shadow-sm cursor-pointer"
+                >
+                  👥 New Group
+                </button>
               </div>
               <div className="relative">
 
@@ -1108,61 +1097,7 @@ const ClientChatSystem = () => {
       )}
 
       {/* New 1-on-1 Chat Modal */}
-      {showNewChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-gray-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Start New Chat</h3>
-              <button
-                onClick={() => setShowNewChat(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <p className="text-xs text-gray-500 mb-3">
-              Select any registered user from your database to start a direct message:
-            </p>
-
-            <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-200 rounded-xl p-2 bg-gray-50/50">
-              {usersLoading ? (
-                <p className="text-xs text-gray-400 p-4 text-center">Loading registered users...</p>
-              ) : users.length === 0 ? (
-                <p className="text-xs text-gray-400 p-4 text-center">No other registered users found in database.</p>
-              ) : (
-                users.map((u) => (
-                  <div
-                    key={u.id}
-                    onClick={() => {
-                      startChatWithUser(u.id);
-                      setShowNewChat(false);
-                    }}
-                    className="p-3 bg-white rounded-lg border border-gray-200 hover:border-orange-400 hover:bg-orange-50/50 cursor-pointer transition flex justify-between items-center shadow-sm"
-                  >
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-900">{u.username}</h4>
-                      {u.email && <p className="text-xs text-gray-400">{u.email}</p>}
-                    </div>
-                    <span className="text-xs font-bold text-orange-500 bg-orange-100 px-2.5 py-1 rounded-full">
-                      + Chat
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowNewChat(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
