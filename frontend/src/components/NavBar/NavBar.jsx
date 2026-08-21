@@ -160,25 +160,7 @@ export default function Navbar({ isDashboard = false }) {
                 </li>
               ))}
             </ul>
-          ) : (
-            // Main App Search bar (After Login)
-            <div className="relative w-full max-w-xl">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                size={18}
-                aria-hidden="true"
-              />
-              <input
-                type="text"
-                placeholder="Search files or events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                aria-label="Search"
-                className="w-full py-3 pl-12 pr-4 rounded-full bg-gray-700 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
-              />
-            </div>
-          )}
+          ) : null}
 
           {/* Mobile Auth Buttons Toggle */}
           {!isAuthenticated && (
