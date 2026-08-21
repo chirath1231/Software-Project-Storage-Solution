@@ -25,10 +25,10 @@ function Login() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/accounts/google-login/`, {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/google/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
+        body: JSON.stringify({ token: credentialResponse.credential }),
       });
 
       let data = {};
