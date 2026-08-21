@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import buynow from "../assets/buy_now.png";
 import api from "../api/axios";
+import { useAuth } from "../auth/AuthContext";
 
 export default function SubscriptionPage() {
+  const { user: authUser } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]); //Stores all available plans
   const [paidSubs, setPaidSubs] = useState(new Set()); // Stores already purchased subscription IDs
   const [loading, setLoading] = useState(true); // Controls loading screen
   const [currentPlan, setCurrentPlan] = useState(null);
   const [usedGB, setUsedGB] = useState(0);
-  const userEmail = localStorage.getItem("username");
-  const userId = localStorage.getItem("user_id");
+
+  const userEmail = authUser?.email || authUser?.username || localStorage.getItem("email") || localStorage.getItem("username");
+  const userId = authUser?.id || localStorage.getItem("user_id");
 
  useEffect(() => {
     setLoading(true);
