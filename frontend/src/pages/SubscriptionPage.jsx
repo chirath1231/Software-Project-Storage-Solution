@@ -80,6 +80,8 @@ export default function SubscriptionPage() {
       const data = res.data;
       if (!data.success) return alert("Payment failed");
 
+      console.log("PayHere Checkout Data:", data.paymentData);
+
       if (window.payhere && typeof window.payhere.startPayment === "function") {
         window.payhere.onCompleted = function onCompleted(orderId) {
           console.log("Payment completed. OrderID:" + orderId);
