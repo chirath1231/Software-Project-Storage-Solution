@@ -115,15 +115,12 @@ const ClientChatSystem = () => {
     }
 
     const other = selectedConversation.other_user || {};
+    const formattedName = formatChatDisplayName(other);
     return {
       id: other.id ?? selectedConversation.id,
       isGroup: false,
-      name:
-        other.full_name ||
-        other.username ||
-        other.email ||
-        `Conversation #${selectedConversation.id}`,
-      username: other.username || "",
+      name: formattedName,
+      username: formattedName,
       email: other.email || "",
       phone: other.phone || "",
       language: other.language || "",
@@ -642,7 +639,7 @@ const ClientChatSystem = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
+                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{formatChatDisplayName(u)}</h3>
                             <p className="text-xs text-gray-500 truncate">{u.email || "Registered User"}</p>
                           </div>
                           <span className="text-xs font-bold text-orange-500 bg-orange-100 group-hover:bg-orange-500 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
@@ -669,7 +666,7 @@ const ClientChatSystem = () => {
                         const isSelected = selectedConversationId === conv.id;
                         const name = conv.is_group
                           ? (conv.name || "Group Chat")
-                          : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
+                          : formatChatDisplayName(other);
                         const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
                         const online = !conv.is_group && Boolean(other.is_online);
                         const preview = conv.last_message?.text || "";
@@ -711,7 +708,7 @@ const ClientChatSystem = () => {
 
                     const name = conv.is_group
                       ? (conv.name || "Group Chat")
-                      : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
+                      : formatChatDisplayName(other);
                     const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
                     const online = !conv.is_group && Boolean(other.is_online);
                     const preview = conv.last_message?.text || "";
