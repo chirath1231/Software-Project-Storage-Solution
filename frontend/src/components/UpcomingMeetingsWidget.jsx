@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../config";
+import { getStoredToken } from "../api/axios";
 
 export default function UpcomingMeetingsWidget() {
   const [meetings, setMeetings] = useState([]);
@@ -13,7 +14,7 @@ export default function UpcomingMeetingsWidget() {
 
   const fetchUpcomingMeetings = async () => {
     try {
-      const token = localStorage.getItem("access_token"); 
+      const token = getStoredToken();
       
       const response = await fetch(`${API_BASE_URL}/api/accounts/events/`, {
         method: "GET",

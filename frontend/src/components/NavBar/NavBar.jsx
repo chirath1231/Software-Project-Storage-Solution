@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/AuthContext.jsx";
 import { useNotifications } from "../../context/NotificationContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
+import { getStoredToken } from "../../api/axios";
 
 const LogoDark = () => (
   <div className="flex items-center">
@@ -93,7 +94,7 @@ export default function Navbar({ isDashboard = false }) {
   // Handle marking notification as read
   const handleMarkRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getStoredToken();
       await fetch(`${API_BASE_URL}/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: {

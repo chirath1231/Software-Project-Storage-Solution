@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Bot } from "lucide-react";
 import { API_BASE_URL } from "../../config";
+import { getStoredToken } from "../../api/axios";
 
 export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +24,7 @@ export default function ChatAssistant() {
   
 
  const sendMessage = async (message) => {
-  const token = localStorage.getItem("access_token");
+  const token = getStoredToken();
 
   let response = await fetch(
     `${API_BASE_URL}/api/assistant/chat/`,

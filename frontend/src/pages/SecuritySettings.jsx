@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
+import { getStoredToken } from "../api/axios";
 
 export default function SecuritySettings() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function SecuritySettings() {
     setErrorMsg("");
 
     try {
-        const token = localStorage.getItem("access_token");
+        const token = getStoredToken();
 
         const res = await fetch(`${API_BASE_URL}/api/accounts/change-password/`, {
         method: "POST",

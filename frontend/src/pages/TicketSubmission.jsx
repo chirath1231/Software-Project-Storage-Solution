@@ -1,18 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
-
-const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-});
-
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from "../api/axios";
 
 const categories = ["Bug / Error", "Feature Request", "Account / Access", "Performance", "Content Issue", "Other"];
 const priorities = ["LOW", "MEDIUM", "HIGH"];
@@ -56,9 +43,6 @@ export default function TicketSubmission() {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     
-    // Retrieve the token saved during your login process
-    const token = localStorage.getItem("access_token");
-
     setLoading(true);
     try {
       const response = await api.post("/tickets/", {
@@ -68,11 +52,6 @@ export default function TicketSubmission() {
         priority: form.priority,
         title: form.subject,
         description: form.description
-      }, {
-        headers: {
-          // Send the token in the format "Bearer <token>"
-          'Authorization': `Bearer ${token}`
-        }
       });
       
       setTicketId(`TKT-${response.data.id}`);

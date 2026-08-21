@@ -3,6 +3,7 @@ import { X, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import EventCalendar from "../components/EventCalendar"; 
 import { useNotifications } from '../context/NotificationContext';
 import { API_BASE_URL } from '../config';
+import { getStoredToken } from '../api/axios';
 
 export default function Notifications() {
   const { notifications, fetchGlobalNotifications, nextPageUrl, prevPageUrl } = useNotifications();
@@ -19,7 +20,7 @@ export default function Notifications() {
 
   const markAsRead = async (id) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getStoredToken();
       
       // --- FIX 2: Correct endpoint path and trailing slash ---
       const response = await fetch(`${BASE_URL}${id}/read/`, {

@@ -1,23 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
 import { Search, Paperclip, Send, X, ArrowLeft, Info } from "lucide-react";
 import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
 import { useAuth } from "../auth/AuthContext";
-import { API_BASE_URL, WS_BASE_URL } from "../config";
-
-// ✅ one axios client (avoid URL mistakes)
-const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-});
-
-// ✅ AUTO attach JWT token to every API request (SESSION STORAGE)
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token"); // saved after login
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+import { WS_BASE_URL } from "../config";
+import api from "../api/axios";
 
 // Helper: format time nicely
 const formatTime = (isoOrDate) => {
@@ -30,7 +18,7 @@ const formatTime = (isoOrDate) => {
 };
 
 const ClientChatSystem = () => {
-  const { token } = useAuth();
+  const { accessToken: token } = useAuth();
 
   // ----------------- State -----------------
   const [search, setSearch] = useState("");

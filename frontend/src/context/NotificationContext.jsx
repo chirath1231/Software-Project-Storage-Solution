@@ -4,7 +4,7 @@ import React, {
   useEffect,
   useContext,
 } from "react";
-import api from "../api/axios";
+import api, { getStoredToken } from "../api/axios";
 
 const NotificationContext = createContext(null);
 
@@ -16,7 +16,7 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchGlobalNotifications = async (sortBy = "newest", pageUrl = null) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getStoredToken();
       if (!token) return;
 
       const url = pageUrl
@@ -36,7 +36,7 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     // Only fetch if a token exists to avoid unnecessary 401s on mount
-    if (localStorage.getItem("access_token")) {
+    if (getStoredToken()) {
       fetchGlobalNotifications();
     }
   }, []);

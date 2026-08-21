@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { API_BASE_URL } from "../config";
+import { getStoredToken } from "../api/axios";
 
 export default function DeleteAccount() {
   const [password, setPassword] = useState("");
@@ -20,7 +21,7 @@ export default function DeleteAccount() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getStoredToken();
 
       const res = await fetch(`${API_BASE_URL}/api/accounts/delete-account/`, {
         method: "DELETE",
