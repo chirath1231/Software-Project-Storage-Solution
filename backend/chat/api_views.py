@@ -232,7 +232,6 @@ class StartConversationView(APIView):
             ConversationParticipant.objects.create(conversation=conversation, user_id=other_user_id)
 
         return Response({"conversation_id": conversation.id}, status=status.HTTP_200_OK)
-        return Response({"conversation_id": conversation.id}, status=status.HTTP_200_OK)
 
 
 class CreateGroupConversationView(APIView):
