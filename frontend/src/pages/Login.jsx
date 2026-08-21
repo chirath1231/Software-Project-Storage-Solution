@@ -21,6 +21,9 @@ function Login() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
+  // Determines where to send the user after a successful login:
+  // if they were redirected here from a protected route, send them back there;
+  // otherwise fall back to the role-based dashboard.
   function resolveRedirect(role) {
     return location.state?.from || (role === "admin" ? "/admin-dashboard" : "/dashboard");
   }
@@ -58,6 +61,10 @@ function Login() {
       setLoading(false);
     }
   };
+  // Outer try/catch handles network-level errors (e.g. server down, CORS, no internet).
+  // Inner try/catch silently guards against non-JSON responses to prevent a parse crash.
+  // HTTP errors (4xx/5xx) are handled separately via `res.ok` since fetch() doesn't throw on them.
+  // `finally` ensures the loading state is always cleared regardless of outcome.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,6 +98,7 @@ function Login() {
       } catch {
         data = {};
       }
+      console.log("ACCESS TOKEN:", data.access);
 
       if (!res.ok) {
         setError(data.detail || data.error || "Invalid email or password");
@@ -115,7 +123,7 @@ function Login() {
       <div className="left-side">
         <div className="auth-box">
           <h2 className="title">Sign in</h2>
-          <p className="caption">Please login to continue to your account.</p>
+          <h4 className="caption">Welcome back to Revolutie</h4>
 
           <form className="form" onSubmit={handleSubmit}>
             <input
@@ -124,7 +132,7 @@ function Login() {
               onChange={onChange}
               type="email"
               placeholder="Email"
-              className="input-styled"
+              className="input"
               required
             />
             <div style={{ position: "relative", width: "100%" }}>
@@ -134,7 +142,7 @@ function Login() {
                 onChange={onChange}
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                className="input-styled"
+                className="input"
                 required
                 style={{ paddingRight: "45px" }}
               />
@@ -145,7 +153,7 @@ function Login() {
                 style={{
                   position: "absolute",
                   right: "12px",
-                  top: "40%",
+                  top: "50%",
                   transform: "translateY(-50%)",
                   border: "none",
                   background: "none",
@@ -156,42 +164,29 @@ function Login() {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {error && (
-              <div style={{ color: "#d9534f", marginBottom: 12, fontSize: "14px", fontWeight: "500" }}>
-                {error}
-              </div>
-            )}
-            <button className="btn-orange" disabled={loading}>
+            {error && <div style={{ color: "salmon", marginBottom: 10 }}>{error}</div>}
+            <button className="btn" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
-          <div className="divider-container">
-            <span className="divider-line"></span>
-            <span className="divider-text">or</span>
-            <span className="divider-line"></span>
-          </div>
+          <p className="or">___________________________or_____________________________</p>
 
-          <div className="social-google-wrap">
+          <div className="social">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError("Google login failed. Please try again.")}
-              theme="outline"
-              size="large"
-              width="100%"
             />
           </div>
 
-          <div className="auth-links-stacked">
-            <p className="link-item">
-              Don't have an account? <Link to="/register" className="highlight-link">Create account</Link>
-            </p>
-            <p className="link-item">
-              <Link to="/forgot-password">Forgot Password?</Link>
-            </p>
-            <p className="link-item">
-              <Link to="/restore-account">Restore your account</Link>
-            </p>
+          <p className="footer-text">
+            Don't have an account? <Link to="/register">Sign up</Link>
+          </p>
+
+          <div className="footer-links">
+            <a href="#">Terms</a>
+            <a href="#">Support</a>
+            <a href="#">Customer Care</a>
           </div>
         </div>
 
