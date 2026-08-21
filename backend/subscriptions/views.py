@@ -13,12 +13,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 import os
+from django.conf import settings
 
 # --------------------------------------------------------
-# PAYHERE CONFIG  (LOAD FROM ENV OR FALLBACK TO SANDBOX)
+# PAYHERE CONFIG  (LOAD FROM DJANGO SETTINGS / ENV)
 # --------------------------------------------------------
-MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "1237637")
-MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "MzQ4MjE5MzA2MzM2MDI2OTE3MDY1MTIwMzY4MTcyNTI4Mjc2NjI0")
+MERCHANT_ID = getattr(settings, "PAYHERE_MERCHANT_ID", os.getenv("PAYHERE_MERCHANT_ID", "1237637"))
+MERCHANT_SECRET = getattr(settings, "PAYHERE_MERCHANT_SECRET", os.getenv("PAYHERE_MERCHANT_SECRET", "MzQ4MjE5MzA2MzM2MDI2OTE3MDY1MTIwMzY4MTcyNTI4Mjc2NjI0"))
 
 # PayHere requires md5(secret)
 MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
