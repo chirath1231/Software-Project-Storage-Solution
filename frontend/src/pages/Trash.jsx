@@ -29,6 +29,7 @@ export default function Trash() {
     } catch (err) {
       console.error(err);
       if (err.response?.status === 401) {
+        sessionStorage.clear();
         localStorage.clear();
         navigate("/login");
       } else {
@@ -44,6 +45,7 @@ export default function Trash() {
     } catch (err) {
       console.error(err);
       if (err.response?.status === 401) {
+        sessionStorage.clear();
         localStorage.clear();
         navigate("/login");
       } else {
@@ -65,6 +67,7 @@ export default function Trash() {
     } catch (err) {
       console.error(err);
       if (err.response?.status === 401) {
+        sessionStorage.clear();
         localStorage.clear();
         navigate("/login");
       } else {

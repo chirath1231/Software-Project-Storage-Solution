@@ -24,7 +24,14 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>CEYNOA</title>
+    <!-- PayHere Payment Gateway SDK -->
+    <script type="text/javascript">
+      var payhere = window.payhere = window.payhere || {};
+      payhere.M_ID = payhere.M_ID || "1233030";
+      window.payhere = payhere;
+    </script>
+    <script type="text/javascript" src="https://www.payhere.lk/lib/payhere.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

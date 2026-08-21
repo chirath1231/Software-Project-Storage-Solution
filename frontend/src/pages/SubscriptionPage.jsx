@@ -4,11 +4,11 @@ import buynow from "../assets/buy_now.png";
 import { useAuth } from "../auth/AuthContext";
 
 export default function SubscriptionPage() {
-  const { email: userEmail } = useAuth();
+  const { email, username } = useAuth();
+  const userEmail = username || email || sessionStorage.getItem("username") || localStorage.getItem("username");
   const [subscriptions, setSubscriptions] = useState([]);
   const [paidSubs, setPaidSubs] = useState(new Set());
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data);
 
@@ -61,6 +61,12 @@ export default function SubscriptionPage() {
 
       const data = res.data;
       if (!data.success) return alert("Payment failed");
+
+      // Safely ensure window.payhere is defined with M_ID to prevent extension errors
+      window.payhere = window.payhere || {};
+      if (data.paymentData?.merchant_id) {
+        window.payhere.M_ID = data.paymentData.merchant_id;
+      }
 
       const form = document.createElement("form");
       form.method = "POST";

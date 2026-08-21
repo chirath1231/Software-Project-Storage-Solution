@@ -7,7 +7,8 @@ from .api_views import (
     CreateGroupConversationView,
     AddGroupMemberView,
     RemoveGroupMemberView,
-    RenameGroupView
+    RenameGroupView,
+    DeleteMessageView
 )
 
 urlpatterns = [
@@ -17,6 +18,7 @@ urlpatterns = [
     path("conversations/group/<int:conversation_id>/add/", AddGroupMemberView.as_view()),
     path("conversations/group/<int:conversation_id>/remove/", RemoveGroupMemberView.as_view()),
     path("conversations/group/<int:conversation_id>/rename/", RenameGroupView.as_view()),
-    path("messages/<int:conversation_id>/", MessageListView.as_view()),
     path("messages/send/", SendMessageView.as_view()),
+    path("messages/<int:message_id>/delete/", DeleteMessageView.as_view()),
+    path("messages/<int:conversation_id>/", MessageListView.as_view()),
 ]

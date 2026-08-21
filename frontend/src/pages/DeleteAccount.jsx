@@ -35,6 +35,7 @@ export default function DeleteAccount() {
       if (res.ok) {
         alert("Account scheduled for deletion");
 
+        sessionStorage.clear();
         localStorage.clear();
         window.location.href = "/login";
       } else {

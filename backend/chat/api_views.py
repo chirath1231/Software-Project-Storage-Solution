@@ -410,3 +410,45 @@ class RenameGroupView(APIView):
                 )
 
         return Response({"detail": "Group renamed successfully"})
+
+
+class DeleteMessageView(APIView):
+    """
+    DELETE /api/messages/<int:message_id>/delete/
+    Permanently deletes a message from DB if the user is the sender or group admin,
+    and broadcasts deletion event to all participants.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, message_id):
+        try:
+            m = Message.objects.select_related("conversation").get(id=message_id)
+        except Message.DoesNotExist:
+            return Response({"detail": "Message not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        conv = m.conversation
+        is_sender = (m.sender_id == request.user.id)
+        is_admin = (conv.is_group and conv.admin_id == request.user.id)
+
+        if not (is_sender or is_admin):
+            return Response({"detail": "You do not have permission to delete this message"}, status=status.HTTP_403_FORBIDDEN)
+
+        conv_id = m.conversation_id
+        participants = list(ConversationParticipant.objects.filter(conversation_id=conv_id).values_list('user_id', flat=True))
+
+        m.delete()
+
+        # Broadcast deletion to all conversation participants via Channel Layer
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for pid in participants:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{pid}",
+                    {
+                        "type": "message_deleted_event",
+                        "message_id": message_id,
+                        "conversation_id": conv_id,
+                    }
+                )
+
+        return Response({"detail": "Message deleted successfully", "message_id": message_id}, status=status.HTTP_200_OK)

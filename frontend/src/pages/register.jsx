@@ -52,13 +52,13 @@ function Register() {
       }
 
       // Use the login function from AuthContext to store token and user data
-      login(data.access, { // Pass access token
+      login(data.access, {
         id: data.user.id,
         username: data.user.username,
         email: data.user.email,
         is_staff: data.user.is_staff,
         role: data.user.is_staff ? "admin" : "user"
-      }, true); // Assuming registration implies "remember me"
+      }, true);
 
       setLoading(false);
       navigate("/dashboard");
@@ -89,10 +89,10 @@ function Register() {
       // Determine role and update context
       const userData = data.user || data;
       const role = userData.is_staff ? "admin" : "user";
-      login(data.access, { // Pass access token
+      login(data.access, {
         ...userData,
         role
-      }, true); // Google login usually implies "remember me"
+      }, true);
 
 
       navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");

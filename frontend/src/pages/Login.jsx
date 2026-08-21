@@ -20,7 +20,6 @@ function Login() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  // ✅ FIX: handleGoogleSuccess was referenced but never defined
   const handleGoogleSuccess = async (credentialResponse) => {
     setError(null);
     setLoading(true);

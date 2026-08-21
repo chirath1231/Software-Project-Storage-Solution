@@ -43,6 +43,7 @@ export default function TicketSubmission() {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     
+
     setLoading(true);
     try {
       const response = await api.post("/tickets/", {

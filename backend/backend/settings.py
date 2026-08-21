@@ -397,11 +397,13 @@ DO_S3_OBJECT_PARAMETERS = {
 # =====================================================
 
 AWS_GLACIER_ACCESS_KEY_ID = os.getenv(
-    "AWS_GLACIER_ACCESS_KEY_ID"
+    "AWS_GLACIER_ACCESS_KEY_ID",
+    ""
 )
 
 AWS_GLACIER_SECRET_ACCESS_KEY = os.getenv(
-    "AWS_GLACIER_SECRET_ACCESS_KEY"
+    "AWS_GLACIER_SECRET_ACCESS_KEY",
+    ""
 )
 
 AWS_GLACIER_REGION = os.getenv(
@@ -410,7 +412,8 @@ AWS_GLACIER_REGION = os.getenv(
 )
 
 AWS_GLACIER_BUCKET_NAME = os.getenv(
-    "AWS_GLACIER_BUCKET_NAME"
+    "AWS_GLACIER_BUCKET_NAME",
+    ""
 )
 
 

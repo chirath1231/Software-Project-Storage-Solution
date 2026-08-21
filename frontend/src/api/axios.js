@@ -3,12 +3,16 @@ import { API_BASE_URL } from '../config';
 
 export const getStoredToken = () => {
   const token =
-    localStorage.getItem('access') ||
-    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('access_token') ||
+    sessionStorage.getItem('token') ||
     sessionStorage.getItem('access') ||
-    sessionStorage.getItem('accessToken');
+    sessionStorage.getItem('accessToken') ||
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('access') ||
+    localStorage.getItem('accessToken');
 
-  if (token === 'undefined' || token === 'null') {
+  if (!token || token === 'undefined' || token === 'null') {
     return null;
   }
 
@@ -17,10 +21,12 @@ export const getStoredToken = () => {
 
 const getStoredRefresh = () => {
   const refresh =
+    sessionStorage.getItem('refresh') ||
+    sessionStorage.getItem('refresh_token') ||
     localStorage.getItem('refresh') ||
-    sessionStorage.getItem('refresh');
+    localStorage.getItem('refresh_token');
 
-  if (refresh === 'undefined' || refresh === 'null') {
+  if (!refresh || refresh === 'undefined' || refresh === 'null') {
     return null;
   }
 
@@ -28,23 +34,20 @@ const getStoredRefresh = () => {
 };
 
 const storeAccessToken = (token) => {
-  // Keep the token in whichever storage already holds the session
-  if (localStorage.getItem('access') || localStorage.getItem('refresh')) {
-    localStorage.setItem('access', token);
-  } else {
+  if (sessionStorage.getItem('access') || sessionStorage.getItem('token') || sessionStorage.getItem('access_token')) {
     sessionStorage.setItem('access', token);
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('access_token', token);
+  } else {
+    localStorage.setItem('access', token);
+    localStorage.setItem('token', token);
+    localStorage.setItem('access_token', token);
   }
 };
 
 const clearAuthStorage = () => {
-  localStorage.removeItem('access');
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refresh');
-  localStorage.removeItem('user');
-  sessionStorage.removeItem('access');
-  sessionStorage.removeItem('accessToken');
-  sessionStorage.removeItem('refresh');
-  sessionStorage.removeItem('user');
+  sessionStorage.clear();
+  localStorage.clear();
 };
 
 // Create an Axios instance
@@ -93,7 +96,7 @@ api.interceptors.response.use(
   async (error) => {
     const { config, response } = error;
 
-    if (!response || response.status !== 401 || config._retry) {
+    if (!response || response.status !== 401 || config?._retry) {
       return Promise.reject(error);
     }
 

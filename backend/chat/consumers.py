@@ -122,6 +122,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "conversation_id": event["conversation_id"]
         }))
 
+    async def message_deleted_event(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "message_deleted",
+            "message_id": event["message_id"],
+            "conversation_id": event["conversation_id"]
+        }))
+
     @database_sync_to_async
     def is_member(self, user_id, conversation_id):
         return ConversationParticipant.objects.filter(

@@ -1,455 +1,249 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-=======
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   ActivityIndicator, Alert, Linking, RefreshControl,
 } from "react-native";
->>>>>>> main
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeContext";
-<<<<<<< HEAD
-import { storage, plans } from "../data/mock";
-=======
 import { useAuth } from "../context/AuthContext";
 import { apiGet, apiPost, BASE_URL } from "../api/apiClient";
->>>>>>> main
 import GradientHeader from "../components/GradientHeader";
 import StorageMeter from "../components/StorageMeter";
 import { accent } from "../theme/colors";
 
-<<<<<<< HEAD
-export default function SubscriptionScreen({ navigation }) {
-  const { c } = useTheme();
-  const insets = useSafeAreaInsets();
-  const [selected, setSelected] = useState("plus");
-
-  return (
-    <View style={[styles.root, { backgroundColor: c.bgApp }]}>
-      <GradientHeader title="Subscription" onBack={() => navigation.goBack()} />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 18, paddingBottom: insets.bottom + 30 }}
-      >
-        {/* Current plan */}
-        <View style={[styles.current, { backgroundColor: c.bgSecondary, borderColor: c.border, shadowColor: c.shadow }]}>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={[styles.currentLabel, { color: c.textMuted }]}>CURRENT PLAN</Text>
-            <Text style={[styles.currentName, { color: c.textPrimary }]}>Plus</Text>
-            <Text style={[styles.currentMeta, { color: c.textSecondary }]}>
-              {storage.used} GB of {storage.total} GB used
-            </Text>
-          </View>
-          <StorageMeter percent={storage.percent} size={92} stroke={10} label="full" />
-        </View>
-
-        <Text style={[styles.sectionLabel, { color: c.textPrimary }]}>Subscription details</Text>
-
-        <View style={{ gap: 14, marginTop: 12 }}>
-          {plans.map((p) => {
-            const active = selected === p.id;
-            return (
-              <Pressable
-                key={p.id}
-                onPress={() => setSelected(p.id)}
-                style={[
-                  styles.plan,
-                  {
-                    backgroundColor: c.bgSecondary,
-                    borderColor: active ? c.accent.orange : c.border,
-                    shadowColor: c.shadow,
-                  },
-                  active && styles.planActive,
-                ]}
-              >
-                <View style={styles.planHead}>
-                  <View>
-                    <View style={styles.planTitleRow}>
-                      <Text style={[styles.planName, { color: c.textPrimary }]}>{p.name}</Text>
-                      {p.highlight ? (
-                        <View style={[styles.popular, { backgroundColor: c.bgSoftOrange }]}>
-                          <Text style={[styles.popularText, { color: c.accent.deep }]}>Popular</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    <Text style={[styles.planStorage, { color: c.textMuted }]}>{p.storage} storage</Text>
-                  </View>
-                  <View style={styles.priceWrap}>
-                    <Text style={[styles.price, { color: c.textPrimary }]}>${p.price}</Text>
-                    <Text style={[styles.per, { color: c.textMuted }]}>/mo</Text>
-                  </View>
-                </View>
-
-                <View style={styles.features}>
-                  {p.features.map((f) => (
-                    <View key={f} style={styles.featureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={c.accent.deep} />
-                      <Text style={[styles.featureText, { color: c.textSecondary }]}>{f}</Text>
-                    </View>
-                  ))}
-                </View>
-
-                {active ? (
-                  <LinearGradient colors={accent.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.selectBtn}>
-                    <Text style={styles.selectText}>{p.id === "plus" ? "Current Plan" : "Choose " + p.name}</Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={[styles.selectBtnOutline, { borderColor: c.border }]}>
-                    <Text style={[styles.selectTextOutline, { color: c.textPrimary }]}>Select</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-=======
-// ─── helpers ──────────────────────────────────────────────────
-async function fetchPlans() {
-  return apiGet("/api/subscriptions/");
-}
-
-async function fetchUserSubscriptions(email) {
-  return apiGet(`/api/subscriptions/user-subscriptions/${encodeURIComponent(email)}/`);
-}
-
-async function createPayment(sub, email) {
-  return apiPost("/api/subscriptions/create-payment/", {
-    subscription_id: sub.id,
-    email,
-    amount: Number(sub.price).toFixed(2),
-    first_name: email.split("@")[0],
-  });
-}
-
-function formatStorage(gb) {
-  if (!gb) return "—";
-  if (gb >= 1000) return `${(gb / 1000).toFixed(0)} TB`;
-  return `${gb} GB`;
-}
-
-// ─── Plan card ────────────────────────────────────────────────
-function PlanCard({ plan, isPaid, isBest, onSubscribe, subscribing, c }) {
-  const features = Array.isArray(plan.features) ? plan.features : [];
-
-  return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: c.bgSecondary,
-          borderColor: isBest ? c.accent.orange : c.border,
-          shadowColor: c.shadow,
-        },
-        isBest && styles.cardBest,
-      ]}
-    >
-      {/* Header row */}
-      <View style={styles.cardHead}>
-        <View style={styles.cardTitleRow}>
-          <Text style={[styles.cardName, { color: c.textPrimary }]}>{plan.name}</Text>
-          {isBest && (
-            <View style={[styles.badge, { backgroundColor: c.bgSoftOrange }]}>
-              <Text style={[styles.badgeText, { color: c.accent.deep }]}>Best Value</Text>
-            </View>
-          )}
-          {isPaid && (
-            <View style={[styles.badge, { backgroundColor: "#f0fdf4" }]}>
-              <Ionicons name="checkmark-circle" size={12} color="#16a34a" />
-              <Text style={[styles.badgeText, { color: "#16a34a" }]}>Active</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.priceRow}>
-          <Text style={[styles.price, { color: c.textPrimary }]}>
-            Rs. {Number(plan.price).toFixed(2)}
-          </Text>
-          <Text style={[styles.pricePer, { color: c.textMuted }]}>/mo</Text>
-        </View>
-      </View>
-
-      {/* Description */}
-      {plan.description ? (
-        <Text style={[styles.desc, { color: c.textSecondary }]}>{plan.description}</Text>
-      ) : null}
-
-      {/* Storage badge */}
-      {plan.storage ? (
-        <View style={[styles.storagePill, { backgroundColor: c.bgSoftOrange }]}>
-          <Ionicons name="cloud-outline" size={13} color={c.accent.deep} />
-          <Text style={[styles.storagePillText, { color: c.accent.deep }]}>
-            {formatStorage(plan.storage)} Storage
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Features */}
-      {features.length > 0 && (
-        <View style={styles.features}>
-          {features.map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={15} color="#22c55e" />
-              <Text style={[styles.featureText, { color: c.textSecondary }]}>{f}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Button */}
-      {isPaid ? (
-        <View style={[styles.btnDisabled, { borderColor: c.border }]}>
-          <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
-          <Text style={[styles.btnDisabledText, { color: "#16a34a" }]}>Subscribed</Text>
-        </View>
-      ) : (
-        <Pressable
-          onPress={onSubscribe}
-          disabled={subscribing}
-          style={({ pressed }) => ({ opacity: pressed || subscribing ? 0.75 : 1 })}
-        >
-          <LinearGradient
-            colors={isBest ? accent.gradient : ["#3b82f6", "#2563eb"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.btn}
-          >
-            {subscribing ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="cart-outline" size={16} color="#fff" />
-                <Text style={styles.btnText}>Subscribe Now</Text>
-              </>
-            )}
-          </LinearGradient>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-// ─── Main screen ──────────────────────────────────────────────
 export default function SubscriptionScreen({ navigation }) {
   const { c } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [plans, setPlans] = useState([]);
-  const [paidIds, setPaidIds] = useState(new Set());
-  const [currentPlan, setCurrentPlan] = useState(null);
-  const [storageGB, setStorageGB] = useState(5);
-  const [storageUsedPct, setStorageUsedPct] = useState(0);
+  const [currentSub, setCurrentSub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [subscribingId, setSubscribingId] = useState(null);
+  const [submittingId, setSubmittingId] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
-      // Web uses localStorage "username" (Django username) as the subscription key — not email
-      const subKey = user?.username || user?.email;
-      const [planData, userSubs] = await Promise.all([
-        fetchPlans(),
-        subKey ? fetchUserSubscriptions(subKey) : Promise.resolve([]),
+      const [plansRes, subRes] = await Promise.all([
+        apiGet("subscriptions/plans/"),
+        user ? apiGet(`subscriptions/my-subscription/?email=${encodeURIComponent(user.email)}`) : null,
       ]);
-
-      const plansArr = Array.isArray(planData) ? planData : [];
-      setPlans(plansArr);
-
-      const activeSubs = Array.isArray(userSubs) ? userSubs : [];
-      const ids = new Set(activeSubs.map((r) => Number(r.subscription_id)));
-      setPaidIds(ids);
-
-      // Find the user's latest active plan (API returns date field)
-      if (activeSubs.length > 0) {
-        const latest = [...activeSubs].sort(
-          (a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at)
-        )[0];
-        const matchedPlan = plansArr.find((p) => p.id === Number(latest.subscription_id));
-        setCurrentPlan(matchedPlan || null);
-        setStorageGB(latest.storage || matchedPlan?.storage || 5);
-      } else {
-        setCurrentPlan(null);
-        setStorageGB(5);
-      }
+      setPlans(plansRes || []);
+      setCurrentSub(subRes || null);
     } catch (err) {
-      console.error("SubscriptionScreen load error:", err);
-      Alert.alert("Error", "Could not load subscription plans.");
+      console.error("Subscription load error:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.email]);
+  }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
   const onRefresh = () => { setRefreshing(true); loadData(); };
 
   const handleSubscribe = async (plan) => {
-    if (paidIds.has(plan.id)) {
-      Alert.alert("Already Subscribed", "You already own this plan.");
+    if (plan.price === "0.00" || plan.price === 0) {
+      Alert.alert("Free Plan", "You are automatically on the Free plan.");
       return;
     }
-    const subKey = user?.username || user?.email;
-    if (!subKey) {
-      Alert.alert("Not logged in", "Please log in first.");
-      return;
+    setSubmittingId(plan.id);
+    try {
+      const data = await apiPost("subscriptions/checkout/", {
+        plan_id: plan.id,
+        user_email: user?.email,
+      });
+
+      if (data.checkout_url) {
+        Alert.alert(
+          "Complete Payment",
+          `Opening PayHere to complete your ${plan.name} subscription.`,
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Pay Now", onPress: () => Linking.openURL(data.checkout_url) },
+          ]
+        );
+      } else {
+        Alert.alert("Success", "Subscription activated!");
+        loadData();
+      }
+    } catch (err) {
+      Alert.alert("Error", err.message || "Failed to initiate payment.");
+    } finally {
+      setSubmittingId(null);
     }
-
-    Alert.alert(
-      "Confirm Subscription",
-      `Subscribe to ${plan.name} for Rs. ${Number(plan.price).toFixed(2)}/month?\n\nYou will be redirected to PayHere to complete payment.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Proceed to Payment",
-          onPress: async () => {
-            setSubscribingId(plan.id);
-            try {
-              // Send username as email (matches web app behaviour)
-              const data = await createPayment(plan, subKey);
-              if (!data.success) {
-                Alert.alert("Payment Error", "Failed to create payment. Please try again.");
-                return;
-              }
-
-              // Build PayHere checkout URL (try GET params — works on PayHere sandbox)
-              const params = new URLSearchParams(data.paymentData).toString();
-              const checkoutUrl = `https://sandbox.payhere.lk/pay/checkout?${params}`;
-
-              const supported = await Linking.canOpenURL(checkoutUrl);
-              if (supported) {
-                await Linking.openURL(checkoutUrl);
-              } else {
-                Alert.alert(
-                  "Payment",
-                  "Could not open PayHere checkout. Please visit the website to complete your subscription.",
-                  [
-                    {
-                      text: "Open Website",
-                      onPress: () => Linking.openURL(`${BASE_URL}/dashboard/subscription`),
-                    },
-                    { text: "OK" },
-                  ]
-                );
-              }
-            } catch (err) {
-              console.error("Payment error:", err);
-              Alert.alert("Payment Error", err.message || "Payment failed. Please try again.");
-            } finally {
-              setSubscribingId(null);
-            }
-          },
-        },
-      ]
-    );
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.bgApp }]}>
-        <GradientHeader title="Subscription Plans" onBack={() => navigation.goBack()} />
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={c.accent.deep} />
-          <Text style={[styles.loadingText, { color: c.textMuted }]}>Loading plans…</Text>
-        </View>
-      </View>
-    );
-  }
+  const activePlanId = currentSub?.plan?.id;
 
   return (
     <View style={[styles.root, { backgroundColor: c.bgApp }]}>
       <GradientHeader title="Subscription Plans" onBack={() => navigation.goBack()} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent.deep} />
-        }
-        contentContainerStyle={{ padding: 18, paddingBottom: insets.bottom + 30 }}
-      >
-        {/* Page heading */}
-        <Text style={[styles.heading, { color: c.textPrimary }]}>Choose Your Plan</Text>
-        <Text style={[styles.subheading, { color: c.textSecondary }]}>
-          Select the plan that fits your needs
-        </Text>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={c.accent.deep} />
+          <Text style={[styles.loadingText, { color: c.textMuted }]}>Loading plans…</Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent.deep} />
+          }
+          contentContainerStyle={{ padding: 18, paddingBottom: insets.bottom + 30 }}
+        >
+          <Text style={[styles.heading, { color: c.textPrimary }]}>Choose Your Plan</Text>
+          <Text style={[styles.subheading, { color: c.textSecondary }]}>
+            Upgrade your storage and unlock premium tools for your workflow.
+          </Text>
 
-        {/* Current plan card */}
-        {currentPlan ? (
-          <View
-            style={[
-              styles.currentCard,
-              { backgroundColor: c.bgSecondary, borderColor: c.border, shadowColor: c.shadow },
-            ]}
-          >
-            <View style={{ flex: 1, gap: 6 }}>
-              <Text style={[styles.currentLabel, { color: c.textMuted }]}>CURRENT PLAN</Text>
-              <Text style={[styles.currentName, { color: c.textPrimary }]}>{currentPlan.name}</Text>
-              <Text style={[styles.currentMeta, { color: c.textSecondary }]}>
-                {formatStorage(storageGB)} storage
+          {/* Current plan card */}
+          {currentSub ? (
+            <View style={[styles.currentCard, { backgroundColor: c.bgSecondary, borderColor: c.border, shadowColor: c.shadow }]}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={[styles.currentLabel, { color: c.textMuted }]}>ACTIVE SUBSCRIPTION</Text>
+                <Text style={[styles.currentName, { color: c.textPrimary }]}>
+                  {currentSub.plan?.name || "Free"}
+                </Text>
+                <Text style={[styles.currentMeta, { color: c.textSecondary }]}>
+                  {currentSub.plan?.storage_gb} GB Storage Limit
+                </Text>
+              </View>
+              <StorageMeter percent={100} size={84} stroke={9} label="active" />
+            </View>
+          ) : (
+            <View style={[styles.noPlanCard, { backgroundColor: c.bgSecondary, borderColor: c.border }]}>
+              <Ionicons name="information-circle-outline" size={20} color={c.accent.orange} />
+              <Text style={[styles.noPlanText, { color: c.textSecondary }]}>
+                You are currently using the default <Text style={{ fontWeight: "700" }}>Free (5 GB)</Text> plan.
               </Text>
             </View>
-            <StorageMeter percent={storageUsedPct} size={88} stroke={10} label="used" />
+          )}
+
+          <Text style={[styles.sectionLabel, { color: c.textPrimary, marginBottom: 14 }]}>Available Plans</Text>
+
+          <View style={{ gap: 16 }}>
+            {plans.map((plan) => {
+              const isCurrent = activePlanId === plan.id;
+              const isBest = plan.name.toLowerCase().includes("pro");
+              const isFree = plan.price === "0.00" || plan.price === 0;
+
+              return (
+                <View
+                  key={plan.id}
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: c.bgSecondary,
+                      borderColor: isBest ? c.accent.orange : c.border,
+                      shadowColor: isBest ? c.accent.orange : c.shadow,
+                    },
+                    isBest && styles.cardBest,
+                  ]}
+                >
+                  <View style={styles.cardHead}>
+                    <View style={styles.cardTitleRow}>
+                      <Text style={[styles.cardName, { color: c.textPrimary }]}>{plan.name}</Text>
+                      {isBest && (
+                        <View style={[styles.badge, { backgroundColor: c.bgSoftOrange }]}>
+                          <Ionicons name="sparkles" size={12} color={c.accent.orange} />
+                          <Text style={[styles.badgeText, { color: c.accent.orange }]}>MOST POPULAR</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.priceRow}>
+                      <Text style={[styles.price, { color: c.textPrimary }]}>
+                        {isFree ? "Free" : `LKR ${Number(plan.price).toLocaleString()}`}
+                      </Text>
+                      {!isFree && <Text style={[styles.pricePer, { color: c.textMuted }]}>/ month</Text>}
+                    </View>
+                  </View>
+
+                  {plan.description ? (
+                    <Text style={[styles.desc, { color: c.textSecondary }]}>{plan.description}</Text>
+                  ) : null}
+
+                  <View style={[styles.storagePill, { backgroundColor: c.bgTertiary }]}>
+                    <Ionicons name="cloud-outline" size={15} color={c.accent.deep} />
+                    <Text style={[styles.storagePillText, { color: c.accent.deep }]}>
+                      {plan.storage_gb} GB Cloud Storage
+                    </Text>
+                  </View>
+
+                  <View style={styles.features}>
+                    <View style={styles.featureRow}>
+                      <Ionicons name="checkmark-circle" size={18} color={c.accent.orange} />
+                      <Text style={[styles.featureText, { color: c.textPrimary }]}>
+                        {plan.storage_gb} GB High-Speed Cloud Storage
+                      </Text>
+                    </View>
+                    <View style={styles.featureRow}>
+                      <Ionicons name="checkmark-circle" size={18} color={c.accent.orange} />
+                      <Text style={[styles.featureText, { color: c.textPrimary }]}>
+                        Client Messaging & File Sharing
+                      </Text>
+                    </View>
+                    <View style={styles.featureRow}>
+                      <Ionicons name="checkmark-circle" size={18} color={c.accent.orange} />
+                      <Text style={[styles.featureText, { color: c.textPrimary }]}>
+                        24/7 File Accessibility & Backups
+                      </Text>
+                    </View>
+                  </View>
+
+                  {isCurrent ? (
+                    <View style={[styles.btnDisabled, { borderColor: "#bbf7d0" }]}>
+                      <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
+                      <Text style={[styles.btnDisabledText, { color: "#16a34a" }]}>Current Active Plan</Text>
+                    </View>
+                  ) : (
+                    <Pressable
+                      onPress={() => handleSubscribe(plan)}
+                      disabled={submittingId === plan.id}
+                      style={({ pressed }) => [
+                        styles.btn,
+                        { backgroundColor: isBest ? c.accent.orange : c.accent.deep, opacity: pressed ? 0.8 : 1 },
+                      ]}
+                    >
+                      {submittingId === plan.id ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Text style={styles.btnText}>{isFree ? "Default Plan" : "Upgrade to " + plan.name}</Text>
+                          <Ionicons name="arrow-forward" size={16} color="#fff" />
+                        </>
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })}
+
+            {plans.length === 0 && (
+              <View style={styles.empty}>
+                <Ionicons name="cube-outline" size={36} color={c.textMuted} />
+                <Text style={[styles.emptyText, { color: c.textMuted }]}>No subscription plans available right now.</Text>
+              </View>
+            )}
           </View>
-        ) : (
-          <View
-            style={[
-              styles.noPlanCard,
-              { backgroundColor: c.bgSoftOrange, borderColor: c.accent.orange + "40" },
-            ]}
-          >
-            <Ionicons name="information-circle-outline" size={20} color={c.accent.deep} />
-            <Text style={[styles.noPlanText, { color: c.accent.deep }]}>
-              You don't have an active subscription yet. Pick a plan below to get started.
+
+          <View style={styles.footerNote}>
+            <Ionicons name="shield-checkmark-outline" size={16} color={c.textMuted} />
+            <Text style={[styles.footerText, { color: c.textMuted }]}>
+              Payments are securely processed via PayHere Gateway. Subscriptions auto-renew monthly. Cancel anytime.
             </Text>
           </View>
-        )}
-
-        {/* Plans */}
-        <Text style={[styles.sectionLabel, { color: c.textPrimary }]}>Available Plans</Text>
-
-        {plans.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="cloud-offline-outline" size={40} color={c.textMuted} />
-            <Text style={[styles.emptyText, { color: c.textMuted }]}>No plans available</Text>
-          </View>
-        ) : (
-          <View style={{ gap: 16, marginTop: 12 }}>
-            {plans.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                isPaid={paidIds.has(plan.id)}
-                isBest={plan.name === "Standard"}
-                onSubscribe={() => handleSubscribe(plan)}
-                subscribing={subscribingId === plan.id}
-                c={c}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Footer note */}
-        <View style={styles.footerNote}>
-          <Ionicons name="shield-checkmark-outline" size={14} color={c.textMuted} />
-          <Text style={[styles.footerText, { color: c.textMuted }]}>
-            Payments are securely processed by PayHere. Pull down to refresh after payment.
-          </Text>
->>>>>>> main
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-<<<<<<< HEAD
-  current: {
-=======
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   loadingText: { fontSize: 14 },
 
@@ -457,54 +251,18 @@ const styles = StyleSheet.create({
   subheading: { fontSize: 14, textAlign: "center", marginTop: 6, marginBottom: 20 },
 
   currentCard: {
->>>>>>> main
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 20,
     borderWidth: 1,
     padding: 18,
-<<<<<<< HEAD
-    shadowOpacity: 0.05,
-=======
     marginBottom: 24,
     shadowOpacity: 0.06,
->>>>>>> main
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 2,
   },
   currentLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 1 },
-<<<<<<< HEAD
-  currentName: { fontSize: 24, fontWeight: "800", letterSpacing: -0.4 },
-  currentMeta: { fontSize: 13 },
-  sectionLabel: { fontSize: 16, fontWeight: "800", marginTop: 24 },
-  plan: {
-    borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 18,
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
-  },
-  planActive: { shadowOpacity: 0.1 },
-  planHead: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
-  planTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  planName: { fontSize: 18, fontWeight: "800" },
-  popular: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
-  popularText: { fontSize: 10.5, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
-  planStorage: { fontSize: 13, marginTop: 3 },
-  priceWrap: { flexDirection: "row", alignItems: "baseline" },
-  price: { fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
-  per: { fontSize: 13, fontWeight: "600" },
-  features: { gap: 9, marginTop: 14, marginBottom: 16 },
-  featureRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  featureText: { fontSize: 13.5 },
-  selectBtn: { borderRadius: 12, paddingVertical: 12, alignItems: "center" },
-  selectText: { color: "#fff", fontWeight: "700", fontSize: 14.5 },
-  selectBtnOutline: { borderRadius: 12, paddingVertical: 12, alignItems: "center", borderWidth: 1 },
-  selectTextOutline: { fontWeight: "700", fontSize: 14.5 },
-=======
   currentName: { fontSize: 22, fontWeight: "800", letterSpacing: -0.4 },
   currentMeta: { fontSize: 13 },
 
@@ -521,7 +279,6 @@ const styles = StyleSheet.create({
 
   sectionLabel: { fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
 
-  // Plan card
   card: {
     borderRadius: 20,
     borderWidth: 1.5,
@@ -602,5 +359,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   footerText: { flex: 1, fontSize: 12, lineHeight: 18 },
->>>>>>> main
 });
