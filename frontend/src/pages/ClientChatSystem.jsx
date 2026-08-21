@@ -269,6 +269,7 @@ const ClientChatSystem = () => {
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
     loadConversations();
+    loadUsers();
     // eslint-disable-next-line
   }, []);
 
@@ -490,8 +491,15 @@ const ClientChatSystem = () => {
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return [];
-    return users.filter((u) => u.username.toLowerCase().includes(q));
+    if (!q) return users;
+    return users.filter((u) => {
+      const uname = (u.username || "").toLowerCase();
+      const email = (u.email || "").toLowerCase();
+      const fname = (u.first_name || "").toLowerCase();
+      const lname = (u.last_name || "").toLowerCase();
+      const fullName = `${fname} ${lname}`.trim();
+      return uname.includes(q) || email.includes(q) || fullName.includes(q);
+    });
   }, [users, search]);
 
   // ----------------- Render -----------------
@@ -557,27 +565,38 @@ const ClientChatSystem = () => {
               </div>
               {/* Search Results Panel */}
               {search.length > 0 && (
-                <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                <div className="mt-4 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto z-20">
 
                   {filteredConversations.length > 0 && (
                     <div className="p-2 border-b">
-                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">Chats</p>
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase mb-1">Existing Chats</p>
                       {filteredConversations.map((c) => (
-                        <div key={c.id} onClick={() => { setSelectedConversationId(c.id); setSearch(""); }} className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm">
-                          {c.other_user?.username || "Chat"}
+                        <div key={c.id} onClick={() => { setSelectedConversationId(c.id); setSearch(""); }} className="p-2 rounded hover:bg-gray-100 cursor-pointer text-sm font-medium text-gray-800">
+                          💬 {c.is_group ? (c.name || "Group Chat") : (c.other_user?.username || c.name || "Chat")}
                         </div>
                       ))}
                     </div>
                   )}
-                  {filteredUsers.length > 0 && (
+                  {filteredUsers.length > 0 ? (
                     <div className="p-2">
-                      <p className="px-2 text-xs text-gray-400 font-bold uppercase">People</p>
+                      <p className="px-2 text-xs text-gray-400 font-bold uppercase mb-1">All Registered Users</p>
                       {filteredUsers.map((u) => (
-                        <div key={u.id} onClick={() => { startChatWithUser(u.id); }} className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium">
-                          + Start chat with {u.username}
+                        <div
+                          key={u.id}
+                          onClick={() => { startChatWithUser(u.id); }}
+                          className="p-2 rounded hover:bg-orange-50 cursor-pointer text-sm text-orange-600 font-medium flex justify-between items-center"
+                        >
+                          <span>+ Start chat with <strong className="text-gray-900">{u.username}</strong></span>
+                          {u.email && <span className="text-xs text-gray-400 font-normal ml-2">{u.email}</span>}
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    filteredConversations.length === 0 && (
+                      <div className="p-4 text-center text-sm text-gray-400">
+                        No registered users found matching "{search}"
+                      </div>
+                    )
                   )}
                 </div>
               )}
