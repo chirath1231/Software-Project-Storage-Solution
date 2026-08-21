@@ -169,25 +169,10 @@ function Register() {
             ___________________________or_____________________________
           </p>
 
-          {/* ✅ YOUR BUTTON – GOOGLE LOGIN ATTACHED */}
           <div className="social">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google Login Failed")}
-              render={(renderProps) => (
-                <button
-                  className="social-btn"
-                  onClick={renderProps.onClick}
-                  disabled={renderProps.disabled}
-                >
-                  Continue with Google
-                  <img
-                    src={googleLogo}
-                    alt="Google"
-                    className="social-logo"
-                  />
-                </button>
-              )}
+              onError={() => setErrors({ error: "Google signup failed. Please try again." })}
             />
           </div>
 
