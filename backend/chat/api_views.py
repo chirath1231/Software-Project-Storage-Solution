@@ -47,10 +47,14 @@ class ConversationListView(APIView):
                 p_user = p.user
                 p_online = False
                 p_last_active = "Offline"
+                p_pic = None
                 try:
-                    p_profile = p_user.profile
-                    p_online = p_profile.is_online
-                    p_last_active = "Online" if p_online else "Offline"
+                    p_profile = getattr(p_user, "profile", None)
+                    if p_profile:
+                        p_online = p_profile.is_online
+                        p_last_active = "Online" if p_online else "Offline"
+                        if p_profile.profile_picture:
+                            p_pic = request.build_absolute_uri(p_profile.profile_picture.url)
                 except Exception:
                     pass
 
@@ -58,8 +62,9 @@ class ConversationListView(APIView):
                     "id": p_user.id,
                     "username": p_user.username,
                     "email": p_user.email,
-                    "full_name": getattr(p_user, "full_name", "") or p_user.username,
+                    "full_name": getattr(p_user, "full_name", "") or f"{p_user.first_name} {p_user.last_name}".strip() or p_user.username,
                     "avatar_emoji": getattr(p_user, "avatar_emoji", "👤"),
+                    "profile_picture": p_pic,
                     "is_online": p_online,
                     "last_active": p_last_active,
                     "is_admin": (c.is_group and c.admin_id == p_user.id)
@@ -105,14 +110,15 @@ class ConversationListView(APIView):
                 other_user = other_part.user if other_part else None
                 is_online = False
                 last_active = "Offline"
+                other_pic = None
                 if other_user:
                     try:
-                        profile = other_user.profile
-                        is_online = profile.is_online
-                        if is_online:
-                            last_active = "Online"
-                        else:
-                            last_active = "Offline"
+                        profile = getattr(other_user, "profile", None)
+                        if profile:
+                            is_online = profile.is_online
+                            last_active = "Online" if is_online else "Offline"
+                            if profile.profile_picture:
+                                other_pic = request.build_absolute_uri(profile.profile_picture.url)
                     except Exception:
                         pass
 
@@ -125,10 +131,11 @@ class ConversationListView(APIView):
                         "id": other_user.id if other_user else None,
                         "username": other_user.username if other_user else "",
                         "email": other_user.email if other_user else "",
-                        "full_name": getattr(other_user, "full_name", "") if other_user else "",
+                        "full_name": getattr(other_user, "full_name", "") or (f"{other_user.first_name} {other_user.last_name}".strip() if other_user else "") or (other_user.username if other_user else ""),
                         "phone": getattr(other_user, "phone", "") if other_user else "",
                         "language": getattr(other_user, "language", "") if other_user else "",
                         "avatar_emoji": getattr(other_user, "avatar_emoji", "👤") if other_user else "👤",
+                        "profile_picture": other_pic,
                         "is_online": is_online,
                         "last_active": last_active,
                     },

@@ -347,7 +347,7 @@ export default function Navbar({ isDashboard = false }) {
                   <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600 border border-orange-500/20">
                     {user?.profile_picture ? (
                       <img
-                        src={user.profile_picture}
+                        src={user.profile_picture.startsWith("http") ? user.profile_picture : `${API_BASE_URL}${user.profile_picture}`}
                         alt={username || "User"}
                         className="w-full h-full object-cover"
                       />

@@ -17,7 +17,7 @@ class UserListView(APIView):
             users = User.objects.exclude(id=request.user.id).order_by("username")
         else:
             users = User.objects.all().order_by("username")
-        return Response(UserSerializer(users, many=True).data)
+        return Response(UserSerializer(users, many=True, context={"request": request}).data)
 
 class GetOrCreateConversationView(APIView):
     permission_classes = [permissions.IsAuthenticated]

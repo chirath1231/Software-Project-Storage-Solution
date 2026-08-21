@@ -4,7 +4,7 @@ import Navbar from "../components/NavBar/NavBar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Footer from "../components/Footer/Footer";
 import { useAuth } from "../auth/AuthContext";
-import { WS_BASE_URL } from "../config";
+import { WS_BASE_URL, API_BASE_URL } from "../config";
 import api from "../api/axios";
 
 // Helper: format time nicely
@@ -15,6 +15,12 @@ const formatTime = (isoOrDate) => {
   } catch {
     return "";
   }
+};
+
+const getProfileImgSrc = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${API_BASE_URL}${url}`;
 };
 
 const ClientChatSystem = () => {
@@ -44,6 +50,7 @@ const ClientChatSystem = () => {
   const [editGroupNameVal, setEditGroupNameVal] = useState("");
   const [groupSearchQuery, setGroupSearchQuery] = useState("");
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [showAddMemberDropdown, setShowAddMemberDropdown] = useState(false);
 
   const wsRef = useRef(null);
   const fileInputRef = useRef(null); // ✅ For file attachments
@@ -97,6 +104,7 @@ const ClientChatSystem = () => {
         name: selectedConversation.name || "Group Chat",
         adminId: selectedConversation.admin_id,
         avatar: "👥",
+        profile_picture: null,
         online: false,
         lastActive: "",
         recentFiles: selectedConversation.recent_files || [],
@@ -120,6 +128,7 @@ const ClientChatSystem = () => {
       phone: other.phone || "",
       language: other.language || "",
       avatar: other.avatar_emoji || "👤",
+      profile_picture: other.profile_picture || null,
       online: Boolean(other.is_online),
       lastActive: other.last_active || (Boolean(other.is_online) ? "Online" : "Offline"),
       recentFiles: selectedConversation.recent_files || [],
@@ -625,8 +634,12 @@ const ClientChatSystem = () => {
                           }}
                           className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-50/70 transition-colors group border border-transparent hover:border-orange-200 mb-1"
                         >
-                          <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
-                            {u.username?.[0]?.toUpperCase() || "👤"}
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                            {u.profile_picture ? (
+                              <img src={getProfileImgSrc(u.profile_picture)} alt={u.username} className="w-full h-full object-cover" />
+                            ) : (
+                              u.username?.[0]?.toUpperCase() || "👤"
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
@@ -667,9 +680,13 @@ const ClientChatSystem = () => {
                             onClick={() => { setSelectedConversationId(conv.id); setSearch(""); }}
                             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50 text-gray-800"}`}
                           >
-                            <div className="relative">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-xl">
-                                {avatar}
+                            <div className="relative flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-xl">
+                                {other.profile_picture ? (
+                                  <img src={getProfileImgSrc(other.profile_picture)} alt={name} className="w-full h-full object-cover" />
+                                ) : (
+                                  avatar
+                                )}
                               </div>
                               {online && (
                                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
@@ -706,9 +723,13 @@ const ClientChatSystem = () => {
                         onClick={() => setSelectedConversationId(conv.id)}
                         className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"}`}
                       >
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
-                            {avatar}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
+                            {other.profile_picture ? (
+                              <img src={getProfileImgSrc(other.profile_picture)} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              avatar
+                            )}
                           </div>
                           {online && (
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -755,8 +776,12 @@ const ClientChatSystem = () => {
                   </button>
 
                   <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
-                      {selectedClient.avatar}
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
+                      {selectedClient.profile_picture ? (
+                        <img src={getProfileImgSrc(selectedClient.profile_picture)} alt={selectedClient.name} className="w-full h-full object-cover" />
+                      ) : (
+                        selectedClient.avatar
+                      )}
                     </div>
                     {selectedClient.online && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -880,8 +905,12 @@ const ClientChatSystem = () => {
                 {/* Details Contents */}
                 <div className="flex flex-col items-center text-center mb-6 w-full">
                   <div className="relative mb-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-5xl border-4 border-white shadow-lg">
-                      {selectedClient.avatar}
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-5xl border-4 border-white shadow-lg">
+                      {selectedClient.profile_picture ? (
+                        <img src={getProfileImgSrc(selectedClient.profile_picture)} alt={selectedClient.name} className="w-full h-full object-cover" />
+                      ) : (
+                        selectedClient.avatar
+                      )}
                     </div>
                     {selectedClient.online && (
                       <div className="absolute bottom-2 right-2 w-5 h-5 bg-green-500 rounded-full border-3 border-white"></div>
