@@ -120,44 +120,6 @@ export default function SecuritySettings() {
             </div>
           )}
         </div>
-
-        {/* Connected Devices */}
-        <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Connected Devices
-          </h2>
-          <button
-            onClick={() => window.open("https://your-app-link.com", "_blank")}
-            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 py-2 rounded-lg font-semibold hover:scale-105 transition mb-6"
-            >
-            Download Mobile App
-          </button>
-
-          {/* <div className="space-y-3">
-            {devices.map((device) => (
-              <div
-                key={device.id}
-                className="p-3 border rounded-lg flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-medium text-gray-800">
-                    {device.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {device.location}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {device.lastActive}
-                  </p>
-                </div>
-
-                <button className="text-sm text-red-500 hover:underline">
-                  Logout
-                </button>
-              </div>
-            ))}
-          </div> */}
-        </div>
       </div>
 
       {/*  Restore Account Button */}
