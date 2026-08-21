@@ -1,4 +1,5 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -25,6 +26,7 @@ MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 # GET ALL SUBSCRIPTIONS
 # --------------------------------------------------------
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def subscription_list(request):
     """
     Returns all available subscription plans
@@ -37,8 +39,8 @@ def subscription_list(request):
 # --------------------------------------------------------
 # GET USER'S ACTIVE SUBSCRIPTIONS
 # --------------------------------------------------------
-# views.py (replace only the user_subscriptions function)
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def user_subscriptions(request, email):
     """
     Returns all active subscriptions for a specific user email.
@@ -58,7 +60,8 @@ def user_subscriptions(request, email):
             "amount": str(r.amount),
             "order_id": r.order_id,
             "payment_id": r.payment_id,
-            "date": r.created_at.isoformat(),
+            "status": r.status,
+            "created_at": r.created_at.isoformat(),
         }
         for r in records
     ]
@@ -71,6 +74,7 @@ def user_subscriptions(request, email):
 # CREATE PAYMENT → FRONTEND REDIRECTS TO PAYHERE
 # --------------------------------------------------------
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def create_payhere_payment(request):
     """
     Creates a payment record and returns PayHere checkout data
