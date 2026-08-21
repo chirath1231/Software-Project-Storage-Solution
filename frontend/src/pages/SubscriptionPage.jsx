@@ -111,7 +111,7 @@ export default function SubscriptionPage() {
 
   const totalGB = currentPlan?.storage || 5;
   const usedCapped = Math.min(usedGB, totalGB);
-  const percentage = Math.min(Math.round((usedGB / totalGB) * 100), 100);
+  const percentage = Math.min((usedGB / totalGB) * 100, 100);
 
   return (
     <div className="px-6 py-10 min-h-screen">
@@ -143,25 +143,30 @@ export default function SubscriptionPage() {
               <div
                 className="h-4 rounded-full transition-all duration-700"
                 style={{
-                  width: `${percentage}%`,
+                  width: `${percentage.toFixed(2)}%`,
                   background: "linear-gradient(to right, #f97316, #fb923c)",
                 }}
               />
             </div>
             <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
-              {percentage}%
+              {percentage.toFixed(2)}%
             </span>
           </div>
         </div>
 
         {/* GB display */}
         <div className="whitespace-nowrap">
-          <span className="text-3xl font-bold text-gray-800">
-            {usedCapped.toFixed(0)}GB
-          </span>
-          <span className="text-base text-gray-400 font-medium">
-            /{totalGB}GB
-          </span>
+          <div className="whitespace-nowrap">
+            <span className="text-3xl font-bold text-gray-800">
+              {usedGB < 1
+                ? `${(usedGB * 1024).toFixed(0)}MB`
+                : `${usedCapped.toFixed(2)}GB`}
+            </span>
+
+            <span className="text-base text-gray-400 font-medium">
+              /{totalGB}GB
+            </span>
+          </div>
         </div>
 
         {/* Upgrade button */}
