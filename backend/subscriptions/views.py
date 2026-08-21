@@ -13,12 +13,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 import os
+import base64
 
 # --------------------------------------------------------
 # PAYHERE CONFIG  (LOAD FROM ENV OR FALLBACK TO SANDBOX)
 # --------------------------------------------------------
 MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "1237637")
-MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "MzQ4MjE5MzA2MzM2MDI2OTE3MDY1MTIwMzY4MTcyNTI4Mjc2NjI0")
+MERCHANT_SECRET_RAW = os.getenv("PAYHERE_MERCHANT_SECRET", "MzQ4MjE5MzA2MzM2MDI2OTE3MDY1MTIwMzY4MTcyNTI4Mjc2NjI0")
+
+# Auto-decode base64 if needed (PayHere Sandbox secret is base64 encoded)
+try:
+    decoded = base64.b64decode(MERCHANT_SECRET_RAW).decode("utf-8")
+    if decoded.isalnum():
+        MERCHANT_SECRET = decoded
+    else:
+        MERCHANT_SECRET = MERCHANT_SECRET_RAW
+except Exception:
+    MERCHANT_SECRET = MERCHANT_SECRET_RAW
 
 # PayHere requires md5(secret)
 MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
