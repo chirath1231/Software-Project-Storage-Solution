@@ -240,27 +240,36 @@ def check_intent(prompt):
         return KNOWLEDGE_BASE.get(best_intent)
 
     return None
-   
+
 def ask_gemini(user_message: str):
-    # These now correctly receive just "hi", "how to delete", etc.
-    
-    greeting = handle_greetings(user_message)
-    if greeting:
-        return greeting
-
-    kb_answer = check_intent(user_message)
-    if kb_answer:
-        return kb_answer
-
-    faq_answer = check_faq(user_message)
-    if faq_answer:
-        return faq_answer
-
     key = user_message.strip().lower()
+
+    # 1. CACHE CHECK
     if key in CACHE:
+        print("CACHE HIT")
         return CACHE[key]
 
-    # Only here do we build the full prompt for Gemini
+    print("CACHE MISS")
+
+    # 2. GREETING CHECK
+    greeting = handle_greetings(user_message)
+    if greeting:
+        CACHE[key] = greeting
+        return greeting
+
+    # 3. FAQ CHECK
+    faq_answer = check_faq(user_message)
+    if faq_answer:
+        CACHE[key] = faq_answer
+        return faq_answer
+
+    # 4. KNOWLEDGE BASE CHECK
+    kb_answer = check_intent(user_message)
+    if kb_answer:
+        CACHE[key] = kb_answer
+        return kb_answer
+
+    # 5. GEMINI FALLBACK
     full_prompt = f"""
     {SYSTEM_PROMPT}
 
@@ -273,22 +282,27 @@ def ask_gemini(user_message: str):
     for attempt in range(2):
         try:
             print("CALLING GEMINI API")
+
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
-                # model = "gemini-3.1-flash-lite",
-                # model = "gemini-3-flash",
-                contents=[full_prompt]  # single assembled string
+                contents=[full_prompt]
             )
+
             answer = response.text
+
+            # 6. SAVE GEMINI RESPONSE TO CACHE
             CACHE[key] = answer
+
             return answer
 
         except ServerError:
             return "AI is currently busy. Please try again in a few seconds."
+
         except ClientError as e:
             if "429" in str(e):
                 time.sleep(2)
                 continue
+
             return f"AI error: {str(e)}"
 
     return "AI is busy. Please retry after a few seconds."
