@@ -28,6 +28,7 @@ import ClientChatSystem from "./pages/ClientChatSystem.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import DashboardSupport from "./pages/DashboardSupport";
 import DashboardSettings from "./pages/DashboardSettings.jsx";
+import MyProfile from "./pages/MyProfile.jsx";
 import ProfileSettings from "./pages/ProfileSettings.jsx";
 import SecuritySettings from "./pages/SecuritySettings.jsx";
 import SubscriptionPage from "./pages/SubscriptionPage.jsx";
@@ -87,6 +88,8 @@ function App() {
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="support" element={<DashboardSupport />} />
                 <Route path="settings" element={<DashboardSettings />} />
+                <Route path="profile" element={<MyProfile />} />
+                <Route path="profile-settings" element={<ProfileSettings />} />
                 <Route path="settings/profile" element={<ProfileSettings />} />
                 <Route path="security" element={<SecuritySettings />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
