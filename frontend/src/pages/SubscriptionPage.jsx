@@ -95,7 +95,11 @@ export default function SubscriptionPage() {
           alert("PayHere Error: " + error);
         };
 
-        window.payhere.startPayment(data.paymentData);
+        const paymentObj = {
+          ...data.paymentData,
+          sandbox: true,
+        };
+        window.payhere.startPayment(paymentObj);
       } else {
         const form = document.createElement("form");
         form.method = "POST";

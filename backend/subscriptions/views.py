@@ -117,6 +117,7 @@ def create_payhere_payment(request):
 
     # Prepare payment data for PayHere checkout
     paymentData = {
+        "sandbox": True,
         "merchant_id": MERCHANT_ID,
         "return_url": f"{origin}/dashboard/payment-success",
         "cancel_url": f"{origin}/dashboard/subscription",
