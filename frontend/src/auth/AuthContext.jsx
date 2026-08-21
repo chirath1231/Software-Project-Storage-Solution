@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import api from "../api/axios";
 
 const AuthContext = createContext();
 
@@ -9,30 +10,55 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   
-  useEffect(() => {
+useEffect(() => {
   const savedToken =
     sessionStorage.getItem("token") || localStorage.getItem("token");
 
   const savedUser =
     sessionStorage.getItem("user") || localStorage.getItem("user");
 
-  if (savedToken) {
-    setToken(savedToken);
+  if (!savedToken) {
+    setLoading(false);
+    return;
   }
 
+  setToken(savedToken);
+
+  // First load cached user so UI can render quickly
   if (savedUser) {
     setUser(JSON.parse(savedUser));
   }
 
-  setLoading(false);
+  // Then fetch the latest profile from backend
+  api.get("/api/accounts/profile/")
+    .then((res) => {
+      const freshUser = res.data;
+
+      setUser(freshUser);
+
+      // Update stored user information as well
+      const storage = sessionStorage.getItem("token")
+        ? sessionStorage
+        : localStorage;
+
+      storage.setItem("user", JSON.stringify(freshUser));
+    })
+    .catch((err) => {
+      console.error("Error fetching current user profile:", err);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+
 }, []);
 
 useEffect(() => {
   console.log("USER:", user);
 }, [user]);
 
-  const login = (token, userData, rememberMe = false) => {
-    if (!userData) return; 
+  const login = async (token, userData, rememberMe = false) => {
+    if (!userData) return;
+
     const storage = rememberMe ? localStorage : sessionStorage;
 
     storage.setItem("token", token);
@@ -40,6 +66,19 @@ useEffect(() => {
 
     setToken(token);
     setUser(userData);
+
+    // Get complete/latest profile information
+    try {
+      const response = await api.get("/api/accounts/profile/");
+
+      const freshUser = response.data;
+
+      storage.setItem("user", JSON.stringify(freshUser));
+      setUser(freshUser);
+
+    } catch (error) {
+      console.error("Could not fetch profile after login:", error);
+    }
   };
 
   const logout = () => {
