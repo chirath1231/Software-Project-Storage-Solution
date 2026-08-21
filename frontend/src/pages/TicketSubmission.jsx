@@ -25,6 +25,7 @@ export default function TicketSubmission() {
   const [focused, setFocused] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const emailParam = searchParams.get("email");
     if (emailParam) {
       setForm((f) => ({ ...f, email: emailParam }));

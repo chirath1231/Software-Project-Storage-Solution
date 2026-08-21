@@ -47,9 +47,23 @@ import AdminSubscriptionAnalytics from "./pages/AdminSubscriptionAnalytics";
 import AdminPermissionsManager from "./pages/AdminPermissionsManager";
 import AdminUnauthorized from "./pages/AdminUnauthorized";
 
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         {/* Global Brain Provider - MUST wrap routes to prevent context crashes */}
         <NotificationProvider>
