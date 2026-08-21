@@ -269,10 +269,8 @@ const ClientChatSystem = () => {
     }
   };
 
-  useEffect(() => {
-    loadConversations();
-    loadUsers();
-  }, []);
+  const reconnectTimeoutRef = useRef(null);
+
   // ----------------- Load Conversations on mount -----------------
   useEffect(() => {
     loadConversations();
@@ -280,129 +278,157 @@ const ClientChatSystem = () => {
     // eslint-disable-next-line
   }, []);
 
-  // ----------------- Global WebSocket Connection -----------------
+  // ----------------- Global WebSocket Connection with Auto-Reconnect -----------------
   useEffect(() => {
     if (!token) {
       console.warn("No JWT token found. WebSocket will not connect.");
       return;
     }
 
-    const wsUrl = `${WS_BASE_URL}/ws/chat/?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let isComponentMounted = true;
 
-    ws.onopen = () => console.log("WS connected globally:", wsUrl);
+    const connectWebSocket = () => {
+      if (!isComponentMounted) return;
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      const wsUrl = `${WS_BASE_URL}/ws/chat/?token=${encodeURIComponent(token)}`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-        // 1. Handle status updates
-        if (data.type === "status_update") {
-          setConversations((prev) =>
-            prev.map((c) => {
-              const isMatch = c.other_user?.id && data.user_id && Number(c.other_user.id) === Number(data.user_id);
-              return isMatch
-                ? {
-                    ...c,
-                    other_user: {
-                      ...c.other_user,
-                      is_online: data.is_online,
-                      last_active: data.is_online ? "Online" : "Offline",
-                    },
-                  }
-                : c;
-            })
-          );
-          return;
-        }
+      ws.onopen = () => {
+        console.log("WS connected globally:", wsUrl);
+      };
 
-        // 3. Handle group updates
-        if (data.type === "group_update") {
-          loadConversations();
-          return;
-        }
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-        // 4. Handle message deletion
-        if (data.type === "message_deleted") {
-          const deletedId = data.message_id;
-          if (deletedId) {
-            setMessages((prev) =>
-              prev.filter((m) => String(m.id) !== String(deletedId))
+          // 1. Handle status updates
+          if (data.type === "status_update") {
+            setConversations((prev) =>
+              prev.map((c) => {
+                const isMatch = c.other_user?.id && data.user_id && Number(c.other_user.id) === Number(data.user_id);
+                return isMatch
+                  ? {
+                      ...c,
+                      other_user: {
+                        ...c.other_user,
+                        is_online: data.is_online,
+                        last_active: data.is_online ? "Online" : "Offline",
+                      },
+                    }
+                  : c;
+              })
             );
-          }
-          loadConversations();
-          return;
-        }
-
-        // 2. Handle chat messages
-        if (data.type === "chat_message") {
-          const incomingText = (data.text || "").trim();
-          if (!incomingText) return;
-
-          const incoming = {
-            id: data.id ?? `ws-${Date.now()}`,
-            text: incomingText,
-            sender: data.sender ?? null,
-            sender_username: data.sender_username ?? "Unknown",
-            timestamp: data.created_at || new Date().toISOString(),
-            is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
-          };
-
-          // If the message is for the currently active conversation, append it in real-time
-          const isMsgForActive = data.conversation && selectedIdRef.current && Number(data.conversation) === Number(selectedIdRef.current);
-          if (isMsgForActive) {
-            setMessages((prev) => {
-              if (data.client_id) {
-                const idx = prev.findIndex((m) => String(m.id) === String(data.client_id));
-                if (idx !== -1) {
-                  const copy = [...prev];
-                  copy[idx] = { ...incoming, id: data.id || incoming.id };
-                  return copy;
-                }
-              }
-              if (incoming.id && prev.some((m) => String(m.id) === String(incoming.id))) return prev;
-              return [...prev, incoming];
-            });
+            return;
           }
 
-          // Update sidebar conversations list (move to top, set last message, increment unread if not selected)
-          setConversations((prev) => {
-            const updated = prev.map((c) => {
-              if (c.id && data.conversation && Number(c.id) === Number(data.conversation)) {
-                const isCurrent = selectedIdRef.current && Number(c.id) === Number(selectedIdRef.current);
-                return {
-                  ...c,
-                  last_message: {
-                    text: incomingText,
-                    timestamp: incoming.timestamp,
-                  },
-                  unread_count: isCurrent ? 0 : (c.unread_count || 0) + (incoming.is_mine ? 0 : 1),
-                };
-              }
-              return c;
-            });
-            // Sort conversations (newest message or creation time first)
-            const getConvTime = (conv) => {
-              if (conv.last_message?.timestamp) return new Date(conv.last_message.timestamp).getTime();
-              if (conv.created_at) return new Date(conv.created_at).getTime();
-              return conv.id || 0;
+          // 3. Handle group updates
+          if (data.type === "group_update") {
+            loadConversations();
+            return;
+          }
+
+          // 4. Handle message deletion
+          if (data.type === "message_deleted") {
+            const deletedId = data.message_id;
+            if (deletedId) {
+              setMessages((prev) =>
+                prev.filter((m) => String(m.id) !== String(deletedId))
+              );
+            }
+            loadConversations();
+            return;
+          }
+
+          // 2. Handle chat messages
+          if (data.type === "chat_message") {
+            const incomingText = (data.text || "").trim();
+            if (!incomingText) return;
+
+            const incoming = {
+              id: data.id ?? `ws-${Date.now()}`,
+              text: incomingText,
+              sender: data.sender ?? null,
+              sender_username: data.sender_username ?? "Unknown",
+              timestamp: data.created_at || new Date().toISOString(),
+              is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
             };
-            return updated.sort((a, b) => getConvTime(b) - getConvTime(a));
-          });
+
+            // If the message is for the currently active conversation, append it in real-time
+            const isMsgForActive = data.conversation && selectedIdRef.current && Number(data.conversation) === Number(selectedIdRef.current);
+            if (isMsgForActive) {
+              setMessages((prev) => {
+                if (data.client_id) {
+                  const idx = prev.findIndex((m) => String(m.id) === String(data.client_id));
+                  if (idx !== -1) {
+                    const copy = [...prev];
+                    copy[idx] = { ...incoming, id: data.id || incoming.id };
+                    return copy;
+                  }
+                }
+                if (incoming.id && prev.some((m) => String(m.id) === String(incoming.id))) return prev;
+                return [...prev, incoming];
+              });
+            }
+
+            // Update sidebar conversations list (move to top, set last message, increment unread if not selected)
+            setConversations((prev) => {
+              const updated = prev.map((c) => {
+                if (c.id && data.conversation && Number(c.id) === Number(data.conversation)) {
+                  const isCurrent = selectedIdRef.current && Number(c.id) === Number(selectedIdRef.current);
+                  return {
+                    ...c,
+                    last_message: {
+                      text: incomingText,
+                      timestamp: incoming.timestamp,
+                    },
+                    unread_count: isCurrent ? 0 : (c.unread_count || 0) + (incoming.is_mine ? 0 : 1),
+                  };
+                }
+                return c;
+              });
+              // Sort conversations (newest message or creation time first)
+              const getConvTime = (conv) => {
+                if (conv.last_message?.timestamp) return new Date(conv.last_message.timestamp).getTime();
+                if (conv.created_at) return new Date(conv.created_at).getTime();
+                return conv.id || 0;
+              };
+              return updated.sort((a, b) => getConvTime(b) - getConvTime(a));
+            });
+          }
+        } catch (e) {
+          console.error("WS message parse error:", e);
         }
-      } catch (e) {
-        console.error("WS message parse error:", e);
-      }
+      };
+
+      ws.onclose = (e) => {
+        console.log("WS closed:", e.reason || e.code);
+        if (isComponentMounted) {
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        }
+      };
+
+      ws.onerror = (e) => {
+        console.error("WS error:", e);
+        try {
+          ws.close();
+        } catch {}
+      };
     };
 
-    ws.onclose = () => console.log("WS closed");
-    ws.onerror = (e) => console.error("WS error:", e);
+    connectWebSocket();
 
     return () => {
-      try {
-        ws.close();
-      } catch { }
+      isComponentMounted = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        try {
+          wsRef.current.onclose = null;
+          wsRef.current.close();
+        } catch {}
+      }
     };
   }, [currentUsername, token]);
 
