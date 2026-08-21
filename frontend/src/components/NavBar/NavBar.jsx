@@ -29,6 +29,7 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar({ isDashboard = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, isAuthenticated, username, logout } = useAuth();
   const rawName = user?.first_name || username || "User";
   const displayUsername = rawName.includes("@") ? rawName.split("@")[0] : rawName;
   const [showProfileMenu, setShowProfileMenu] = useState(false);
