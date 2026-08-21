@@ -54,10 +54,11 @@ export default function ProfileSettings() {
 
     // validation BEFORE API call
     const phoneRegex = /^(?:\+94|0)?7\d{8}$/;
-    if (!phoneRegex.test(contact)) {
+    if (contact && contact.trim() !== "" && !phoneRegex.test(contact)) {
       setContactError("Invalid phone number format");
       return;
     }
+    setContactError("");
 
     try {
       const formData = new FormData();

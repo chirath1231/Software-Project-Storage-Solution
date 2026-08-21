@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import { useAuth } from "../auth/AuthContext"; 
+import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from "../config";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -13,55 +14,63 @@ export default function ProfilePage() {
     total: 100,
   });
 
+  useEffect(() => {
+    // Fetch profile
+    api
+      .get("/api/accounts/profile/")
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
+        updateUser(userData);
 
-useEffect(() => {
-  // Fetch profile
-  api.get("/api/accounts/profile/")
-  .then((res) => {
+        if (userData.profile_picture) {
+          setProfilePicURL(userData.profile_picture);
+        }
 
-    setUser(res.data);
-    updateUser(res.data); // <-- THIS updates Navbar too
+        // Fetch actual files and subscription to calculate real storage
+        const userEmail = userData.email || localStorage.getItem("username");
 
-    if (res.data.profile_picture) {
-      setProfilePicURL(res.data.profile_picture);
-    }
-  })
-  .catch((err) => console.error("Error fetching profile:", err));
+        Promise.all([
+          api.get("/api/files/").then((r) => r.data).catch(() => []),
+          userEmail
+            ? api
+                .get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
+                .then((r) => r.data)
+                .catch(() => [])
+            : Promise.resolve([]),
+        ]).then(([files, userActive]) => {
+          const totalBytes = (files || []).reduce(
+            (sum, file) => sum + (file.size || 0),
+            0
+          );
+          const usedGB = totalBytes / 1024 / 1024 / 1024;
 
-  // Fetch actual files to calculate real storage 
-  const userEmail = localStorage.getItem("username");
+          const highestPlan = (userActive || []).reduce((max, plan) => {
+            return (plan.storage > (max?.storage || 0)) ? plan : max;
+          }, null);
+          const totalGB = highestPlan?.storage || 5;
 
-  Promise.all([
-    api.get("/api/files/").then(res => res.data).catch(() => []),
-    userEmail
-      ? fetch(`http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
-          .then(res => res.ok ? res.json() : [])
-      : Promise.resolve([])
-  ]).then(([files, userActive]) => {
-    // Calculate used GB from files
-    const totalBytes = (files || []).reduce((sum, file) => sum + (file.size || 0), 0);
-    const usedGB = totalBytes / 1024 / 1024 / 1024;
+          setStorage({ used: usedGB, total: totalGB });
+        });
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, []);
 
-    // Get total GB from highest active plan
-    const highestPlan = (userActive || []).reduce((max, plan) => {
-      return (plan.storage > (max?.storage || 0)) ? plan : max;
-    }, null);
-    const totalGB = highestPlan?.storage || 5;
+  const percentage = storage.total > 0 ? Math.min((storage.used / storage.total) * 100, 100) : 0;
+  const safePercentage = percentage;
 
-    setStorage({ used: usedGB, total: totalGB });
-  });
-}, []);
+  if (!user) return <p className="p-6 text-gray-500">Loading profile...</p>;
 
-const percentage = Math.min((storage.used / storage.total) * 100, 100);
-const safePercentage = percentage; 
+  const getProfileImgSrc = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `${API_BASE_URL}${url}`;
+  };
 
-  if (!user) return <p>Loading...</p>;
   return (
     <div className="flex min-h-screen">
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-
         <div className="p-6">
           {/* Header */}
           <h1 className="text-3xl font-bold text-gray-800 pb-11">
@@ -75,7 +84,7 @@ const safePercentage = percentage;
               <div className="w-24 h-24 rounded-full overflow-hidden">
                 {profilePicURL ? (
                   <img
-                    src={profilePicURL.startsWith("/media") ? `http://localhost:8000${profilePicURL}` : profilePicURL}
+                    src={getProfileImgSrc(profilePicURL)}
                     alt="profile"
                     className="w-full h-full object-cover"
                   />
@@ -87,12 +96,20 @@ const safePercentage = percentage;
               </div>
 
               <h2 className="mt-4 font-semibold text-2xl">{user.username}</h2>
-              <p className="text-gray-500 text-lg">{user.first_name} {user.last_name}</p> 
-              <p className="text-gray-500 text-lg">Country: {user.state}</p> 
+              <p className="text-gray-500 text-lg">
+                {[user.first_name, user.last_name].filter(Boolean).join(" ") || "No Name Provided"}
+              </p>
+              {user.country && (
+                <p className="text-gray-500 text-lg">Country: {user.country}</p>
+              )}
+              {user.state && (
+                <p className="text-gray-500 text-lg">State: {user.state}</p>
+              )}
 
-              <button 
-              onClick={() => navigate("/dashboard/profile-settings")}
-              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+              <button
+                onClick={() => navigate("/dashboard/profile-settings")}
+                className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+              >
                 Edit Profile
               </button>
             </div>
