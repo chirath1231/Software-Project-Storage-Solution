@@ -56,7 +56,7 @@ export default function TicketSubmission() {
 
     setLoading(true);
     try {
-      const response = await api.post("/tickets/", {
+      const response = await api.post("/api/tickets/", {
         name: form.name,
         email: form.email,
         category: form.category,

@@ -6,12 +6,16 @@ from notifications.utils import create_system_notification
 
 class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
-    # Change from AllowAny to IsAuthenticated
-    permission_classes = [permissions.IsAuthenticated] 
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return Ticket.objects.filter(user=self.request.user)
+        if self.request.user and self.request.user.is_authenticated:
+            return Ticket.objects.filter(user=self.request.user)
+        return Ticket.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        if self.request.user and self.request.user.is_authenticated:
+            serializer.save(user=self.request.user)
+        else:
+            serializer.save()
         
