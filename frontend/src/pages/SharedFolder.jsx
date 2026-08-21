@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Download, Folder, File, Lock, FileText, Image as ImageIcon, Music, Video } from "lucide-react";
 import api from "../api/axios";
 
 export default function SharedFolder() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
@@ -14,11 +15,13 @@ export default function SharedFolder() {
       .get(`/api/shared/folder/${token}/`)
       .then((res) => setData(res.data))
       .catch((err) => {
-        if (err.response?.status === 403) setError("You don't have permission to access this folder.");
+        if (err.response?.status === 401) {
+          navigate("/login", { state: { from: location.pathname } });
+        } else if (err.response?.status === 403) setError("You don't have permission to access this folder.");
         else if (err.response?.status === 404) setError("This share link is invalid or has been revoked.");
         else if (err.response) setError(err.response.data?.error || "Unable to load this folder.");
       });
-  }, [token]);
+  }, [token, navigate, location.pathname]);
 
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -47,7 +50,7 @@ export default function SharedFolder() {
           </div>
           <h2 className="text-lg font-semibold text-gray-800 mb-2">Access Denied</h2>
           <p className="text-gray-500 text-sm">{error}</p>
-          <button onClick={() => navigate("/login")}
+          <button onClick={() => navigate("/login", { state: { from: location.pathname } })}
             className="mt-6 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition">
             Go to Login
           </button>
