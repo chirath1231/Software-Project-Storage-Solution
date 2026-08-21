@@ -388,12 +388,13 @@ const ClientChatSystem = () => {
               }
               return c;
             });
-            // Sort conversations (newest message first)
-            return updated.sort(
-              (a, b) =>
-                new Date(b.last_message?.timestamp || 0) -
-                new Date(a.last_message?.timestamp || 0)
-            );
+            // Sort conversations (newest message or creation time first)
+            const getConvTime = (conv) => {
+              if (conv.last_message?.timestamp) return new Date(conv.last_message.timestamp).getTime();
+              if (conv.created_at) return new Date(conv.created_at).getTime();
+              return conv.id || 0;
+            };
+            return updated.sort((a, b) => getConvTime(b) - getConvTime(a));
           });
         }
       } catch (e) {
@@ -460,7 +461,12 @@ const ClientChatSystem = () => {
           ? { ...c, last_message: { text, timestamp: new Date().toISOString() } }
           : c
       );
-      return updated.sort((a, b) => new Date(b.last_message?.timestamp || 0) - new Date(a.last_message?.timestamp || 0));
+      const getConvTime = (conv) => {
+        if (conv.last_message?.timestamp) return new Date(conv.last_message.timestamp).getTime();
+        if (conv.created_at) return new Date(conv.created_at).getTime();
+        return conv.id || 0;
+      };
+      return updated.sort((a, b) => getConvTime(b) - getConvTime(a));
     });
 
     // WebSocket send

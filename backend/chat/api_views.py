@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models.functions import Coalesce
 from django.db.models import Count, OuterRef, Subquery
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,17 +7,14 @@ from rest_framework import permissions, status
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-
 from .models import Conversation, ConversationParticipant, Message
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
 
 def _is_participant(user, conversation_id):
     return ConversationParticipant.objects.filter(
         conversation_id=conversation_id, user=user
     ).exists()
-
 
 class ConversationListView(APIView):
     """
@@ -37,7 +35,8 @@ class ConversationListView(APIView):
             last_text=Subquery(last_msg_qs.values("text")[:1]),
             last_time=Subquery(last_msg_qs.values("created_at")[:1]),
             pcount=Count("participants", distinct=True),
-        ).order_by("-last_time", "-id")
+            sort_time=Coalesce(Subquery(last_msg_qs.values("created_at")[:1]), "created_at"),
+        ).order_by("-sort_time", "-id")
 
         data = []
         for c in qs:
