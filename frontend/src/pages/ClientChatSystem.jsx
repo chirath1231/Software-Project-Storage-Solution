@@ -23,6 +23,23 @@ const getProfileImgSrc = (url) => {
   return `${API_BASE_URL}${url}`;
 };
 
+const formatChatDisplayName = (u) => {
+  if (!u) return "User";
+  if (typeof u === "string") {
+    return u.includes("@") ? u.split("@")[0] : u;
+  }
+  if (u.first_name || u.last_name) {
+    const fn = [u.first_name, u.last_name].filter(Boolean).join(" ");
+    if (fn.trim()) return fn;
+  }
+  if (u.full_name && u.full_name.trim()) {
+    const fn = u.full_name.trim();
+    if (!fn.includes("@")) return fn;
+  }
+  const raw = u.username || u.name || u.email || "User";
+  return raw.includes("@") ? raw.split("@")[0] : raw;
+};
+
 const ClientChatSystem = () => {
   const { accessToken: token } = useAuth();
 
