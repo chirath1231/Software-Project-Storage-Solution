@@ -101,12 +101,8 @@ export default function MyFiles() {
 
   const fetchFiles = async (storageGB = totalStorageGB, folderId = currentFolderId) => {
     try {
-<<<<<<< HEAD
-      const res = await api.get(`/api/files/`);
-=======
       const params = folderId ? `?folder=${folderId}` : "";
       const res = await api.get(`/api/${params}`);
->>>>>>> origin/main
       const data = res.data;
       setFiles(data);
       const totalBytes = data.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -114,19 +110,9 @@ export default function MyFiles() {
       setTotalUsedGB(Math.min(usedGB, storageGB).toFixed(2));
       setStorageUsed(Math.min(Math.round((usedGB / storageGB) * 100), 100));
       setIsStorageFull(usedGB >= storageGB * 0.99);
-<<<<<<< HEAD
-      setPageLoading(false);
-    } catch (err) {
-      console.error(err);
-      if (err.response?.status !== 401) {
-        alert("Failed to fetch files. Please check your connection.");
-      }
-      setPageLoading(false);
-=======
     } catch (err) {
       if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
       else alert("Failed to fetch files.");
->>>>>>> origin/main
     }
   };
 
@@ -212,16 +198,8 @@ export default function MyFiles() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-<<<<<<< HEAD
-      // Do NOT set Content-Type header — axios sets multipart/form-data automatically
-
-      const res = await api.post("/api/files/upload/", formData);
-      console.log("Upload response:", res.data);
-
-=======
       if (currentFolderId) formData.append("folder_id", currentFolderId);
       await api.post("/api/upload/", formData);
->>>>>>> origin/main
       setSelectedFile(null);
       const input = document.getElementById("file-input");
       if (input) input.value = "";
@@ -229,27 +207,14 @@ export default function MyFiles() {
       await fetchFiles(planGB, currentFolderId);
       if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
-<<<<<<< HEAD
-       console.error("Upload error detail:", JSON.stringify(err.response?.data));
-      if (err.response?.status !== 401) {
-        const serverMsg =
-          err.response?.data?.detail || err.response?.data?.error;
-        if (
-          err.response?.status === 413 ||
-          serverMsg?.toLowerCase().includes("storage")
-        ) {
-          setUploadError(
-            serverMsg || "Storage limit exceeded. Please upgrade your plan."
-          );
-        } else {
-          setUploadError(serverMsg || "Upload failed. Please try again.");
-        }
-=======
       if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
       else {
         const serverMsg = err.response?.data?.detail || err.response?.data?.error;
-        setUploadError(serverMsg || "Upload failed. Please try again.");
->>>>>>> origin/main
+        if (err.response?.status === 413 || serverMsg?.toLowerCase().includes("storage")) {
+          setUploadError(serverMsg || "Storage limit exceeded. Please upgrade your plan.");
+        } else {
+          setUploadError(serverMsg || "Upload failed. Please try again.");
+        }
       }
     } finally {
       setUploading(false);
@@ -264,15 +229,8 @@ export default function MyFiles() {
       await fetchFiles(planGB, currentFolderId);
       if (fetchGlobalNotifications) fetchGlobalNotifications();
     } catch (err) {
-<<<<<<< HEAD
-      console.error(err);
-      if (err.response?.status !== 401) {
-        alert("Delete failed.");
-      }
-=======
       if (err.response?.status === 401) { localStorage.clear(); navigate("/login"); }
       else alert("Delete failed.");
->>>>>>> origin/main
     }
   };
 
@@ -1047,29 +1005,6 @@ export default function MyFiles() {
         </div>
       )}
 
-<<<<<<< HEAD
-      {/* LOADING */}
-      {pageLoading && <p className="text-gray-400">Loading files...</p>}
-
-      {/* FILE GRID */}
-      {!pageLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {files.length === 0 && (
-            <p className="text-gray-400 col-span-full">No files uploaded yet</p>
-          )}
-
-          {files.map((file) => (
-            <div
-              key={file.id}
-              className="bg-white p-5 rounded-xl shadow border border-gray-100 flex flex-col items-center text-center relative"
-            >
-              {/* File Icon */}
-              <div className="mb-4">{getFileIcon(file.name)}</div>
-
-              {/* File Name */}
-              <p className="font-medium truncate w-full" title={file.name}>
-                {file.name}
-=======
       {/* ── Loading ── */}
       {loading && (
         <div className="flex items-center gap-3 text-gray-400 py-8">
@@ -1086,7 +1021,6 @@ export default function MyFiles() {
               <Folder size={48} className="text-gray-300 mb-3" />
               <p className="text-gray-400 font-medium">
                 {currentFolderId ? "This folder is empty" : "No files or folders yet"}
->>>>>>> origin/main
               </p>
               <p className="text-gray-300 text-sm mt-1">
                 {currentFolderId ? "Upload a file or create a sub-folder" : "Upload a file or create a folder to get started"}
@@ -1102,80 +1036,6 @@ export default function MyFiles() {
                   </div>
                 </div>
               )}
-<<<<<<< HEAD
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-4 relative">
-                <a
-                  href={file.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg"
-                >
-                  Open
-                </a>
-                <button
-                  onClick={() => deleteFile(file.id)}
-                  className="flex items-center gap-1 text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg"
-                >
-                  <Trash2 size={14} />
-                  Delete
-                </button>
-
-                {/* 3 Dots Menu */}
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === file.id ? null : file.id)
-                    }
-                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-lg font-bold"
-                  >
-                    ⋮
-                  </button>
-
-                  {openMenuId === file.id && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg z-10 p-2">
-                      <label className="text-xs text-gray-500 mb-1 block">Expiry Date:</label>
-                      <input
-                        type="datetime-local"
-                        className="w-full border border-gray-300 rounded px-2 py-1 mb-2 text-sm"
-                        value={shareExpiry}
-                        onChange={(e) => setShareExpiry(e.target.value)}
-                      />
-                      <button
-                        onClick={async () => {
-                          if (!shareExpiry) {
-                            alert("Please select expiry date");
-                            return;
-                          }
-                          try {
-                            const res = await api.post(`/api/files/${file.id}/share/`, {
-                              expiry_date: shareExpiry,
-                            });
-                            navigator.clipboard.writeText(res.data.url);
-                            alert(
-                              "Sharable URL copied! It will expire at " +
-                                new Date(res.data.expiry).toLocaleString()
-                            );
-                            setOpenMenuId(null);
-                            setShareExpiry("");
-                          } catch (err) {
-                            console.error(err);
-                            alert(err.response?.data?.error || "Failed to generate link");
-                          }
-                        }}
-                        className="block w-full text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded"
-                      >
-                        Generate & Copy Link
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-=======
               {files.length > 0 && (
                 <div>
                   {folders.length > 0 && <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Files</p>}
@@ -1200,7 +1060,6 @@ export default function MyFiles() {
             </div>
           )}
         </>
->>>>>>> origin/main
       )}
     </div>
   );
