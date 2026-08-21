@@ -18,24 +18,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # 1. Join user-specific group
         await self.channel_layer.group_add(self.user_group_name, self.channel_name)
 
-        # 2. Update status to Online in DB (returns True if this is the user's first connection)
+        # 2. Update status to Online in DB
         is_first_connection = await self.update_user_status(user.id, True)
 
-        # 3. Notify all chat partners that this user is online ONLY if it's the first connection
-        if is_first_connection:
-            partners = await self.get_chat_partners(user.id)
-            for partner_id in partners:
-                await self.channel_layer.group_send(
-                    f"user_{partner_id}",
-                    {
-                        "type": "presence_update",
-                        "user_id": user.id,
-                        "is_online": True,
-                        "last_seen": None
-                    }
-                )
-
         await self.accept()
+
+        # 3. Notify all chat partners that this user is online
+        partners = await self.get_chat_partners(user.id)
+        for partner_id in partners:
+            await self.channel_layer.group_send(
+                f"user_{partner_id}",
+                {
+                    "type": "presence_update",
+                    "user_id": user.id,
+                    "is_online": True,
+                    "last_seen": None
+                }
+            )
+
+        # 4. Sync online status of any already-online partners back to this newly connected user
+        online_partners = await self.get_online_chat_partners(partners)
+        for p_id in online_partners:
+            await self.send(text_data=json.dumps({
+                "type": "status_update",
+                "user_id": p_id,
+                "is_online": True,
+                "last_seen": None
+            }))
 
     async def disconnect(self, close_code):
         user = self.scope["user"]
@@ -146,6 +155,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         conv_ids = ConversationParticipant.objects.filter(user_id=user_id).values_list('conversation_id', flat=True)
         partner_ids = ConversationParticipant.objects.filter(conversation_id__in=conv_ids).exclude(user_id=user_id).values_list('user_id', flat=True)
         return list(set(partner_ids))
+
+    @database_sync_to_async
+    def get_online_chat_partners(self, partner_ids):
+        if not partner_ids:
+            return []
+        return list(Profile.objects.filter(user_id__in=partner_ids, is_online=True).values_list('user_id', flat=True))
 
     @database_sync_to_async
     def create_message(self, conversation_id, sender_id, text):

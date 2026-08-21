@@ -3,4 +3,7 @@ export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8
 
 // WebSocket base URL, derived from API_BASE_URL unless overridden
 export const WS_BASE_URL =
-  process.env.REACT_APP_WS_URL || API_BASE_URL.replace(/^http/, 'ws');
+  process.env.REACT_APP_WS_URL ||
+  (API_BASE_URL.startsWith('https')
+    ? API_BASE_URL.replace(/^https/, 'wss')
+    : API_BASE_URL.replace(/^http/, 'ws'));
