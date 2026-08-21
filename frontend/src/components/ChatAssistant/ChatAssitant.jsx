@@ -38,6 +38,10 @@ export default function ChatAssistant() {
     }
   );
 
+  if (!response.ok) {
+    return "Sorry, the assistant is unavailable right now. Please try again later.";
+  }
+
   const data = await response.json();
   return data.reply;
 };

@@ -25,6 +25,9 @@ urlpatterns = [
     path("api/chat/", include("chat.urls")),
     path("api/", include("chat.api_urls")),
 
+    # AI Assistant
+    path("api/assistant/", include("assistant.urls")),
+
     # Storage & File Management
     path("api/files/", include("storage.urls")),
     path("api/", include("storage.urls")),
