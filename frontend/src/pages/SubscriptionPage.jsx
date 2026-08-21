@@ -80,20 +80,36 @@ export default function SubscriptionPage() {
       const data = res.data;
       if (!data.success) return alert("Payment failed");
 
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "https://sandbox.payhere.lk/pay/checkout";
+      if (window.payhere && typeof window.payhere.startPayment === "function") {
+        window.payhere.onCompleted = function onCompleted(orderId) {
+          console.log("Payment completed. OrderID:" + orderId);
+          window.location.href = "/dashboard/payment-success";
+        };
+        window.payhere.onDismissed = function onDismissed() {
+          console.log("Payment dismissed");
+        };
+        window.payhere.onError = function onError(error) {
+          console.error("PayHere Error:", error);
+          alert("PayHere Error: " + error);
+        };
 
-      Object.entries(data.paymentData).forEach(([k, v]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = k;
-        input.value = v;
-        form.appendChild(input);
-      });
+        window.payhere.startPayment(data.paymentData);
+      } else {
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "https://sandbox.payhere.lk/pay/checkout";
 
-      document.body.appendChild(form);
-      form.submit();
+        Object.entries(data.paymentData).forEach(([k, v]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = k;
+          input.value = v;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+      }
     } catch (err) {
       console.error("Payment error:", err);
       alert("Payment error");
