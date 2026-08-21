@@ -1,11 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaYoutube, FaAngleRight } from "react-icons/fa";
 import serversalad from "../../assets/server_salad.png";
 
 export default function Footer() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (email.trim()) {
+      navigate(`/dashboard/ticket-submission?email=${encodeURIComponent(email.trim())}`);
+    } else {
+      navigate("/dashboard/ticket-submission");
+    }
+  };
+
   return (
     <footer className="bg-[#323D41] text-white mt-16">
-      
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Logo + Description */}
@@ -59,17 +71,29 @@ export default function Footer() {
 
         {/* Contact */}
         <div>
-          <h3 className="font-semibold mb-4">Contact Us</h3>
+          <h3
+            className="font-semibold mb-4 cursor-pointer hover:text-orange-400 transition-colors"
+            onClick={() => navigate("/dashboard/ticket-submission")}
+          >
+            Contact Us
+          </h3>
 
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="w-full p-3 rounded bg-gray-200 text-black mb-3 focus:outline-none"
-          />
+          <form onSubmit={handleSubmit}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="w-full p-3 rounded bg-gray-200 text-black mb-3 focus:outline-none"
+            />
 
-          <button className="bg-gradient-to-r from-orange-400 to-orange-600 text-white px-6 py-2 rounded mb-4">
-            Submit
-          </button>
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-orange-400 to-orange-600 text-white px-6 py-2 rounded mb-4 hover:opacity-90 transition-opacity"
+            >
+              Submit
+            </button>
+          </form>
 
           <ul className="text-sm text-gray-300 space-y-1">
             <li>+94 77 123 4567</li>

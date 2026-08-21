@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 
 const categories = ["Bug / Error", "Feature Request", "Account / Access", "Performance", "Content Issue", "Other"];
@@ -15,12 +16,20 @@ const initialForm = {
 };
 
 export default function TicketSubmission() {
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [ticketId, setTicketId] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState("");
+
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setForm((f) => ({ ...f, email: emailParam }));
+    }
+  }, [searchParams]);
 
   const validate = () => {
     const e = {};
