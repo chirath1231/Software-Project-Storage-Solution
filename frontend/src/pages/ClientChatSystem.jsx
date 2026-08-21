@@ -139,7 +139,12 @@ const ClientChatSystem = () => {
   // ----------------- Helpers: Load Conversations -----------------
   const loadConversations = async () => {
     try {
-      const res = await api.get("/conversations/");
+      let res;
+      try {
+        res = await api.get("/api/conversations/");
+      } catch {
+        res = await api.get("/conversations/");
+      }
       const list = res.data || [];
       setConversations(list);
 
@@ -160,9 +165,13 @@ const ClientChatSystem = () => {
     try {
       let res;
       try {
-        res = await api.get("/chat/users/");
+        res = await api.get("/api/chat/users/");
       } catch {
-        res = await api.get("/conversations/users/");
+        try {
+          res = await api.get("/chat/users/");
+        } catch {
+          res = await api.get("/api/conversations/users/");
+        }
       }
       setUsers(res.data || []);
     } catch (err) {

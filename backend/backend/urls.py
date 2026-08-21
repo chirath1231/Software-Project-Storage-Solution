@@ -24,6 +24,8 @@ urlpatterns = [
     # Chat System
     path("api/chat/", include("chat.urls")),
     path("api/", include("chat.api_urls")),
+    path("chat/", include("chat.urls")),
+    path("", include("chat.api_urls")),
 
     # AI Assistant
     path("api/assistant/", include("assistant.urls")),
