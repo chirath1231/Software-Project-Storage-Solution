@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import "../auth.css";
@@ -10,6 +10,7 @@ import { API_BASE_URL } from "../config";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
@@ -18,6 +19,13 @@ function Login() {
 
   function onChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  // Determines where to send the user after a successful login:
+  // if they were redirected here from a protected route, send them back there;
+  // otherwise fall back to the role-based dashboard.
+  function resolveRedirect(role) {
+    return location.state?.from || (role === "admin" ? "/admin-dashboard" : "/dashboard");
   }
 
   const handleGoogleSuccess = async (credentialResponse) => {
@@ -31,7 +39,11 @@ function Login() {
       });
 
       let data = {};
-      try { data = await res.json(); } catch { data = {}; }
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
 
       if (!res.ok) {
         setError(data.detail || data.error || "Google login failed");
@@ -41,7 +53,7 @@ function Login() {
       const userBase = data.user || { username: data.username, email: data.email, is_staff: false };
       const role = userBase.is_staff ? "admin" : "user";
       login(data.access, { ...userBase, role });
-      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
+      navigate(resolveRedirect(role));
     } catch (err) {
       console.error("GOOGLE LOGIN ERROR:", err);
       setError("Network error. Please try again.");
@@ -50,9 +62,9 @@ function Login() {
     }
   };
   // Outer try/catch handles network-level errors (e.g. server down, CORS, no internet).
- // Inner try/catch silently guards against non-JSON responses to prevent a parse crash.
-// HTTP errors (4xx/5xx) are handled separately via `res.ok` since fetch() doesn't throw on them.
-// `finally` ensures the loading state is always cleared regardless of outcome.
+  // Inner try/catch silently guards against non-JSON responses to prevent a parse crash.
+  // HTTP errors (4xx/5xx) are handled separately via `res.ok` since fetch() doesn't throw on them.
+  // `finally` ensures the loading state is always cleared regardless of outcome.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,7 +93,12 @@ function Login() {
       });
 
       let data = {};
-      try { data = await res.json(); } catch { data = {}; }console.log("ACCESS TOKEN:", data.access);
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+      console.log("ACCESS TOKEN:", data.access);
 
       if (!res.ok) {
         setError(data.detail || data.error || "Invalid email or password");
@@ -91,7 +108,7 @@ function Login() {
       const userBase = data.user || { username: data.username, email: data.email, is_staff: false };
       const role = userBase.is_staff ? "admin" : "user";
       login(data.access, { ...userBase, role });
-      navigate(role === "admin" ? "/admin-dashboard" : "/dashboard");
+      navigate(resolveRedirect(role));
     } catch (err) {
       console.error("LOGIN ERROR:", err);
       setError("Network error. Please try again.");
@@ -118,7 +135,7 @@ function Login() {
               className="input"
               required
             />
-           <div style={{ position: "relative", width: "100%" }}>
+            <div style={{ position: "relative", width: "100%" }}>
               <input
                 name="password"
                 value={form.password}
@@ -141,7 +158,7 @@ function Login() {
                   border: "none",
                   background: "none",
                   cursor: "pointer",
-                  color: "#666"
+                  color: "#666",
                 }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
