@@ -1,5 +1,3 @@
-import uuid
-
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -82,28 +80,3 @@ class File(models.Model):
 
     def __str__(self):
         return self.name
-
-
-# =========================================================
-# SHARE LINK MODEL
-# =========================================================
-
-class ShareLink(models.Model):
-    file = models.ForeignKey(
-        File,
-        on_delete=models.CASCADE,
-        related_name="share_links"
-    )
-
-    token = models.UUIDField(
-        default=uuid.uuid4,
-        unique=True,
-        editable=False
-    )
-
-    expiry = models.DateTimeField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Share link for {self.file.name}"
