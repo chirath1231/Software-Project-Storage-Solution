@@ -109,38 +109,3 @@ class Notification(models.Model):
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.get_or_create(user=instance)
-
-
-# =========================================================
-# ACCOUNT DELETION & OTP
-# =========================================================
-
-class AccountDeletion(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="deletion_request"
-    )
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.user.username} - Deleted: {self.is_deleted}"
-
-
-class PasswordResetOTP(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="reset_otps"
-    )
-    otp = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def is_valid(self):
-        from django.utils.timezone import now
-        from datetime import timedelta
-        return now() <= self.created_at + timedelta(minutes=10)
-
-    def __str__(self):
-        return f"{self.user.email} - OTP: {self.otp}"

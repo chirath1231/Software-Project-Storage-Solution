@@ -8,13 +8,8 @@ from .views import (
     RegisterView,
     LoginAPIView,
     GoogleLoginAPIView,
-    ForgotPasswordAPIView,
-    ResetPasswordAPIView,
     ProfileView,
     ProfileUpdateView,
-    DeleteView,
-    RestoreAccountView,
-    ChangePasswordView,
 )
 
 
@@ -35,13 +30,4 @@ urlpatterns = [
         ProfileUpdateView.as_view(),
         name="profile-update",
     ),
-
-    # Password management
-    path("forgot-password/", ForgotPasswordAPIView.as_view(), name="forgot-password"),
-    path("reset-password/", ResetPasswordAPIView.as_view(), name="reset-password"),
-    path("change-password/", ChangePasswordView.as_view(), name="change-password"),
-
-    # Account deletion & restoration
-    path("delete-account/", DeleteView.as_view(), name="delete-account"),
-    path("restore-account/", RestoreAccountView.as_view(), name="restore-account"),
 ]
