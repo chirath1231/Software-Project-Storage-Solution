@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
+import api from "../api/axios";
 
 export const AuthContext = createContext({});
 
@@ -78,12 +79,23 @@ export const AuthProvider = ({ children }) => {
       if (storedRefresh) {
         setRefreshToken(storedRefresh);
       }
+
+      // Fetch fresh profile data
+      api.get("/api/accounts/profile/")
+        .then((res) => {
+          if (res.data) {
+            setUser((prev) => ({ ...prev, ...res.data }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       sessionStorage.clear();
       localStorage.clear();
+      setLoading(false);
     }
-
-    setLoading(false);
   }, []);
 
   const persistAuth = (authUser, token, refresh, remember = false) => {
@@ -110,10 +122,10 @@ export const AuthProvider = ({ children }) => {
     otherStorage.removeItem("access_token");
   };
 
-  const login = useCallback((token, userData, remember = false, refresh = null) => {
+  const login = useCallback(async (token, userData, remember = false, refresh = null) => {
     if (!token) return;
 
-    const authUser = typeof userData === "object" && userData !== null ? {
+    let authUser = typeof userData === "object" && userData !== null ? {
       ...userData,
       role: userData.role || (userData.is_staff ? "admin" : "user")
     } : {
@@ -125,6 +137,17 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(token);
     setRefreshToken(refresh);
     persistAuth(authUser, token, refresh, remember);
+
+    try {
+      const res = await api.get("/api/accounts/profile/");
+      if (res.data) {
+        const freshUser = { ...authUser, ...res.data };
+        setUser(freshUser);
+        persistAuth(freshUser, token, refresh, remember);
+      }
+    } catch {
+      // Keep existing authUser if profile fetch fails
+    }
   }, []);
 
   const logout = useCallback(() => {
@@ -138,9 +161,13 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = useCallback((updates) => {
     setUser((prevUser) => {
-      if (!prevUser) return prevUser;
-      const nextUser = { ...prevUser, ...updates };
-      sessionStorage.setItem(STORAGE_KEYS.user, JSON.stringify(nextUser));
+      const nextUser = { ...(prevUser || {}), ...updates };
+      const mainStorage = localStorage.getItem("token") || localStorage.getItem(STORAGE_KEYS.access)
+        ? localStorage
+        : sessionStorage;
+
+      mainStorage.setItem(STORAGE_KEYS.user, JSON.stringify(nextUser));
+      mainStorage.setItem("user", JSON.stringify(nextUser));
       return nextUser;
     });
   }, []);

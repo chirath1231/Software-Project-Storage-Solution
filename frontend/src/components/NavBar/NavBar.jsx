@@ -344,8 +344,18 @@ export default function Navbar({ isDashboard = false }) {
                     setShowNotifications(false);
                   }}
                 >
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
-                    <User size={20} className="text-orange-500" />
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-600 border border-orange-500/20">
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={username || "User"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-semibold text-lg">
+                        {(username || "User")?.[0]?.toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-col text-left">
                     <div className="text-white text-sm font-bold leading-none">{username || "User"}</div>
