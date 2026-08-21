@@ -182,10 +182,6 @@ export default function SubscriptionPage() {
         </button>
       </div>
 
-      <p className="text-gray-500 mb-10">
-        The storage bar will start to update once you reach 1 GB
-      </p>
-
       {/* PLANS GRID */}
       <div id="plans-section" className="grid md:grid-cols-3 sm:grid-cols-2 gap-6">
         {subscriptions.map((sub) => {
