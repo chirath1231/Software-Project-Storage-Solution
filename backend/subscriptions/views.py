@@ -17,8 +17,8 @@ import os
 # --------------------------------------------------------
 # PAYHERE CONFIG  (LOAD FROM ENV OR FALLBACK TO SANDBOX)
 # --------------------------------------------------------
-MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "1233030")
-MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "MTQwNDg3NDkzNDQ0MjE4MTIyMDE5MzI2ODUwMjAxMTE4MDk2NTY2")
+MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "1237637")
+MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "MzQ4MjE5MzA2MzM2MDI2OTE3MDY1MTIwMzY4MTcyNTI4Mjc2NjI0")
 
 # PayHere requires md5(secret)
 MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
@@ -111,7 +111,8 @@ def create_payhere_payment(request):
     string_to_hash = f"{MERCHANT_ID}{order_id}{amount}{currency}{MERCHANT_SECRET_MD5}"
     md5sig = hashlib.md5(string_to_hash.encode()).hexdigest().upper()
 
-    origin = request.headers.get("origin") or "http://localhost:3000"
+    origin = request.headers.get("origin") or "https://software-project-storage-solution.vercel.app"
+    backend_url = os.getenv("BACKEND_URL", "https://software-project-storage-solution-backend.onrender.com")
 
     # Prepare payment data for PayHere checkout
     paymentData = {
@@ -119,7 +120,7 @@ def create_payhere_payment(request):
         "merchant_id": MERCHANT_ID,
         "return_url": f"{origin}/dashboard/payment-success",
         "cancel_url": f"{origin}/dashboard/subscription",
-        "notify_url": f"{origin}/api/subscriptions/payhere/notify/",
+        "notify_url": f"{backend_url}/api/subscriptions/payhere/notify/",
         "order_id": order_id,
         "items": f"Subscription-{subscription_id}",
         "currency": currency,
