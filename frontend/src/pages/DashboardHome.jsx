@@ -7,7 +7,7 @@ import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-reac
 import UpcomingMeetingsWidget from "../components/UpcomingMeetingsWidget";
 
 export default function DashboardHome() {
-  const { username, email: userEmail, userId } = useAuth();
+  const { username, email, userId } = useAuth();
   const displayName = username || "User";
   const [files, setFiles] = useState([]);
   const [notifications, setNotifications] = useState([]);
