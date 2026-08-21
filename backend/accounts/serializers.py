@@ -181,3 +181,20 @@ class LoginSerializer(serializers.Serializer):
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
 
+
+# -------------------------
+# Password Reset & Deletion Serializers
+# -------------------------
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(validators=[validate_password])
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField()
+
