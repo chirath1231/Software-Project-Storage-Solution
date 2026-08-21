@@ -64,10 +64,6 @@ staticfiles/
 .env.*
 *.env
 
-# Frontend env files hold no secrets (just the public API URL) — keep them tracked
-!frontend/.env
-!frontend/.env.development
-
 # ================================
 # IDE / Editor
 # ================================
