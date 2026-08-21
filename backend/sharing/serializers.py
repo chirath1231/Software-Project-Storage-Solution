@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from .models import FileShare, FileShareCollaborator, FolderShare, FolderShareCollaborator
 
-FRONTEND_URL = "http://localhost:3000"
+DEFAULT_FRONTEND_URL = "https://software-project-storage-solution.vercel.app"
+
+
+def get_frontend_origin(request):
+    if request is not None:
+        origin = request.headers.get("origin")
+        if origin:
+            return origin
+    return DEFAULT_FRONTEND_URL
 
 
 class FileShareCollaboratorSerializer(serializers.ModelSerializer):
@@ -25,7 +33,8 @@ class FileShareSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "token", "created_at", "updated_at", "file_name"]
 
     def get_share_url(self, obj):
-        return f"{FRONTEND_URL}/shared/{obj.token}"
+        origin = get_frontend_origin(self.context.get("request"))
+        return f"{origin}/shared/{obj.token}"
 
 
 class FolderShareCollaboratorSerializer(serializers.ModelSerializer):
@@ -49,4 +58,5 @@ class FolderShareSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "token", "created_at", "updated_at", "folder_name"]
 
     def get_share_url(self, obj):
-        return f"{FRONTEND_URL}/shared/folder/{obj.token}"
+        origin = get_frontend_origin(self.context.get("request"))
+        return f"{origin}/shared/folder/{obj.token}"
