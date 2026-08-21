@@ -549,9 +549,13 @@ const ClientChatSystem = () => {
                 {/* Input */}
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search users or chats..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => loadUsers()}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    if (!users || users.length === 0) loadUsers();
+                  }}
                   className={`w-full ${search ? "pl-4" : "pl-5"
                     } pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 />
@@ -573,9 +577,44 @@ const ClientChatSystem = () => {
             <div className="flex-1 overflow-y-auto">
               {search.trim().length > 0 ? (
                 <>
-                  {/* 1. Matching Existing Chats */}
+                  {/* 1. All Matching Registered Database Users (Shown First when Searching) */}
+                  <div className="p-3">
+                    <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Registered Users</p>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((u) => (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            startChatWithUser(u.id);
+                            setSearch("");
+                          }}
+                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-50/70 transition-colors group border border-transparent hover:border-orange-200 mb-1"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
+                            {u.username?.[0]?.toUpperCase() || "👤"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
+                            <p className="text-xs text-gray-500 truncate">{u.email || "Registered User"}</p>
+                          </div>
+                          <span className="text-xs font-bold text-orange-500 bg-orange-100 group-hover:bg-orange-500 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
+                            + Chat
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      filteredConversations.length === 0 && (
+                        <div className="p-8 text-center text-gray-400">
+                          <p className="text-sm font-medium">No registered users found</p>
+                          <p className="text-xs mt-1">Try searching with a different name or email.</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {/* 2. Matching Existing Chats */}
                   {filteredConversations.length > 0 && (
-                    <div className="p-3 border-b border-gray-100">
+                    <div className="p-3 border-t border-gray-100">
                       <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Existing Chats</p>
                       {filteredConversations.map((conv) => {
                         const other = conv.other_user || {};
@@ -611,41 +650,6 @@ const ClientChatSystem = () => {
                       })}
                     </div>
                   )}
-
-                  {/* 2. All Matching Registered Database Users */}
-                  <div className="p-3">
-                    <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Global Registered Users</p>
-                    {filteredUsers.length > 0 ? (
-                      filteredUsers.map((u) => (
-                        <div
-                          key={u.id}
-                          onClick={() => {
-                            startChatWithUser(u.id);
-                            setSearch("");
-                          }}
-                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-50/70 transition-colors group border border-transparent hover:border-orange-200 mb-1"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
-                            {u.username?.[0]?.toUpperCase() || "👤"}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
-                            <p className="text-xs text-gray-500 truncate">{u.email || "Registered User"}</p>
-                          </div>
-                          <span className="text-xs font-bold text-orange-500 bg-orange-100 group-hover:bg-orange-500 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
-                            + Chat
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      filteredConversations.length === 0 && (
-                        <div className="p-8 text-center text-gray-400">
-                          <p className="text-sm font-medium">No registered users found</p>
-                          <p className="text-xs mt-1">Try searching with a different name or email.</p>
-                        </div>
-                      )
-                    )}
-                  </div>
                 </>
               ) : (
                 <>
