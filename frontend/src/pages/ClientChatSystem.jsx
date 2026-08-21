@@ -648,46 +648,81 @@ const ClientChatSystem = () => {
                   </div>
                 </>
               ) : (
-                conversations.map((conv) => {
-                  const other = conv.other_user || {};
-                  const isSelected = selectedConversationId === conv.id;
+                <>
+                  {/* Active Conversations */}
+                  {conversations.length > 0 && (
+                    <div className="p-3 border-b border-gray-100">
+                      <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Recent Chats</p>
+                      {conversations.map((conv) => {
+                        const other = conv.other_user || {};
+                        const isSelected = selectedConversationId === conv.id;
 
-                  const name = conv.is_group
-                    ? (conv.name || "Group Chat")
-                    : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
-                  const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
-                  const online = !conv.is_group && Boolean(other.is_online);
-                  const preview = conv.last_message?.text || "";
-                  const unread = conv.unread_count || 0;
+                        const name = conv.is_group
+                          ? (conv.name || "Group Chat")
+                          : (other.full_name || other.username || other.email || `Conversation #${conv.id}`);
+                        const avatar = conv.is_group ? "👥" : (other.avatar_emoji || "👤");
+                        const online = !conv.is_group && Boolean(other.is_online);
+                        const preview = conv.last_message?.text || "";
+                        const unread = conv.unread_count || 0;
 
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => setSelectedConversationId(conv.id)}
-                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"}`}
-                    >
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
-                          {avatar}
-                        </div>
-                        {online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                        )}
-                      </div>
+                        return (
+                          <div
+                            key={conv.id}
+                            onClick={() => setSelectedConversationId(conv.id)}
+                            className={`flex items-center gap-3 p-4 cursor-pointer rounded-xl transition-colors ${isSelected ? "bg-orange-400 text-white" : "hover:bg-gray-50"}`}
+                          >
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center text-2xl">
+                                {avatar}
+                              </div>
+                              {online && (
+                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                              )}
+                            </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"}`}>{name}</h3>
-                        <p className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"}`}>{preview}</p>
-                      </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className={`font-semibold truncate ${isSelected ? "text-white" : "text-gray-900"}`}>{name}</h3>
+                              <p className={`text-sm truncate ${isSelected ? "text-white/80" : "text-gray-500"}`}>{preview}</p>
+                            </div>
 
-                      {unread > 0 && (
-                        <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                          {unread}
-                        </div>
-                      )}
+                            {unread > 0 && (
+                              <div className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                                {unread}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })
+                  )}
+
+                  {/* Registered Database Users */}
+                  <div className="p-3">
+                    <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">All Registered Users</p>
+                    {users.length > 0 ? (
+                      users.map((u) => (
+                        <div
+                          key={u.id}
+                          onClick={() => startChatWithUser(u.id)}
+                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-50/70 transition-colors group border border-transparent hover:border-orange-200 mb-1"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
+                            {u.username?.[0]?.toUpperCase() || "👤"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 truncate">{u.username}</h3>
+                            <p className="text-xs text-gray-500 truncate">{u.email || "Registered User"}</p>
+                          </div>
+                          <span className="text-xs font-bold text-orange-500 bg-orange-100 group-hover:bg-orange-500 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
+                            + Chat
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400 px-3 py-2">No registered users found in database.</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>
