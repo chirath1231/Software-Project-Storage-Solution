@@ -29,7 +29,8 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
 
 export default function Navbar({ isDashboard = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, isAuthenticated, username, logout } = useAuth();
+  const rawName = user?.first_name || username || "User";
+  const displayUsername = rawName.includes("@") ? rawName.split("@")[0] : rawName;
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,7 +180,7 @@ export default function Navbar({ isDashboard = false }) {
                   <User size={20} className="text-orange-500" />
                 </div>
                 <div className="flex flex-col gap-0.5 text-left">
-                  <div className="text-white text-sm font-semibold">{username || "User"}</div>
+                  <div className="text-white text-sm font-semibold">{displayUsername}</div>
                 </div>
               </div>
 
@@ -340,7 +341,7 @@ export default function Navbar({ isDashboard = false }) {
                     )}
                   </div>
                   <div className="flex flex-col text-left">
-                    <div className="text-white text-sm font-bold leading-none">{username || "User"}</div>
+                    <div className="text-white text-sm font-bold leading-none">{displayUsername}</div>
                   </div>
                   <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
