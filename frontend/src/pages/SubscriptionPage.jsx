@@ -11,53 +11,50 @@ export default function SubscriptionPage() {
   const userEmail = localStorage.getItem("username");
   const userId = localStorage.getItem("user_id");
 
- useEffect(() => { // frontend sends 3 requests simultaneously to get all plans, user's active plans, and used storage. 
-  setLoading(true);
+ useEffect(() => {
+    setLoading(true);
 
-  const fetchPlans = fetch("http://127.0.0.1:8000/api/subscriptions/").then(
-    (res) => res.json()
-  );
+    const fetchPlans = api.get("/api/subscriptions/").then((res) => res.data).catch(() => []);
 
-  const fetchUserActive = userEmail
-    ? fetch(
-        `http://127.0.0.1:8000/api/subscriptions/user-subscriptions/${encodeURIComponent(
-          userEmail
-        )}/`
-      ).then((res) => (res.ok ? res.json() : []))
-    : Promise.resolve([]);
+    const fetchUserActive = userEmail
+      ? api
+          .get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`)
+          .then((res) => res.data)
+          .catch(() => [])
+      : Promise.resolve([]);
 
-  const fetchUsedStorage = api.get("/api/files/").then(res => res.data).catch(() => []);
+    const fetchUsedStorage = api.get("/api/files/").then((res) => res.data).catch(() => []);
 
-  Promise.all([fetchPlans, fetchUserActive, fetchUsedStorage])
-    .then(([plans, userActive, files]) => {
-      setSubscriptions(plans || []);
+    Promise.all([fetchPlans, fetchUserActive, fetchUsedStorage])
+      .then(([plans, userActive, files]) => {
+        setSubscriptions(plans || []);
 
-      const paidIds = new Set();
-      (userActive || []).forEach((r) => {
-        if (r.subscription_id) paidIds.add(Number(r.subscription_id));
-      });
-      setPaidSubs(paidIds);
+        const paidIds = new Set();
+        (userActive || []).forEach((r) => {
+          if (r.subscription_id) paidIds.add(Number(r.subscription_id));
+        });
+        setPaidSubs(paidIds);
 
-      // Get the plan with highest storage among active plans
-      const highestPlan = (userActive || []).reduce((max, plan) => {
-        return (plan.storage > (max?.storage || 0)) ? plan : max;
-      }, null);
-      setCurrentPlan(highestPlan);
+        // Get the plan with highest storage among active plans
+        const highestPlan = (userActive || []).reduce((max, plan) => {
+          return (plan.storage > (max?.storage || 0)) ? plan : max;
+        }, null);
+        setCurrentPlan(highestPlan);
 
-      // Calculate used storage from files
-      const totalBytes = (files || []).reduce(
-        (sum, file) => sum + (file.size || 0),
-        0
-      );
-      setUsedGB(totalBytes / 1024 / 1024 / 1024);
+        // Calculate used storage from files
+        const totalBytes = (files || []).reduce(
+          (sum, file) => sum + (file.size || 0),
+          0
+        );
+        setUsedGB(totalBytes / 1024 / 1024 / 1024);
 
-    })
-    .catch((err) => {
-      console.error("Fetch error:", err);
-    })
-    .finally(() => setLoading(false));
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+      })
+      .finally(() => setLoading(false));
 
-}, [userEmail, userId, window.location.search]);
+  }, [userEmail, userId, window.location.search]);
 
   const handleSubscribe = async (sub) => {
     if (paidSubs.has(sub.id)) {
@@ -70,21 +67,14 @@ export default function SubscriptionPage() {
     }
 
     try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/subscriptions/create-payment/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subscription_id: sub.id,
-            email: userEmail,
-            amount: Number(sub.price).toFixed(2),
-            first_name: userEmail.split("@")[0],
-          }),
-        }
-      );
+      const res = await api.post("/api/subscriptions/create-payment/", {
+        subscription_id: sub.id,
+        email: userEmail,
+        amount: Number(sub.price).toFixed(2),
+        first_name: userEmail.split("@")[0],
+      });
 
-      const data = await res.json();
+      const data = res.data;
       if (!data.success) return alert("Payment failed");
 
       const form = document.createElement("form");
