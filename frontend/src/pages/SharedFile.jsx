@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Download, FileText, Music, File, Lock } from "lucide-react";
 import api from "../api/axios";
 
 export default function SharedFile() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState("");
 
@@ -14,17 +15,18 @@ export default function SharedFile() {
       .get(`/api/shared/${token}/`)
       .then((res) => setFileData(res.data))
       .catch((err) => {
-        // 401 is handled by axios interceptor → redirects to /login automatically
-        if (err.response?.status === 403) {
+        if (err.response?.status === 401) {
+          // Not logged in (or session expired) — send to login and come straight back here after.
+          navigate("/login", { state: { from: location.pathname } });
+        } else if (err.response?.status === 403) {
           setError("You don't have permission to access this file.");
         } else if (err.response?.status === 404) {
           setError("This share link is invalid or has been revoked.");
         } else if (err.response) {
           setError(err.response.data?.error || "Unable to load this file.");
         }
-        // 401 never reaches here — the interceptor already redirected to /login
       });
-  }, [token]);
+  }, [token, navigate, location.pathname]);
 
   if (error) {
     return (
@@ -36,7 +38,7 @@ export default function SharedFile() {
           <h2 className="text-lg font-semibold text-gray-800 mb-2">Access Denied</h2>
           <p className="text-gray-500 text-sm">{error}</p>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login", { state: { from: location.pathname } })}
             className="mt-6 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition"
           >
             Go to Login
