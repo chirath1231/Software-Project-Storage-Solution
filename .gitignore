@@ -21,17 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-<<<<<<< HEAD
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyc
-.env
-db.sqlite3
-
-=======
 # ================================
 # Python — never commit bytecode/cache (avoid merge noise)
 # ================================
@@ -73,6 +63,10 @@ staticfiles/
 .env
 .env.*
 *.env
+
+# Frontend env files hold no secrets (just the public API URL) — keep them tracked
+!frontend/.env
+!frontend/.env.development
 
 # ================================
 # IDE / Editor
@@ -126,4 +120,3 @@ node_modules/
 # ================================
 *.pem
 *.key
->>>>>>> origin/main
