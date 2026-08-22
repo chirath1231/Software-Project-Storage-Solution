@@ -79,6 +79,7 @@ const AdminTickets = () => {
       if (selectedTicket && selectedTicket.id === ticketId) {
         setSelectedTicket(prev => ({ ...prev, status: newStatus }));
       }
+      await fetchTickets();
     } catch (err) {
       console.error("Failed to update status:", err);
       alert("Failed to update status.");
