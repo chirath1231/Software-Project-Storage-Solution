@@ -83,24 +83,6 @@ const AdminTickets = () => {
     }
   };
 
-  const handleSendReply = async (e) => {
-    e.preventDefault();
-    if (!reply.trim() || !selectedTicket) return;
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/tickets/tickets/${selectedTicket.id}/`, { status: 'CLOSED' });
-      alert(`Response recorded for ticket! Ticket marked as Resolved.`);
-      setReply('');
-      setSelectedTicket(null);
-      fetchTickets();
-    } catch (err) {
-      console.error("Failed to process reply:", err);
-      alert("Failed to update ticket.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const filteredTickets = tickets
     .filter(t => {
       const nameStr = t.name || t.email || '';
@@ -292,41 +274,44 @@ const AdminTickets = () => {
                 </div>
               </div>
 
-              {/* Status Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  disabled={actionLoading}
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'OPEN')}
-                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
-                    getStatusLabel(selectedTicket.status) === 'Open'
-                      ? 'bg-red-500 text-white border-red-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-red-400'
-                  }`}
-                >
-                  Mark Open
-                </button>
-                <button
-                  disabled={actionLoading}
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'IN_PROGRESS')}
-                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
-                    getStatusLabel(selectedTicket.status) === 'Pending'
-                      ? 'bg-yellow-500 text-white border-yellow-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400'
-                  }`}
-                >
-                  Mark In Progress
-                </button>
-                <button
-                  disabled={actionLoading}
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'CLOSED')}
-                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
-                    getStatusLabel(selectedTicket.status) === 'Resolved'
-                      ? 'bg-green-500 text-white border-green-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
-                  }`}
-                >
-                  Mark Resolved
-                </button>
+              {/* Status Selection Buttons */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Update Status</label>
+                <div className="flex gap-3">
+                  <button
+                    disabled={actionLoading}
+                    onClick={() => handleUpdateStatus(selectedTicket.id, 'OPEN')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs border transition-all shadow-sm ${
+                      getStatusLabel(selectedTicket.status) === 'Open'
+                        ? 'bg-red-500 text-white border-red-500 shadow-red-200'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-red-400 hover:text-red-500'
+                    }`}
+                  >
+                    Mark Open
+                  </button>
+                  <button
+                    disabled={actionLoading}
+                    onClick={() => handleUpdateStatus(selectedTicket.id, 'IN_PROGRESS')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs border transition-all shadow-sm ${
+                      getStatusLabel(selectedTicket.status) === 'Pending'
+                        ? 'bg-yellow-500 text-white border-yellow-500 shadow-yellow-200'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400 hover:text-yellow-600'
+                    }`}
+                  >
+                    Mark In Progress
+                  </button>
+                  <button
+                    disabled={actionLoading}
+                    onClick={() => handleUpdateStatus(selectedTicket.id, 'CLOSED')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs border transition-all shadow-sm ${
+                      getStatusLabel(selectedTicket.status) === 'Resolved'
+                        ? 'bg-green-500 text-white border-green-500 shadow-green-200'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-green-400 hover:text-green-600'
+                    }`}
+                  >
+                    Mark Resolved
+                  </button>
+                </div>
               </div>
 
               {/* Problem Description */}
@@ -339,28 +324,6 @@ const AdminTickets = () => {
                   "{selectedTicket.description}"
                 </div>
               </div>
-            </div>
-
-            {/* Reply Section */}
-            <div className="p-8 border-t border-gray-100 bg-gray-50">
-              <form onSubmit={handleSendReply} className="space-y-4">
-                <label className="font-black text-gray-500 uppercase text-[10px] tracking-widest ml-1">Your Reply</label>
-                <textarea 
-                  rows="4" 
-                  placeholder="Type your response to the user here..."
-                  className="w-full p-4 rounded-2xl border-2 border-white bg-white shadow-sm focus:border-orange-500 outline-none transition-all resize-none"
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                ></textarea>
-                <button 
-                  type="submit" 
-                  disabled={actionLoading}
-                  className="w-full bg-orange-500 text-white font-black py-4 rounded-2xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 active:scale-95 disabled:opacity-50"
-                >
-                  <Send size={18} />
-                  {actionLoading ? "Processing..." : "Send Reply & Resolve Ticket"}
-                </button>
-              </form>
             </div>
           </div>
         </div>
