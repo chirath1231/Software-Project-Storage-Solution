@@ -7,8 +7,8 @@ export default function Footer() {
   const navigate = useNavigate();
 
   return (
-    <footer className="bg-[#323D41] text-white mt-16">
-      <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+    <footer className="bg-[#323D41] text-white mt-16 w-full">
+      <div className="w-full px-6 sm:px-10 lg:px-12 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Logo + Description */}
         <div>

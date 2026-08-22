@@ -127,8 +127,8 @@ export default function Navbar({ isDashboard = false }) {
   };
 
   return (
-    <nav className="py-4 relative shadow-lg bg-[#323D41]">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <nav className="py-4 relative shadow-lg bg-[#323D41] w-full">
+      <div className="w-full px-6 sm:px-10 lg:px-12 flex items-center justify-between">
 
         {/* Left Side: Logo */}
         <div className="flex-none">
