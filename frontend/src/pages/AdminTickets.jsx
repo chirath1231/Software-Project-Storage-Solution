@@ -220,7 +220,14 @@ const AdminTickets = () => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-xs font-bold text-gray-500 uppercase">{ticket.category || 'General'}</td>
-                    <td className="px-8 py-5 text-gray-600 font-medium">{ticket.title}</td>
+                    <td className="px-8 py-5">
+                      <div className="font-bold text-gray-800 text-sm">{ticket.title}</div>
+                      {ticket.description && (
+                        <div className="text-xs text-gray-400 max-w-sm truncate mt-0.5" title={ticket.description}>
+                          {ticket.description}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-8 py-5">
                       <span className="text-gray-700 font-bold text-sm">
                         {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
