@@ -1,33 +1,49 @@
-import React, { useState } from 'react';
-import { Search, Filter, MessageSquare, CheckCircle, Clock, Send, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, MessageSquare, CheckCircle, Clock, Send, X, Loader2 } from 'lucide-react';
+import api from '../api/axios';
 
 const AdminTickets = () => {
-  const [tickets] = useState([
-    { id: 'T123', userName: 'Mehrab Bozorgi', email: 'mehrab@example.com', title: 'Payment failure', date: '2024-03-28', timeAgo: '2 hours ago', status: 'Open', description: 'My payment failed but money deducted from my bank account. Please check this immediately.' },
-    { id: 'T124', userName: 'Jane Smith', email: 'jane.smith@service.com', title: 'Storage limit error', date: '2024-03-27', timeAgo: '1 day ago', status: 'Pending', description: 'I upgraded to the Plus plan but my dashboard still shows 5GB limit.' },
-    { id: 'T125', userName: 'John Doe', email: 'john.doe@gmail.com', title: 'Cannot delete file', date: '2024-03-26', timeAgo: '2 days ago', status: 'Resolved', description: 'The delete button is not working for a specific PDF file in my folder.' },
-    { id: 'T126', userName: 'Alice Johnson', email: 'alice.j@outlook.com', title: 'Google Login Issue', date: '2024-03-25', timeAgo: '3 days ago', status: 'Open', description: 'I keep getting an authentication error when trying to use Google login.' },
-  ]);
-
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [reply, setReply] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const filteredTickets = tickets.filter(t => {
-    const matchesSearch = t.userName.toLowerCase().includes(searchTerm.toLowerCase()) || t.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'All' || t.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
-  const stats = {
-    total: tickets.length,
-    open: tickets.filter(t => t.status === 'Open').length,
-    resolved: tickets.filter(t => t.status === 'Resolved').length
+  const fetchTickets = async () => {
+    try {
+      let res;
+      try {
+        res = await api.get('/api/tickets/tickets/');
+      } catch (e) {
+        res = await api.get('/api/tickets/');
+      }
+      const rawData = res.data;
+      const data = Array.isArray(rawData) ? rawData : (rawData?.results || []);
+      setTickets(data);
+    } catch (err) {
+      console.error("Failed to fetch tickets:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    if (!status) return 'Open';
+    const s = String(status).toUpperCase();
+    if (s === 'CLOSED' || s === 'RESOLVED') return 'Resolved';
+    if (s === 'IN_PROGRESS' || s === 'PENDING') return 'Pending';
+    return 'Open';
   };
 
   const getStatusStyle = (status) => {
-    switch (status) {
+    const label = getStatusLabel(status);
+    switch (label) {
       case 'Open': return 'bg-red-100 text-red-600 border-red-200';
       case 'Pending': return 'bg-yellow-100 text-yellow-600 border-yellow-200';
       case 'Resolved': return 'bg-green-100 text-green-600 border-green-200';
@@ -35,13 +51,66 @@ const AdminTickets = () => {
     }
   };
 
-  const handleSendReply = (e) => {
-    e.preventDefault();
-    if (!reply.trim()) return;
-    alert(`Reply sent to ${selectedTicket.userName}`);
-    setReply('');
-    setSelectedTicket(null);
+  const handleUpdateStatus = async (ticketId, newStatus) => {
+    setActionLoading(true);
+    try {
+      await api.patch(`/api/tickets/tickets/${ticketId}/`, { status: newStatus });
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setSelectedTicket(prev => ({ ...prev, status: newStatus }));
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("Failed to update status.");
+    } finally {
+      setActionLoading(false);
+    }
   };
+
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    if (!reply.trim() || !selectedTicket) return;
+    setActionLoading(true);
+    try {
+      await api.patch(`/api/tickets/tickets/${selectedTicket.id}/`, { status: 'CLOSED' });
+      alert(`Response recorded for ticket #${selectedTicket.id}! Ticket marked as Resolved.`);
+      setReply('');
+      setSelectedTicket(null);
+      fetchTickets();
+    } catch (err) {
+      console.error("Failed to process reply:", err);
+      alert("Failed to update ticket.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const filteredTickets = tickets.filter(t => {
+    const nameStr = t.name || t.email || '';
+    const idStr = String(t.id);
+    const titleStr = t.title || '';
+    const matchesSearch = nameStr.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          idStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          titleStr.toLowerCase().includes(searchTerm.toLowerCase());
+    const label = getStatusLabel(t.status);
+    const matchesFilter = filterStatus === 'All' || label === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const stats = {
+    total: tickets.length,
+    open: tickets.filter(t => getStatusLabel(t.status) === 'Open').length,
+    resolved: tickets.filter(t => getStatusLabel(t.status) === 'Resolved').length
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
+        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Loading Support Tickets...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -83,7 +152,7 @@ const AdminTickets = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
               type="text" 
-              placeholder="Search by User or ID (e.g. #T123)..." 
+              placeholder="Search by Name, Title or ID..." 
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -114,36 +183,45 @@ const AdminTickets = () => {
               <tr className="bg-gray-50/50 text-gray-400 text-xs uppercase tracking-widest font-black">
                 <th className="px-8 py-4">Ticket ID</th>
                 <th className="px-8 py-4">User Name</th>
+                <th className="px-8 py-4">Category</th>
                 <th className="px-8 py-4">Problem Title</th>
-                <th className="px-8 py-4">Date / Time</th>
+                <th className="px-8 py-4">Date</th>
                 <th className="px-8 py-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredTickets.map((ticket) => (
-                <tr 
-                  key={ticket.id} 
-                  onClick={() => setSelectedTicket(ticket)}
-                  className="hover:bg-orange-50/30 cursor-pointer transition-colors group"
-                >
-                  <td className="px-8 py-5 font-mono font-bold text-orange-600">#{ticket.id}</td>
-                  <td className="px-8 py-5 font-bold text-gray-700">{ticket.userName}</td>
-                  <td className="px-8 py-5 text-gray-600 font-medium">{ticket.title}</td>
-                  <td className="px-8 py-5">
-                    <div className="flex flex-col">
-                      <span className="text-gray-700 font-bold text-sm">{ticket.date}</span>
-                      <span className="text-xs text-gray-400">{ticket.timeAgo}</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex justify-center">
-                      <span className={`px-4 py-1.5 rounded-full text-xs font-black border ${getStatusStyle(ticket.status)}`}>
-                        {ticket.status}
+              {filteredTickets.length > 0 ? (
+                filteredTickets.map((ticket) => (
+                  <tr 
+                    key={ticket.id} 
+                    onClick={() => setSelectedTicket(ticket)}
+                    className="hover:bg-orange-50/30 cursor-pointer transition-colors group"
+                  >
+                    <td className="px-8 py-5 font-mono font-bold text-orange-600">#TKT-{ticket.id}</td>
+                    <td className="px-8 py-5 font-bold text-gray-700">{ticket.name || ticket.email || 'User'}</td>
+                    <td className="px-8 py-5 text-xs font-bold text-gray-500 uppercase">{ticket.category || 'General'}</td>
+                    <td className="px-8 py-5 text-gray-600 font-medium">{ticket.title}</td>
+                    <td className="px-8 py-5">
+                      <span className="text-gray-700 font-bold text-sm">
+                        {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
                       </span>
-                    </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex justify-center">
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-black border ${getStatusStyle(ticket.status)}`}>
+                          {getStatusLabel(ticket.status)}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-gray-400 font-medium">
+                    No tickets found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -155,7 +233,7 @@ const AdminTickets = () => {
           <div className="w-full max-w-2xl bg-white h-screen shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white">
               <div className="flex items-center gap-3">
-                <span className="bg-orange-100 text-orange-600 p-2 rounded-lg font-mono font-bold">#{selectedTicket.id}</span>
+                <span className="bg-orange-100 text-orange-600 p-2 rounded-lg font-mono font-bold">#TKT-{selectedTicket.id}</span>
                 <h2 className="text-xl font-black text-gray-800">Ticket Details</h2>
               </div>
               <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -168,29 +246,68 @@ const AdminTickets = () => {
               <div className="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-2xl">
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">User Name</label>
-                  <p className="font-bold text-gray-800">{selectedTicket.userName}</p>
+                  <p className="font-bold text-gray-800">{selectedTicket.name || 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email Address</label>
-                  <p className="font-bold text-gray-800">{selectedTicket.email}</p>
+                  <p className="font-bold text-gray-800">{selectedTicket.email || 'N/A'}</p>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Created Date</label>
-                  <p className="font-bold text-gray-800">{selectedTicket.date} ({selectedTicket.timeAgo})</p>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Priority</label>
+                  <span className="font-bold text-orange-600 uppercase text-xs">{selectedTicket.priority || 'MEDIUM'}</span>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Current Status</label>
-                  <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase ${getStatusStyle(selectedTicket.status)}`}>
-                    {selectedTicket.status}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase ${getStatusStyle(selectedTicket.status)}`}>
+                      {getStatusLabel(selectedTicket.status)}
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Status Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  disabled={actionLoading}
+                  onClick={() => handleUpdateStatus(selectedTicket.id, 'OPEN')}
+                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
+                    getStatusLabel(selectedTicket.status) === 'Open'
+                      ? 'bg-red-500 text-white border-red-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-red-400'
+                  }`}
+                >
+                  Mark Open
+                </button>
+                <button
+                  disabled={actionLoading}
+                  onClick={() => handleUpdateStatus(selectedTicket.id, 'IN_PROGRESS')}
+                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
+                    getStatusLabel(selectedTicket.status) === 'Pending'
+                      ? 'bg-yellow-500 text-white border-yellow-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400'
+                  }`}
+                >
+                  Mark In Progress
+                </button>
+                <button
+                  disabled={actionLoading}
+                  onClick={() => handleUpdateStatus(selectedTicket.id, 'CLOSED')}
+                  className={`flex-1 py-2 rounded-xl font-bold text-xs border transition-all ${
+                    getStatusLabel(selectedTicket.status) === 'Resolved'
+                      ? 'bg-green-500 text-white border-green-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+                  }`}
+                >
+                  Mark Resolved
+                </button>
               </div>
 
               {/* Problem Description */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
-                  <h3 className="font-black text-gray-800 uppercase text-xs tracking-tighter">Issue Description</h3>
+                  <h3 className="font-black text-gray-800 uppercase text-xs tracking-tighter">Issue Title: {selectedTicket.title}</h3>
                 </div>
                 <div className="bg-orange-50/50 border border-orange-100 p-6 rounded-2xl italic text-gray-700 leading-relaxed shadow-inner">
                   "{selectedTicket.description}"
@@ -211,10 +328,11 @@ const AdminTickets = () => {
                 ></textarea>
                 <button 
                   type="submit" 
-                  className="w-full bg-orange-500 text-white font-black py-4 rounded-2xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 active:scale-95"
+                  disabled={actionLoading}
+                  className="w-full bg-orange-500 text-white font-black py-4 rounded-2xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 active:scale-95 disabled:opacity-50"
                 >
                   <Send size={18} />
-                  Send Reply to User
+                  {actionLoading ? "Processing..." : "Send Reply & Resolve Ticket"}
                 </button>
               </form>
             </div>
