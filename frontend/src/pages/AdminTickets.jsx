@@ -19,9 +19,9 @@ const AdminTickets = () => {
     try {
       let res;
       try {
-        res = await api.get('/api/tickets/tickets/');
-      } catch (e) {
         res = await api.get('/api/tickets/');
+      } catch (e) {
+        res = await api.get('/api/tickets/tickets/');
       }
       const rawData = res.data;
       const data = Array.isArray(rawData) ? rawData : (rawData?.results || []);
@@ -70,7 +70,11 @@ const AdminTickets = () => {
   const handleUpdateStatus = async (ticketId, newStatus) => {
     setActionLoading(true);
     try {
-      await api.patch(`/api/tickets/tickets/${ticketId}/`, { status: newStatus });
+      try {
+        await api.patch(`/api/tickets/${ticketId}/`, { status: newStatus });
+      } catch (e) {
+        await api.patch(`/api/tickets/tickets/${ticketId}/`, { status: newStatus });
+      }
       setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
       if (selectedTicket && selectedTicket.id === ticketId) {
         setSelectedTicket(prev => ({ ...prev, status: newStatus }));
