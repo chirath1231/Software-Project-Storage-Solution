@@ -51,6 +51,22 @@ const AdminTickets = () => {
     }
   };
 
+  const getPriorityWeight = (priority) => {
+    if (!priority) return 2;
+    const p = String(priority).toUpperCase();
+    if (p === 'HIGH' || p === 'CRITICAL') return 3;
+    if (p === 'MEDIUM') return 2;
+    if (p === 'LOW') return 1;
+    return 2;
+  };
+
+  const getPriorityStyle = (priority) => {
+    const p = String(priority || 'MEDIUM').toUpperCase();
+    if (p === 'HIGH' || p === 'CRITICAL') return 'bg-red-100 text-red-600 border border-red-200';
+    if (p === 'MEDIUM') return 'bg-orange-100 text-orange-600 border border-orange-200';
+    return 'bg-green-100 text-green-600 border border-green-200';
+  };
+
   const handleUpdateStatus = async (ticketId, newStatus) => {
     setActionLoading(true);
     try {
@@ -73,7 +89,7 @@ const AdminTickets = () => {
     setActionLoading(true);
     try {
       await api.patch(`/api/tickets/tickets/${selectedTicket.id}/`, { status: 'CLOSED' });
-      alert(`Response recorded for ticket #${selectedTicket.id}! Ticket marked as Resolved.`);
+      alert(`Response recorded for ticket! Ticket marked as Resolved.`);
       setReply('');
       setSelectedTicket(null);
       fetchTickets();
@@ -85,17 +101,17 @@ const AdminTickets = () => {
     }
   };
 
-  const filteredTickets = tickets.filter(t => {
-    const nameStr = t.name || t.email || '';
-    const idStr = String(t.id);
-    const titleStr = t.title || '';
-    const matchesSearch = nameStr.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          idStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          titleStr.toLowerCase().includes(searchTerm.toLowerCase());
-    const label = getStatusLabel(t.status);
-    const matchesFilter = filterStatus === 'All' || label === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredTickets = tickets
+    .filter(t => {
+      const nameStr = t.name || t.email || '';
+      const titleStr = t.title || '';
+      const matchesSearch = nameStr.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            titleStr.toLowerCase().includes(searchTerm.toLowerCase());
+      const label = getStatusLabel(t.status);
+      const matchesFilter = filterStatus === 'All' || label === filterStatus;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => getPriorityWeight(b.priority) - getPriorityWeight(a.priority));
 
   const stats = {
     total: tickets.length,
@@ -152,7 +168,7 @@ const AdminTickets = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
               type="text" 
-              placeholder="Search by Name, Title or ID..." 
+              placeholder="Search by Name or Problem Title..." 
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -181,8 +197,8 @@ const AdminTickets = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 text-gray-400 text-xs uppercase tracking-widest font-black">
-                <th className="px-8 py-4">Ticket ID</th>
                 <th className="px-8 py-4">User Name</th>
+                <th className="px-8 py-4">Priority</th>
                 <th className="px-8 py-4">Category</th>
                 <th className="px-8 py-4">Problem Title</th>
                 <th className="px-8 py-4">Date</th>
@@ -197,8 +213,12 @@ const AdminTickets = () => {
                     onClick={() => setSelectedTicket(ticket)}
                     className="hover:bg-orange-50/30 cursor-pointer transition-colors group"
                   >
-                    <td className="px-8 py-5 font-mono font-bold text-orange-600">#TKT-{ticket.id}</td>
                     <td className="px-8 py-5 font-bold text-gray-700">{ticket.name || ticket.email || 'User'}</td>
+                    <td className="px-8 py-5">
+                      <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${getPriorityStyle(ticket.priority)}`}>
+                        {ticket.priority || 'MEDIUM'}
+                      </span>
+                    </td>
                     <td className="px-8 py-5 text-xs font-bold text-gray-500 uppercase">{ticket.category || 'General'}</td>
                     <td className="px-8 py-5 text-gray-600 font-medium">{ticket.title}</td>
                     <td className="px-8 py-5">
@@ -233,8 +253,7 @@ const AdminTickets = () => {
           <div className="w-full max-w-2xl bg-white h-screen shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white">
               <div className="flex items-center gap-3">
-                <span className="bg-orange-100 text-orange-600 p-2 rounded-lg font-mono font-bold">#TKT-{selectedTicket.id}</span>
-                <h2 className="text-xl font-black text-gray-800">Ticket Details</h2>
+                <h2 className="text-xl font-black text-gray-800">Support Ticket Details</h2>
               </div>
               <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <X size={24} className="text-gray-400" />
