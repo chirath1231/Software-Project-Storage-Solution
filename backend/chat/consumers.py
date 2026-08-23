@@ -167,6 +167,66 @@ class ChatConsumer(AsyncWebsocketConsumer):
         m = Message.objects.create(
             conversation_id=conversation_id, sender_id=sender_id, text=text
         )
+        
+        # --- TRIGGER NOTIFICATIONS & RESEND EMAILS ---
+        try:
+            from django.apps import apps
+            import os
+            import resend
+            
+            NotificationModel = apps.get_model('notifications', 'Notification')
+            
+            # Get all participants in this conversation except the sender
+            participants = ConversationParticipant.objects.filter(
+                conversation_id=conversation_id
+            ).exclude(user_id=sender_id).select_related("user")
+            
+            sender_name = m.sender.username
+            
+            for p in participants:
+                recipient_user = p.user
+                
+                # 1. Create In-App Notification
+                NotificationModel.objects.create(
+                    user=recipient_user,
+                    title=f"New Message from {sender_name} 💬",
+                    message=text[:50] + ("..." if len(text) > 50 else ""),
+                    is_read=False
+                )
+                
+                # 2. Send Email via Resend
+                if recipient_user.email:
+                    try:
+                        resend.api_key = os.getenv("RESEND_API_KEY")
+                        resend.Emails.send({
+                            "from": "onboarding@resend.dev",
+                            "to": [recipient_user.email],
+                            "subject": f"New message from {sender_name} 💬",
+                            "html": f"""
+                                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f9fc; padding: 30px;">
+                                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                        <div style="background: linear-gradient(135deg, #f97316, #ea580c); padding: 25px; text-align: center; color: white;">
+                                            <h2 style="margin: 0; font-size: 20px;">New Message Received</h2>
+                                        </div>
+                                        <div style="padding: 30px; color: #374151; line-height: 1.6;">
+                                            <p>Hi <strong>{recipient_user.username}</strong>,</p>
+                                            <p>You have received a new message from <strong>{sender_name}</strong>:</p>
+                                            <blockquote style="background: #fdf8f6; border-left: 4px solid #f97316; margin: 20px 0; padding: 15px; color: #1f2937;">
+                                                "{text}"
+                                            </blockquote>
+                                            <p>Log in to your dashboard to reply and continue the conversation.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            """
+                        })
+                    except Exception as email_err:
+                        print(f"⚠️ Chat email notification failed: {email_err}")
+                        
+        except Exception as e:
+            print(f"⚠️ Chat notification error: {e}")
+        # ---------------------------------------------
+
         return {
             "id": m.id,
             "conversation": m.conversation_id,
