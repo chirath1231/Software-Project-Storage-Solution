@@ -30,6 +30,8 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     ".onrender.com",
+    ".ngrok-free.dev",
+    
 ]
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
@@ -125,7 +127,13 @@ CSRF_TRUSTED_ORIGINS = [
 
     # Render deployment
     "https://*.onrender.com",
+    
+    # ngrok tunneling
+    "https://*.ngrok-free.dev",
+    
+    
 ]
+
 
 
 CSRF_COOKIE_SECURE = not DEBUG
