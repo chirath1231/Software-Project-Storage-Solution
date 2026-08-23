@@ -41,7 +41,7 @@ export default function Navbar({ isDashboard = false }) {
   // Fetch real notifications from backend context
   const { notifications, fetchGlobalNotifications } = useNotifications();
 
-  // --- NEW FIX: Manually calculate unread count directly from the array ---
+  // Manually calculate unread count directly from the array
   const calculatedUnreadCount = notifications ? notifications.filter(n => n.is_read === false).length : 0;
 
   // Close menus when clicking outside
@@ -96,29 +96,47 @@ export default function Navbar({ isDashboard = false }) {
     console.log("Navigate to:", href);
   };
 
-  // Handle marking notification as read
+  // Handle marking a single notification as read
   const handleMarkRead = async (notificationId) => {
     try {
       const token = getStoredToken();
       await fetch(`${API_BASE_URL}/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: {
-          "Authorization": `Token ${token}`, // Changed from Bearer to Token to fix 401 error
+          "Authorization": `Token ${token}`,
           "Content-Type": "application/json"
         }
       });
-      // Refresh notifications after marking as read
+      // Refresh notifications immediately after marking as read
       await fetchGlobalNotifications();
     } catch (error) {
       console.error("Failed to mark as read:", error);
     }
   };
 
+  // Handle marking all unread notifications as read
   const handleMarkAllAsRead = async () => {
-    // Mark all unread notifications as read
-    const unreadNotifications = notifications.filter(n => !n.is_read);
-    for (const notification of unreadNotifications) {
-      await handleMarkRead(notification.id);
+    try {
+      const token = getStoredToken();
+      // Option 1: If you have a bulk endpoint, call it. Otherwise, loop through unread items:
+      const unreadNotifications = notifications.filter(n => !n.is_read);
+      
+      await Promise.all(
+        unreadNotifications.map(notification =>
+          fetch(`${API_BASE_URL}/api/accounts/notifications/${notification.id}/read/`, {
+            method: "PATCH",
+            headers: {
+              "Authorization": `Token ${token}`,
+              "Content-Type": "application/json"
+            }
+          })
+        )
+      );
+
+      // Refresh notification state globally
+      await fetchGlobalNotifications();
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
     }
   };
 
@@ -143,7 +161,6 @@ export default function Navbar({ isDashboard = false }) {
           flex-col md:flex-row p-5 md:p-0 z-50 shadow-lg md:shadow-none
         `}>
           {!isAuthenticated ? (
-            // Public Navigation links (Before Login)
             <ul className="flex flex-col md:flex-row list-none gap-8 m-0 p-0 items-center w-full md:w-auto rounded-full border border-gray-500 py-3.5 px-8 md:px-20">
               {[
                 { href: "#home", label: "Home" },
@@ -163,7 +180,6 @@ export default function Navbar({ isDashboard = false }) {
               ))}
             </ul>
           ) : (
-            // Main App Search bar (After Login)
             <div className="relative w-full max-w-xl">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -182,7 +198,6 @@ export default function Navbar({ isDashboard = false }) {
             </div>
           )}
 
-          {/* Mobile Auth Buttons Toggle */}
           {!isAuthenticated && (
             <div className="flex md:hidden gap-3 mt-5 w-full flex-col sm:flex-row">
               <GradientButton title="Register" onClick={() => window.location.href = "/register"} />
@@ -190,7 +205,6 @@ export default function Navbar({ isDashboard = false }) {
             </div>
           )}
 
-          {/* Mobile user profile, settings, notifications, and logout (only when logged in) */}
           {isAuthenticated && (
             <div className="flex md:hidden gap-4 mt-5 w-full flex-col border-t border-gray-750 pt-4">
               <div className="flex items-center gap-3 px-2">
@@ -202,7 +216,6 @@ export default function Navbar({ isDashboard = false }) {
                 </div>
               </div>
 
-              {/* Notification Link */}
               <button
                 className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
                 onClick={() => {
@@ -225,7 +238,6 @@ export default function Navbar({ isDashboard = false }) {
                 Notifications
               </button>
 
-              {/* Settings Link */}
               <button
                 className="flex items-center gap-2.5 text-white hover:text-orange-400 transition-colors text-sm py-2 px-2 border-none bg-transparent outline-none cursor-pointer text-left w-full"
                 onClick={() => {
@@ -237,7 +249,6 @@ export default function Navbar({ isDashboard = false }) {
                 Profile & Settings
               </button>
 
-              {/* Logout Button */}
               <button
                 onClick={() => {
                   handleLogout();
@@ -251,7 +262,7 @@ export default function Navbar({ isDashboard = false }) {
           )}
         </div>
 
-        {/* Right Section: Actions Panel (Auth Controls or Profile Context) */}
+        {/* Right Section: Actions Panel */}
         <div className="flex gap-3 items-center relative">
           {!isAuthenticated ? (
             <div className="hidden md:flex gap-3">
@@ -267,7 +278,6 @@ export default function Navbar({ isDashboard = false }) {
                   onClick={() => {
                     setShowNotifications(!showNotifications);
                     setShowProfileMenu(false);
-                    // Fetch fresh notifications when opening the dropdown
                     if (!showNotifications) fetchGlobalNotifications();
                   }}
                   aria-label={`Notifications ${calculatedUnreadCount > 0 ? `(${calculatedUnreadCount} unread)` : ''}`}
@@ -290,7 +300,13 @@ export default function Navbar({ isDashboard = false }) {
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
                       <h3 className="text-gray-800 font-bold text-xs uppercase tracking-wider">Alerts</h3>
                       {calculatedUnreadCount > 0 && (
-                        <button onClick={handleMarkAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAllAsRead();
+                          }} 
+                          className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer"
+                        >
                           Mark all read
                         </button>
                       )}
@@ -302,7 +318,11 @@ export default function Navbar({ isDashboard = false }) {
                           <div
                             key={notification.id}
                             className={`px-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.is_read ? 'bg-orange-50/30' : ''}`}
-                            onClick={() => handleMarkRead(notification.id)}
+                            onClick={() => {
+                              if (!notification.is_read) {
+                                handleMarkRead(notification.id);
+                              }
+                            }}
                           >
                             <div className="flex items-start gap-3">
                               <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`} />
@@ -372,7 +392,6 @@ export default function Navbar({ isDashboard = false }) {
                   <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile Options Context Menu */}
                 {showProfileMenu && (
                   <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl min-w-[220px] z-50 overflow-hidden border border-gray-100">
                     <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
@@ -389,7 +408,6 @@ export default function Navbar({ isDashboard = false }) {
             </>
           )}
 
-          {/* Desktop Hamburg Menu Icon for Mobile view scaling toggle */}
           <button
             onClick={toggleMenu}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
