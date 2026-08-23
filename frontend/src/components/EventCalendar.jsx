@@ -105,7 +105,24 @@ export default function EventCalendar({ onMeetingScheduled }) {
   const handleScheduleMeeting = async (e) => {
     e.preventDefault();
     
-    // Update 2: Stitch the date and times together into standard ISO strings
+    // 1. Create JavaScript Date objects to compare times
+    const startDateTime = new Date(`${meetingDate}T${startTime}`);
+    const endDateTime = new Date(`${meetingDate}T${endTime}`);
+    const now = new Date();
+
+    // 2. Validate that the meeting is in the future
+    if (startDateTime < now) {
+      alert("You cannot schedule a meeting in the past. Please choose a future time.");
+      return; // Stop the function here
+    }
+
+    // 3. Validate that end time is after start time
+    if (endDateTime <= startDateTime) {
+      alert("The end time must be after the start time.");
+      return; // Stop the function here
+    }
+
+    // If validations pass, stitch the strings together for Django
     const payload = {
       ...newEvent,
       start_time: `${meetingDate}T${startTime}`,
@@ -123,7 +140,6 @@ export default function EventCalendar({ onMeetingScheduled }) {
       
       setShowModal(false);
       
-      // Update 3: Reset all form fields
       setNewEvent({ title: "", description: "", meeting_link: "", attendee_email: "" });
       setMeetingDate("");
       setStartTime("");
@@ -206,6 +222,7 @@ export default function EventCalendar({ onMeetingScheduled }) {
                 <input
                   type="date"
                   required
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
                   value={meetingDate}
                   onChange={(e) => setMeetingDate(e.target.value)}
