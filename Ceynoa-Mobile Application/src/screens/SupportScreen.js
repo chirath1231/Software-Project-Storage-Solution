@@ -44,7 +44,11 @@ export default function SupportScreen({ navigation }) {
 
         <Text style={[styles.group, { color: c.textMuted }]}>GET IN TOUCH</Text>
         <Card padded={false} style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+          <ListRow icon="sparkles-outline" label="Ask Ceynoa Assistant" subtitle="Instant AI answers, any time" onPress={() => navigation.navigate("AIAssistant")} />
+          <Divider c={c} />
           <ListRow icon="chatbubbles-outline" label="Contact Us" subtitle="Chat with our support team" onPress={() => navigation.navigate("Clients")} />
+          <Divider c={c} />
+          <ListRow icon="ticket-outline" label="Submit a Ticket" subtitle="Report a bug or request a feature" onPress={() => navigation.navigate("TicketSubmission")} />
           <Divider c={c} />
           <ListRow icon="mail-outline" label="Email Support" subtitle="support@ceynoa.app" onPress={() => {}} />
           <Divider c={c} />

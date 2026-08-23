@@ -1,17 +1,7 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../theme/ThemeContext";
-import { folders, files } from "../data/mock";
-import SearchBar from "../components/SearchBar";
-import { FolderRow, FileRow } from "../components/Rows";
-=======
 import React, { useCallback, useEffect, useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Image,
-  ActivityIndicator, Alert, Modal, RefreshControl, Linking,
+  ActivityIndicator, Alert, Modal, RefreshControl, Linking, TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,10 +9,10 @@ import { useFocusEffect } from "@react-navigation/core";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { getFiles, getSubscription, trashFile } from "../api/filesApi";
+import { parseSharedLink } from "../api/sharingApi";
 import SearchBar from "../components/SearchBar";
 import ShareModal from "../components/ShareModal";
 import { getFileMeta, getFileType, formatSize, formatDate } from "../utils/fileTypes";
->>>>>>> main
 
 function FilterChip({ label, icon, c, active, onPress }) {
   return (
@@ -42,23 +32,6 @@ function FilterChip({ label, icon, c, active, onPress }) {
   );
 }
 
-<<<<<<< HEAD
-export default function FilesScreen({ navigation }) {
-  const { c } = useTheme();
-  const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState("");
-  const [tab, setTab] = useState("all");
-
-  const q = query.trim().toLowerCase();
-  const shownFolders = tab === "files" ? [] : folders.filter((f) => f.name.toLowerCase().includes(q));
-  const shownFiles = tab === "folders" ? [] : files.filter((f) => f.name.toLowerCase().includes(q));
-
-  return (
-    <View style={[styles.root, { backgroundColor: c.bgApp }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 14, paddingHorizontal: 18, paddingBottom: 120 }}
-=======
 // Three-dot action menu
 function FileActionMenu({ file, c, onClose, onShare, onDelete }) {
   const items = [
@@ -216,6 +189,9 @@ export default function FilesScreen({ navigation }) {
 
   const [menuFile, setMenuFile] = useState(null);
   const [shareFile, setShareFile] = useState(null);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkInput, setLinkInput] = useState("");
+  const [linkError, setLinkError] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -279,6 +255,18 @@ export default function FilesScreen({ navigation }) {
     );
   };
 
+  const handleOpenLink = () => {
+    const parsed = parseSharedLink(linkInput);
+    if (!parsed) {
+      setLinkError("Paste a valid shared file or folder link.");
+      return;
+    }
+    setLinkModalOpen(false);
+    setLinkInput("");
+    setLinkError("");
+    navigation.navigate(parsed.kind === "folder" ? "SharedFolder" : "SharedFile", { token: parsed.token });
+  };
+
   // Filter
   const q = query.trim().toLowerCase();
   const TYPE_GROUPS = {
@@ -323,52 +311,68 @@ export default function FilesScreen({ navigation }) {
           paddingHorizontal: 18,
           paddingBottom: 120,
         }}
->>>>>>> main
       >
-        <Text style={[styles.h1, { color: c.textPrimary }]}>My Files</Text>
-        <Text style={[styles.sub, { color: c.textSecondary }]}>
-          Manage, organize, and share all your stored files.
-        </Text>
-
-<<<<<<< HEAD
-        <View style={{ marginTop: 16 }}>
-          <SearchBar value={query} onChangeText={setQuery} placeholder="Search files & folders…" />
-        </View>
-
-        {/* Filters */}
-        <View style={styles.filterRow}>
-          <FilterChip label="All" c={c} active={tab === "all"} onPress={() => setTab("all")} />
-          <FilterChip label="Folders" c={c} active={tab === "folders"} onPress={() => setTab("folders")} />
-          <FilterChip label="Files" c={c} active={tab === "files"} onPress={() => setTab("files")} />
-          <View style={{ flex: 1 }} />
-          <FilterChip label="Sort" icon="swap-vertical" c={c} />
-        </View>
-
-        {shownFolders.length > 0 ? (
-          <>
-            <Text style={[styles.group, { color: c.textMuted }]}>FOLDERS</Text>
-            {shownFolders.map((f) => (
-              <FolderRow key={f.id} folder={f} onPress={() => navigation.navigate("Folder", { id: f.id, name: f.name })} />
-            ))}
-          </>
-        ) : null}
-
-        {shownFiles.length > 0 ? (
-          <>
-            <Text style={[styles.group, { color: c.textMuted }]}>FILES</Text>
-            {shownFiles.map((f) => (
-              <FileRow key={f.id} file={f} />
-            ))}
-          </>
-        ) : null}
-
-        {shownFolders.length === 0 && shownFiles.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="folder-open-outline" size={40} color={c.textMuted} />
-            <Text style={[styles.emptyText, { color: c.textSecondary }]}>No results for “{query}”.</Text>
+        <View style={styles.titleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.h1, { color: c.textPrimary }]}>My Files</Text>
+            <Text style={[styles.sub, { color: c.textSecondary }]}>
+              Manage, organize, and share all your stored files.
+            </Text>
           </View>
-        ) : null}
-=======
+          <View style={styles.titleActions}>
+            <Pressable
+              onPress={() => setLinkModalOpen(true)}
+              hitSlop={8}
+              style={[styles.titleActionBtn, { backgroundColor: c.bgSecondary, borderColor: c.border }]}
+            >
+              <Ionicons name="link-outline" size={18} color={c.textPrimary} />
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("Trash")}
+              hitSlop={8}
+              style={[styles.titleActionBtn, { backgroundColor: c.bgSecondary, borderColor: c.border }]}
+            >
+              <Ionicons name="trash-outline" size={18} color={c.textPrimary} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Open shared link */}
+        <Modal transparent visible={linkModalOpen} animationType="fade" onRequestClose={() => setLinkModalOpen(false)}>
+          <Pressable style={styles.linkBackdrop} onPress={() => setLinkModalOpen(false)}>
+            <Pressable style={[styles.linkSheet, { backgroundColor: c.bgSecondary }]} onPress={() => {}}>
+              <Text style={[styles.linkTitle, { color: c.textPrimary }]}>Open Shared Link</Text>
+              <Text style={[styles.linkSub, { color: c.textSecondary }]}>
+                Paste a shared file or folder link someone sent you.
+              </Text>
+              <TextInput
+                value={linkInput}
+                onChangeText={(t) => { setLinkInput(t); setLinkError(""); }}
+                placeholder="https://.../shared/…"
+                placeholderTextColor={c.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={[
+                  styles.linkInput,
+                  { color: c.textPrimary, borderColor: linkError ? c.tones.danger : c.border, backgroundColor: c.bgPrimary },
+                ]}
+              />
+              {linkError ? <Text style={[styles.linkError, { color: c.tones.dangerText }]}>{linkError}</Text> : null}
+              <View style={styles.linkActions}>
+                <Pressable
+                  onPress={() => { setLinkModalOpen(false); setLinkInput(""); setLinkError(""); }}
+                  style={[styles.linkBtn, { backgroundColor: c.bgTertiary }]}
+                >
+                  <Text style={[styles.linkBtnText, { color: c.textPrimary }]}>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={handleOpenLink} style={[styles.linkBtn, { backgroundColor: c.accent.orange }]}>
+                  <Text style={[styles.linkBtnText, { color: "#fff" }]}>Open</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
         {/* Storage bar */}
         <View style={[styles.storageBar, { backgroundColor: c.bgSecondary, borderColor: c.border }]}>
           <View style={styles.storageBarTop}>
@@ -456,7 +460,6 @@ export default function FilesScreen({ navigation }) {
             ))}
           </View>
         )}
->>>>>>> main
       </ScrollView>
     </View>
   );
@@ -464,10 +467,21 @@ export default function FilesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  titleActions: { flexDirection: "row", gap: 8 },
+  titleActionBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   h1: { fontSize: 28, fontWeight: "800", letterSpacing: -0.6 },
   sub: { fontSize: 14, marginTop: 6, lineHeight: 20 },
-<<<<<<< HEAD
-=======
+
+  linkBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", padding: 24 },
+  linkSheet: { width: "100%", borderRadius: 20, padding: 22 },
+  linkTitle: { fontSize: 18, fontWeight: "800" },
+  linkSub: { fontSize: 13, marginTop: 6, lineHeight: 19 },
+  linkInput: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, marginTop: 16 },
+  linkError: { fontSize: 12, marginTop: 6 },
+  linkActions: { flexDirection: "row", gap: 10, marginTop: 18 },
+  linkBtn: { flex: 1, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  linkBtnText: { fontSize: 14, fontWeight: "700" },
 
   storageBar: {
     borderRadius: 14,
@@ -513,7 +527,6 @@ const styles = StyleSheet.create({
   fullBannerText: { flex: 1, color: "#dc2626", fontSize: 12, fontWeight: "500" },
   fullBannerAction: { color: "#f97316", fontWeight: "700", fontSize: 12 },
 
->>>>>>> main
   filterRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14, marginBottom: 6 },
   chip: {
     flexDirection: "row",
@@ -525,9 +538,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: { fontSize: 13, fontWeight: "600" },
-<<<<<<< HEAD
-  group: { fontSize: 11, fontWeight: "700", letterSpacing: 1, marginTop: 18, marginBottom: 10 },
-=======
 
   // List row
   row: {
@@ -616,7 +626,6 @@ const styles = StyleSheet.create({
   },
   menuItemText: { fontSize: 15, fontWeight: "500" },
 
->>>>>>> main
   empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
   emptyText: { fontSize: 14 },
 });

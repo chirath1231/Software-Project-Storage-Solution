@@ -19,6 +19,11 @@ import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import SupportScreen from "../screens/SupportScreen";
 import ClientsScreen from "../screens/ClientsScreen";
 import ChatScreen from "../screens/ChatScreen";
+import TrashScreen from "../screens/TrashScreen";
+import TicketSubmissionScreen from "../screens/TicketSubmissionScreen";
+import SharedFileScreen from "../screens/SharedFileScreen";
+import SharedFolderScreen from "../screens/SharedFolderScreen";
+import AIAssistantScreen from "../screens/AIAssistantScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +53,11 @@ export default function RootNavigator() {
           <Stack.Screen name="Support" component={SupportScreen} />
           <Stack.Screen name="Clients" component={ClientsScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Trash" component={TrashScreen} />
+          <Stack.Screen name="TicketSubmission" component={TicketSubmissionScreen} />
+          <Stack.Screen name="SharedFile" component={SharedFileScreen} />
+          <Stack.Screen name="SharedFolder" component={SharedFolderScreen} />
+          <Stack.Screen name="AIAssistant" component={AIAssistantScreen} options={{ animation: "slide_from_bottom" }} />
         </Stack.Group>
       )}
     </Stack.Navigator>

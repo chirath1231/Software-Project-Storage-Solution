@@ -4,6 +4,11 @@ export const getFiles = () => apiGet("/api/files/");
 
 export const trashFile = (id) => apiDelete(`/api/files/${id}/trash/`);
 
+// Trash
+export const getTrash = () => apiGet("/api/files/trash/");
+export const restoreFile = (id) => apiPost(`/api/files/trash/${id}/restore/`);
+export const permanentDeleteFile = (id) => apiDelete(`/api/files/trash/${id}/`);
+
 // Pass user.username (not email) — matches what the web app stores in subscriptions
 export async function getSubscription(usernameOrEmail) {
   const data = await apiGet(
