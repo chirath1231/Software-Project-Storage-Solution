@@ -43,19 +43,80 @@ class EventListCreateView(generics.ListCreateAPIView):
             if resend.api_key:
                 subject = f"Meeting Invitation: {event.title} (CEYNOA)"
                 
+                # Setup conditional CTA button logic
+                if event.meeting_link:
+                    cta_html = f"""
+                    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+                      <a href="{event.meeting_link}" style="background-color: #f97316; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                        Join Meeting
+                      </a>
+                    </div>
+                    """
+                else:
+                    cta_html = """
+                    <p style="color: #6b7280; font-size: 14px; text-align: center; font-style: italic; margin-top: 30px;">
+                      (No meeting link was provided for this event)
+                    </p>
+                    """
+                
                 # HTML Body for a professional look
                 html_content = f"""
-                    <div style="font-family: sans-serif; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
-                        <h2 style="color: #f97316;">Hello!</h2>
-                        <p>You have been invited to a meeting by <strong>{event.user.username}</strong>.</p>
-                        <hr style="border: 0; border-top: 1px solid #eee;" />
-                        <p>📌 <strong>Title:</strong> {event.title}</p>
-                        <p>🕒 <strong>Start:</strong> {event.start_time.strftime('%b %d, %Y at %I:%M %p')}</p>
-                        <p>🔗 <strong>Link:</strong> <a href="{event.meeting_link or '#'}">{event.meeting_link or 'No link provided'}</a></p>
-                        <p><strong>Description:</strong> {event.description or 'No description provided'}</p>
-                        <hr style="border: 0; border-top: 1px solid #eee;" />
-                        <p style="font-size: 12px; color: #777;">Sent securely via CEYNOA Workspace.</p>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>Meeting Invitation</title>
+                </head>
+                <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px;">
+                  
+                  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                    
+                    <!-- Header with CEYNOA Branding -->
+                    <div style="background-color: #f97316; padding: 30px 20px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">CEYNOA</h1>
+                      <p style="color: #ffedd5; margin: 5px 0 0 0; font-size: 14px;">Cloud Workspace</p>
                     </div>
+
+                    <!-- Main Content Body -->
+                    <div style="padding: 40px 30px;">
+                      <h2 style="color: #1f2937; margin-top: 0; font-size: 22px;">Hello!</h2>
+                      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                        You have been invited to a scheduled meeting by <strong style="color: #111827;">{event.user.username}</strong>.
+                      </p>
+
+                      <!-- Event Details Card -->
+                      <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+                        <p style="margin: 0 0 12px 0; color: #374151; font-size: 15px;">
+                          <span style="font-size: 18px; margin-right: 8px;">📌</span> 
+                          <strong>Title:</strong> {event.title}
+                        </p>
+                        <p style="margin: 0 0 12px 0; color: #374151; font-size: 15px;">
+                          <span style="font-size: 18px; margin-right: 8px;">🕒</span> 
+                          <strong>Start:</strong> {event.start_time.strftime('%b %d, %Y at %I:%M %p')}
+                        </p>
+                        <p style="margin: 0; color: #374151; font-size: 15px;">
+                          <span style="font-size: 18px; margin-right: 8px;">📝</span> 
+                          <strong>Description:</strong> {event.description or 'No description provided.'}
+                        </p>
+                      </div>
+
+                      <!-- Conditional Call to Action Button -->
+                      {cta_html}
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                        Sent securely via CEYNOA Workspace.<br>
+                        Please do not reply directly to this automated email.
+                      </p>
+                    </div>
+
+                  </div>
+
+                </body>
+                </html>
                 """
 
                 try:

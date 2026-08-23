@@ -21,7 +21,7 @@ const GradientButton = ({ title, onClick, ariaLabel }) => (
   <button
     onClick={onClick}
     aria-label={ariaLabel || title}
-    className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-800" // Gradient button styling
+    className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-800"
   >
     {title}
   </button>
@@ -39,7 +39,10 @@ export default function Navbar({ isDashboard = false }) {
   const navigate = useNavigate();
 
   // Fetch real notifications from backend context
-  const { notifications, unreadCount, fetchGlobalNotifications } = useNotifications();
+  const { notifications, fetchGlobalNotifications } = useNotifications();
+
+  // --- NEW FIX: Manually calculate unread count directly from the array ---
+  const calculatedUnreadCount = notifications ? notifications.filter(n => n.is_read === false).length : 0;
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -100,7 +103,7 @@ export default function Navbar({ isDashboard = false }) {
       await fetch(`${API_BASE_URL}/api/accounts/notifications/${notificationId}/read/`, {
         method: "PATCH",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Token ${token}`, // Changed from Bearer to Token to fix 401 error
           "Content-Type": "application/json"
         }
       });
@@ -120,7 +123,6 @@ export default function Navbar({ isDashboard = false }) {
   };
 
   const handleClearNotification = (notificationId) => {
-    // For now, we'll just mark it as read. You can extend this to delete if needed.
     handleMarkRead(notificationId);
   };
 
@@ -191,7 +193,6 @@ export default function Navbar({ isDashboard = false }) {
           {/* Mobile user profile, settings, notifications, and logout (only when logged in) */}
           {isAuthenticated && (
             <div className="flex md:hidden gap-4 mt-5 w-full flex-col border-t border-gray-750 pt-4">
-              {/* User Identity Info */}
               <div className="flex items-center gap-3 px-2">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-700 flex-shrink-0">
                   <User size={20} className="text-orange-500" />
@@ -210,10 +211,14 @@ export default function Navbar({ isDashboard = false }) {
                 }}
               >
                 <div className="relative">
-                  <Bell size={18} className="text-gray-300" />
-                  {unreadCount > 0 && (
+                  <Bell
+                    size={18}
+                    className={`transition-colors duration-300 ${calculatedUnreadCount > 0 ? 'text-red-500' : 'text-gray-300'}`}
+                    fill={calculatedUnreadCount > 0 ? 'currentColor' : 'none'}
+                  />
+                  {calculatedUnreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                      {unreadCount}
+                      {calculatedUnreadCount}
                     </span>
                   )}
                 </div>
@@ -265,12 +270,16 @@ export default function Navbar({ isDashboard = false }) {
                     // Fetch fresh notifications when opening the dropdown
                     if (!showNotifications) fetchGlobalNotifications();
                   }}
-                  aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+                  aria-label={`Notifications ${calculatedUnreadCount > 0 ? `(${calculatedUnreadCount} unread)` : ''}`}
                 >
-                  <Bell size={22} className="text-gray-300" />
-                  {unreadCount > 0 && (
+                  <Bell
+                    size={22}
+                    className={`transition-colors duration-300 ${calculatedUnreadCount > 0 ? 'text-red-500' : 'text-gray-300'}`}
+                    fill={calculatedUnreadCount > 0 ? 'currentColor' : 'none'}
+                  />
+                  {calculatedUnreadCount > 0 && (
                     <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-[#323D41]">
-                      {unreadCount}
+                      {calculatedUnreadCount}
                     </span>
                   )}
                 </button>
@@ -280,7 +289,7 @@ export default function Navbar({ isDashboard = false }) {
                   <div className="absolute top-full right-0 mt-4 bg-white rounded-xl shadow-2xl w-80 z-50 overflow-hidden border border-gray-100">
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
                       <h3 className="text-gray-800 font-bold text-xs uppercase tracking-wider">Alerts</h3>
-                      {unreadCount > 0 && (
+                      {calculatedUnreadCount > 0 && (
                         <button onClick={handleMarkAllAsRead} className="text-orange-500 text-xs font-semibold hover:underline bg-transparent border-0 cursor-pointer">
                           Mark all read
                         </button>
@@ -288,7 +297,7 @@ export default function Navbar({ isDashboard = false }) {
                     </div>
 
                     <div className="max-h-96 overflow-y-auto">
-                      {notifications.length > 0 ? (
+                      {notifications && notifications.length > 0 ? (
                         notifications.slice(0, 5).map((notification) => (
                           <div
                             key={notification.id}

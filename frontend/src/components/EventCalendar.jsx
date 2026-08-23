@@ -67,20 +67,22 @@ const CustomToolbar = (toolbar) => {
 
 // --- MAIN COMPONENT ---
 export default function EventCalendar({ onMeetingScheduled }) {
-  // Grab the fetch function from our global context
   const { fetchGlobalNotifications } = useNotifications();
   
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   
+  // Update 1: Separate the Date and Times from the main object
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
-    start_time: "",
-    end_time: "",
     meeting_link: "",
     attendee_email: ""
   });
+  
+  const [meetingDate, setMeetingDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -102,8 +104,16 @@ export default function EventCalendar({ onMeetingScheduled }) {
 
   const handleScheduleMeeting = async (e) => {
     e.preventDefault();
+    
+    // Update 2: Stitch the date and times together into standard ISO strings
+    const payload = {
+      ...newEvent,
+      start_time: `${meetingDate}T${startTime}`,
+      end_time: `${meetingDate}T${endTime}`
+    };
+
     try {
-      const response = await api.post("/api/accounts/events/", newEvent);
+      const response = await api.post("/api/accounts/events/", payload);
       
       setEvents([...events, {
         ...response.data,
@@ -112,13 +122,15 @@ export default function EventCalendar({ onMeetingScheduled }) {
       }]);
       
       setShowModal(false);
-      setNewEvent({ title: "", description: "", start_time: "", end_time: "", meeting_link: "", attendee_email: "" });
       
-      // --- TRIGGER THE GLOBAL NOTIFICATION REFRESH ---
-      // This tells the Navbar Bell to update instantly!
+      // Update 3: Reset all form fields
+      setNewEvent({ title: "", description: "", meeting_link: "", attendee_email: "" });
+      setMeetingDate("");
+      setStartTime("");
+      setEndTime("");
+      
       fetchGlobalNotifications();
 
-      // If the parent component passed a local refresh, call that too
       if (onMeetingScheduled) {
         onMeetingScheduled();
       }
@@ -155,7 +167,6 @@ export default function EventCalendar({ onMeetingScheduled }) {
         />
       </div>
 
-      {/* Sleek Schedule Meeting Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
@@ -189,25 +200,37 @@ export default function EventCalendar({ onMeetingScheduled }) {
                 />
               </div>
 
+              {/* Update 4: The new Date and Time layout */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Meeting Date</label>
+                <input
+                  type="date"
+                  required
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
+                  value={meetingDate}
+                  onChange={(e) => setMeetingDate(e.target.value)}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Start Time</label>
                   <input
-                    type="datetime-local"
+                    type="time"
                     required
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
-                    value={newEvent.start_time}
-                    onChange={(e) => setNewEvent({...newEvent, start_time: e.target.value})}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">End Time</label>
                   <input
-                    type="datetime-local"
+                    type="time"
                     required
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
-                    value={newEvent.end_time}
-                    onChange={(e) => setNewEvent({...newEvent, end_time: e.target.value})}
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
                   />
                 </div>
               </div>
