@@ -37,11 +37,11 @@ urlpatterns = [
     # Sharing API
     path("api/", include("sharing.urls")),
 
-    # Support Tickets
-    path("api/", include("tickets.urls")),
-
     # Admin Management
     path("api/", include("admin_management.urls")),
+
+    # Support Tickets
+    path("api/", include("tickets.urls")),
 ]
 
 
