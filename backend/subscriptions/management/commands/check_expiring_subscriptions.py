@@ -10,32 +10,56 @@ import resend
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = "Checks for subscriptions nearing expiration or already expired and sends alerts."
+    help = "Checks for subscriptions nearing expiration (1 month, 5 days) or already expired and sends alerts."
 
     def handle(self, *args, **kwargs):
         today = timezone.now().date()
-        warning_date = today + timedelta(days=3) # Warn 3 days before expiry
+        
+        # Target dates for reminders
+        one_month_date = today + timedelta(days=30)
+        five_days_date = today + timedelta(days=5)
 
-        # 1. Check for plans expiring in 3 days
-        expiring_soon = SubscriptionPayment.objects.filter(status="ACTIVE", expires_at__date=warning_date)
-        for sub in expiring_soon:
+        # ---------------------------------------------------------
+        # 1. Check for plans expiring in EXACTLY 30 DAYS (1 Month)
+        # ---------------------------------------------------------
+        month_subs = SubscriptionPayment.objects.filter(status="ACTIVE", expires_at__date=one_month_date)
+        for sub in month_subs:
             user = User.objects.filter(email=sub.user_email).first()
             if user:
-                # In-app notification
+                Notification.objects.create(
+                    user=user,
+                    title="Subscription Expiring in 1 Month 📅",
+                    message=f"Your {sub.subscription.name} plan expires in 30 days. Please keep an eye on your renewal date.",
+                    is_read=False
+                )
+                self.send_email(
+                    sub.user_email, 
+                    "Your Subscription Expiring in 1 Month 📅", 
+                    f"Hi {user.username}, just a heads-up that your {sub.subscription.name} plan is scheduled to expire in 30 days."
+                )
+
+        # ---------------------------------------------------------
+        # 2. Check for plans expiring in EXACTLY 5 DAYS
+        # ---------------------------------------------------------
+        five_day_subs = SubscriptionPayment.objects.filter(status="ACTIVE", expires_at__date=five_days_date)
+        for sub in five_day_subs:
+            user = User.objects.filter(email=sub.user_email).first()
+            if user:
                 Notification.objects.create(
                     user=user,
                     title="Subscription Expiring Soon ⚠️",
-                    message=f"Your {sub.subscription.name} plan expires in 3 days. Renew now to avoid interruption.",
+                    message=f"Action required: Your {sub.subscription.name} plan expires in just 5 days. Renew now to avoid losing access.",
                     is_read=False
                 )
-                # Email alert via Resend
                 self.send_email(
                     sub.user_email, 
-                    "Your Subscription is Expiring Soon ⚠️", 
-                    f"Hi there, your {sub.subscription.name} plan is scheduled to expire in 3 days. Please renew to keep your storage active."
+                    "Your Subscription is Expiring in 5 Days ⚠️", 
+                    f"Hi {user.username}, your {sub.subscription.name} plan expires in exactly 5 days. Please renew to keep your storage active and avoid interruption."
                 )
 
-        # 2. Check for expired plans
+        # ---------------------------------------------------------
+        # 3. Check for EXPIRED plans (Date has passed)
+        # ---------------------------------------------------------
         expired_subs = SubscriptionPayment.objects.filter(status="ACTIVE", expires_at__date__lt=today)
         for sub in expired_subs:
             sub.status = "EXPIRED"
@@ -46,16 +70,16 @@ class Command(BaseCommand):
                 Notification.objects.create(
                     user=user,
                     title="Subscription Expired ❌",
-                    message=f"Your {sub.subscription.name} plan has expired. Please upgrade to restore features.",
+                    message=f"Your {sub.subscription.name} plan has expired. Please upgrade your plan to restore full features.",
                     is_read=False
                 )
                 self.send_email(
                     sub.user_email, 
                     "Your Subscription Has Expired ❌", 
-                    f"Hi there, your {sub.subscription.name} plan has expired. Upgrade your plan to restore full storage access."
+                    f"Hi {user.username}, your {sub.subscription.name} plan has officially expired. Upgrade your plan today to restore your full storage access."
                 )
 
-        self.stdout.write(self.style.SUCCESS("Successfully processed subscription lifecycle alerts."))
+        self.stdout.write(self.style.SUCCESS("Successfully processed 1-month, 5-day, and expiration lifecycle alerts."))
 
     def send_email(self, to_email, subject, message):
         try:
