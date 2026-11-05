@@ -168,8 +168,7 @@ function Login() {
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
-
-          <p className="or">___________________________or_____________________________</p>
+          <br></br>
 
           <div className="social">
             <GoogleLogin
