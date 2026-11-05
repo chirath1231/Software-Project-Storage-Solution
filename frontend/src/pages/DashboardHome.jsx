@@ -5,6 +5,7 @@ import api from "../api/axios";
 import { useAuth } from "../auth/AuthContext";
 import { Upload, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
 import UpcomingMeetingsWidget from "../components/UpcomingMeetingsWidget";
+import { fetchPlanStorageGB } from "../utils/subscription";
 
 export default function DashboardHome() {
   const { username, user, userId, email } = useAuth();
@@ -39,17 +40,9 @@ export default function DashboardHome() {
   };
 
   const fetchUserSubscription = async () => {
-    try {
-      const res = await api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`);
-      const payments = res.data;
-      const latest = payments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-      const gb = latest?.storage || 5;
-      setTotalStorageGB(gb);
-      return gb;
-    } catch (err) {
-      console.error("Error fetching subscription:", err);
-      return 5;
-    }
+    const gb = await fetchPlanStorageGB(email || userEmail);
+    setTotalStorageGB(gb);
+    return gb;
   };
 
   const fetchFiles = async (storageGB = totalStorageGB) => {

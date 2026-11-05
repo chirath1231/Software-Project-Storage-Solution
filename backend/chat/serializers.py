@@ -22,8 +22,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source="sender.username", read_only=True)
+    sender_email = serializers.EmailField(source="sender.email", read_only=True)
 
     class Meta:
         model = Message
-        fields = ("id", "conversation", "sender", "sender_username", "text", "created_at")
+        fields = ("id", "conversation", "sender", "sender_username", "sender_email", "text", "created_at")
         read_only_fields = ("id", "sender", "created_at")

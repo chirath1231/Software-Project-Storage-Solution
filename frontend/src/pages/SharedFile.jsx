@@ -10,6 +10,17 @@ export default function SharedFile() {
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState("");
 
+  // Signed links expire after a few minutes, so fetch a fresh one on click
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.get(`/api/shared/${token}/`);
+      window.location.href = res.data.download_url || res.data.file_url;
+    } catch {
+      window.location.href = fileData.download_url || fileData.file_url;
+    }
+  };
+
   useEffect(() => {
     api
       .get(`/api/shared/${token}/`)
@@ -20,6 +31,8 @@ export default function SharedFile() {
           navigate("/login", { state: { from: location.pathname } });
         } else if (err.response?.status === 403) {
           setError("You don't have permission to access this file.");
+        } else if (err.response?.status === 410) {
+          setError("This file is no longer available.");
         } else if (err.response?.status === 404) {
           setError("This share link is invalid or has been revoked.");
         } else if (err.response) {
@@ -79,8 +92,8 @@ export default function SharedFile() {
             <p className="text-xs text-gray-400 mt-0.5">{formatSize(fileData.file_size)}</p>
           </div>
           <a
-            href={fileData.file_url}
-            download
+            href={fileData.download_url || fileData.file_url}
+            onClick={handleDownload}
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex-shrink-0 ml-4"
           >
             <Download size={15} />
@@ -126,8 +139,8 @@ export default function SharedFile() {
               <p className="text-gray-600 font-medium mb-1">{fileData.file_name}</p>
               <p className="text-sm mb-6">Preview not available for this file type.</p>
               <a
-                href={fileData.file_url}
-                download
+                href={fileData.download_url || fileData.file_url}
+                onClick={handleDownload}
                 className="bg-orange-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600 transition"
               >
                 Download File

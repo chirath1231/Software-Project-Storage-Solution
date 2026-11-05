@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import format from "date-fns/format";
-import parse from "date-fns/parse";
-import startOfWeek from "date-fns/startOfWeek";
-import getDay from "date-fns/getDay";
+import { format, parse, startOfWeek, getDay } from "date-fns";
+import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import api from "../api/axios"; 
 import { Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,7 +11,7 @@ import { useNotifications } from '../context/NotificationContext';
 
 // Setup for the Calendar
 const locales = {
-  "en-US": require("date-fns/locale/en-US"),
+  "en-US": enUS,
 };
 const localizer = dateFnsLocalizer({
   format,
@@ -22,6 +20,12 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
+
+// Format a Date as "YYYY-MM-DDTHH:mm" in local time (for datetime-local inputs)
+const toLocalInputValue = (date) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
 
 // --- MODERN CUSTOM TOOLBAR ---
 const CustomToolbar = (toolbar) => {
@@ -72,6 +76,7 @@ export default function EventCalendar({ onMeetingScheduled }) {
   
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [formError, setFormError] = useState("");
   
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -100,8 +105,53 @@ export default function EventCalendar({ onMeetingScheduled }) {
     }
   };
 
+  const openModal = (start = null, end = null) => {
+    setFormError("");
+    if (start) {
+      setNewEvent((prev) => ({
+        ...prev,
+        start_time: toLocalInputValue(start),
+        end_time: toLocalInputValue(end || new Date(start.getTime() + 60 * 60 * 1000)),
+      }));
+    }
+    setShowModal(true);
+  };
+
+  // Clicking/dragging on the calendar: only allow future slots
+  const handleSelectSlot = ({ start, end }) => {
+    const now = new Date();
+    // In month view a slot is a whole day starting at 00:00 — allow today
+    const isToday = start.toDateString() === now.toDateString();
+    if (start < now && !isToday) {
+      alert("You cannot schedule a meeting in the past.");
+      return;
+    }
+    if (start < now) {
+      // Today, but time already passed → start from the next full hour
+      const next = new Date(now);
+      next.setMinutes(0, 0, 0);
+      next.setHours(next.getHours() + 1);
+      openModal(next, new Date(next.getTime() + 60 * 60 * 1000));
+      return;
+    }
+    openModal(start, end);
+  };
+
   const handleScheduleMeeting = async (e) => {
     e.preventDefault();
+    setFormError("");
+
+    const start = new Date(newEvent.start_time);
+    const end = new Date(newEvent.end_time);
+    if (start < new Date()) {
+      setFormError("You cannot schedule a meeting in the past.");
+      return;
+    }
+    if (end <= start) {
+      setFormError("End time must be after the start time.");
+      return;
+    }
+
     try {
       const response = await api.post("/api/accounts/events/", newEvent);
       
@@ -125,7 +175,9 @@ export default function EventCalendar({ onMeetingScheduled }) {
 
     } catch (error) {
       console.error("Failed to schedule meeting:", error);
-      alert("Failed to schedule meeting. Please check your times.");
+      const data = error.response?.data;
+      const msg = data?.start_time?.[0] || data?.end_time?.[0] || data?.non_field_errors?.[0];
+      setFormError(msg || "Failed to schedule meeting. Please check your times.");
     }
   };
 
@@ -134,7 +186,7 @@ export default function EventCalendar({ onMeetingScheduled }) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">Your Schedule</h2>
         <button 
-          onClick={() => setShowModal(true)}
+          onClick={() => openModal()}
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus size={16} strokeWidth={3} /> Schedule Meeting
@@ -149,6 +201,15 @@ export default function EventCalendar({ onMeetingScheduled }) {
           endAccessor="end"
           style={{ height: "100%", fontFamily: "inherit" }}
           components={{ toolbar: CustomToolbar }}
+          selectable
+          onSelectSlot={handleSelectSlot}
+          dayPropGetter={(date) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return date < today
+              ? { style: { backgroundColor: "#f3f4f6", cursor: "not-allowed" } }
+              : {};
+          }}
           eventPropGetter={(event) => ({
             style: { backgroundColor: "#f97316", border: "none", borderRadius: "6px", fontWeight: "600", fontSize: "0.8rem", padding: "2px 6px" } 
           })}
@@ -196,6 +257,7 @@ export default function EventCalendar({ onMeetingScheduled }) {
                     type="datetime-local"
                     required
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
+                    min={toLocalInputValue(new Date())}
                     value={newEvent.start_time}
                     onChange={(e) => setNewEvent({...newEvent, start_time: e.target.value})}
                   />
@@ -206,6 +268,7 @@ export default function EventCalendar({ onMeetingScheduled }) {
                     type="datetime-local"
                     required
                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
+                    min={newEvent.start_time || toLocalInputValue(new Date())}
                     value={newEvent.end_time}
                     onChange={(e) => setNewEvent({...newEvent, end_time: e.target.value})}
                   />
@@ -233,6 +296,12 @@ export default function EventCalendar({ onMeetingScheduled }) {
                 ></textarea>
               </div>
               
+              {formError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {formError}
+                </p>
+              )}
+
               <button type="submit" className="mt-2 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-bold shadow-md transition-all">
                 Save to Calendar
               </button>

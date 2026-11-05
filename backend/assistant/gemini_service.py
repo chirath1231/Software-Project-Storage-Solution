@@ -270,7 +270,7 @@ def ask_gemini(user_message: str):
         return kb_answer
 
     # 5. GEMINI FALLBACK
-    MODEL_NAME = "gemini-2.0-flash"
+    MODEL_NAME = "gemini-2.5-flash"
 
     full_prompt = f"""
     {SYSTEM_PROMPT}

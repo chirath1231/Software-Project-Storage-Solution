@@ -34,6 +34,28 @@ MERCHANT_SECRET = getattr(settings, "PAYHERE_MERCHANT_SECRET", os.getenv("PAYHER
 MERCHANT_SECRET_MD5 = hashlib.md5(MERCHANT_SECRET.encode()).hexdigest().upper()
 
 
+def _user_identifiers(value):
+    """
+    Purchases have been stored under either the user's email or username
+    (depending on what the frontend had at the time). Return every
+    identifier that belongs to the same user so lookups match both.
+    """
+    value = (value or "").strip()
+    ids = {value} if value else set()
+    if not value:
+        return ids
+    user = (
+        User.objects.filter(email__iexact=value).first()
+        or User.objects.filter(username__iexact=value).first()
+    )
+    if user:
+        if user.email:
+            ids.add(user.email)
+        if user.username:
+            ids.add(user.username)
+    return ids
+
+
 # --------------------------------------------------------
 # GET ALL SUBSCRIPTIONS
 # --------------------------------------------------------
@@ -59,7 +81,7 @@ def user_subscriptions(request, email):
     Includes subscription id so the frontend can match plans.
     """
     records = SubscriptionPayment.objects.filter(
-        user_email=email,
+        user_email__in=_user_identifiers(email),
         status="ACTIVE"
     ).select_related("subscription")
 
@@ -99,6 +121,17 @@ def create_payhere_payment(request):
     if not all([subscription_id, email, amount]):
         return Response(
             {"success": False, "error": "Missing required fields"},
+            status=400
+        )
+
+    # Block buying a plan the user already owns
+    if SubscriptionPayment.objects.filter(
+        user_email__in=_user_identifiers(email),
+        subscription_id=subscription_id,
+        status="ACTIVE",
+    ).exists():
+        return Response(
+            {"success": False, "error": "You already own this plan."},
             status=400
         )
 
@@ -509,4 +542,4 @@ def update_subscription(request, subscription_id):
             "subscription": serializer.data
         }, status=200)
 
-    return Response(serializer.errors, status=400)
+    return Response(serializer.errors, status=400)

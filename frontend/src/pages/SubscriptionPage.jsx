@@ -118,7 +118,7 @@ export default function SubscriptionPage() {
       }
     } catch (err) {
       console.error("Payment error:", err);
-      alert("Payment error");
+      alert(err.response?.data?.error || "Payment error");
     }
   };
 
@@ -206,8 +206,11 @@ export default function SubscriptionPage() {
           return (
             <div
               key={sub.id}
-              className="bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border border-gray-200 transition-all duration-300 cursor-pointer
-                hover:border-orange-400 hover:shadow-[0_8px_30px_rgba(249,115,22,0.35)] hover:scale-105 hover:z-10 relative"
+              className={`bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between border transition-all duration-300 relative ${
+                isPaid
+                  ? "border-green-400"
+                  : "border-gray-200 cursor-pointer hover:border-orange-400 hover:shadow-[0_8px_30px_rgba(249,115,22,0.35)] hover:scale-105 hover:z-10"
+              }`}
             >
               <div className="flex justify-between items-center mb-4">
                 <span className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-500">
@@ -239,11 +242,13 @@ export default function SubscriptionPage() {
                     ? "bg-gray-400 cursor-not-allowed opacity-60"
                     : "bg-orange-500 hover:bg-orange-600"
                 } transition-colors`}
-                onClick={() => handleSubscribe(sub)}
+                onClick={() => !isPaid && handleSubscribe(sub)}
                 disabled={isPaid}
+                aria-disabled={isPaid}
+                title={isPaid ? "You already own this plan" : undefined}
               >
-                <img src={buynow} alt="buy" className="w-5" />
-                {isPaid ? "Subscribed" : "Subscribe Now"}
+                {!isPaid && <img src={buynow} alt="buy" className="w-5" />}
+                {isPaid ? "✓ Already Purchased" : "Subscribe Now"}
               </button>
             </div>
           );

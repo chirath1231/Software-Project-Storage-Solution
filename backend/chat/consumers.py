@@ -172,6 +172,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "conversation": m.conversation_id,
             "sender": m.sender_id,
             "sender_username": m.sender.username,
+            "sender_email": m.sender.email,
             "text": m.text,
             "created_at": m.created_at.isoformat(),
         }

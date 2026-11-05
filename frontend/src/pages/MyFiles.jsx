@@ -9,6 +9,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNotifications } from '../context/NotificationContext';
+import { useAuth } from "../auth/AuthContext";
+import { fetchPlanStorageGB } from "../utils/subscription";
 
 export default function MyFiles() {
   const { fetchGlobalNotifications } = useNotifications();
@@ -25,6 +27,7 @@ export default function MyFiles() {
   const [storageUsed, setStorageUsed] = useState(0);
   const [totalUsedGB, setTotalUsedGB] = useState(0);
   const [isStorageFull, setIsStorageFull] = useState(false);
+  const [usedBytes, setUsedBytes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
 
@@ -50,7 +53,8 @@ export default function MyFiles() {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const navigate = useNavigate();
-  const userEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
+  const { email: authEmail, username: authUsername } = useAuth();
+  const userEmail = authEmail || authUsername || sessionStorage.getItem("username") || localStorage.getItem("username");
 
   useEffect(() => { initPage(); }, []);
 
@@ -89,14 +93,9 @@ export default function MyFiles() {
   };
 
   const fetchSubscription = async () => {
-    if (!userEmail) return 5;
-    try {
-      const res = await api.get(`/api/subscriptions/user-subscriptions/${encodeURIComponent(userEmail)}/`);
-      const latest = res.data.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-      const gb = latest?.storage || 5;
-      setTotalStorageGB(gb);
-      return gb;
-    } catch { setTotalStorageGB(5); return 5; }
+    const gb = await fetchPlanStorageGB(userEmail);
+    setTotalStorageGB(gb);
+    return gb;
   };
 
   const fetchFiles = async (storageGB = totalStorageGB, folderId = currentFolderId) => {
@@ -105,7 +104,10 @@ export default function MyFiles() {
       const res = await api.get(`/api/${params}`);
       const data = res.data;
       setFiles(data);
-      const totalBytes = data.reduce((sum, f) => sum + (f.size || 0), 0);
+      // Usage must count ALL files, not just the folder being viewed
+      const allRes = await api.get(`/api/files/?all=true`);
+      const totalBytes = (allRes.data || []).reduce((sum, f) => sum + (f.size || 0), 0);
+      setUsedBytes(totalBytes);
       const usedGB = totalBytes / 1024 / 1024 / 1024;
       setTotalUsedGB(Math.min(usedGB, storageGB).toFixed(2));
       setStorageUsed(Math.min(Math.round((usedGB / storageGB) * 100), 100));
@@ -177,7 +179,6 @@ export default function MyFiles() {
     if (file.size > MAX_SINGLE_FILE)
       return { allowed: false, message: "File is too large. Maximum single file size is 2GB." };
     const planBytes = totalStorageGB * 1024 * 1024 * 1024;
-    const usedBytes = files.reduce((sum, f) => sum + (f.size || 0), 0);
     const remainingBytes = planBytes - usedBytes;
     if (remainingBytes <= 0)
       return { allowed: false, message: `Your storage is full (${totalStorageGB}GB used). Please upgrade your plan.` };

@@ -373,6 +373,7 @@ const ClientChatSystem = () => {
               text: incomingText,
               sender: data.sender ?? null,
               sender_username: data.sender_username ?? "Unknown",
+              sender_email: data.sender_email ?? "",
               timestamp: data.created_at || new Date().toISOString(),
               is_mine: (data.sender_username && data.sender_username === currentUsername) || false,
             };
@@ -842,6 +843,14 @@ const ClientChatSystem = () => {
                         : "bg-white shadow-lg text-gray-900"
                         }`}
                     >
+                      {selectedClient?.isGroup && (
+                        <p
+                          className={`text-xs font-semibold mb-1 truncate ${isMine ? "text-white/90 text-right" : "text-orange-600"}`}
+                          title={m.sender_email || m.sender_username}
+                        >
+                          {isMine ? "You" : (m.sender_email || m.sender_username || "Unknown")}
+                        </p>
+                      )}
                       <p className={isMine ? "text-white" : "text-gray-900"}>{m.text}</p>
                       <div className="flex items-center justify-between gap-3 mt-2">
                         {isMine && m.id && !String(m.id).startsWith("temp-") && (

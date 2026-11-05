@@ -37,11 +37,13 @@ urlpatterns = [
     # Sharing API
     path("api/", include("sharing.urls")),
 
-    # Support Tickets
-    path("api/", include("tickets.urls")),
-
     # Admin Management
+    # Must come before tickets: the tickets router registers an empty
+    # prefix, so "api/<pk>/" would otherwise swallow "api/check-admin/".
     path("api/", include("admin_management.urls")),
+
+    # Support Tickets (keep last — contains a catch-all "api/<pk>/" route)
+    path("api/", include("tickets.urls")),
 ]
 
 

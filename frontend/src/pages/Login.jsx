@@ -98,7 +98,6 @@ function Login() {
       } catch {
         data = {};
       }
-      console.log("ACCESS TOKEN:", data.access);
 
       if (!res.ok) {
         setError(data.detail || data.error || "Invalid email or password");

@@ -102,9 +102,20 @@ export default function SharedFolder() {
                     {file.uploaded_at && <span> · {formatDate(file.uploaded_at)}</span>}
                   </p>
                 </div>
-                <a href={file.url} download
+                <a href={file.download_url || file.url}
                   className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex-shrink-0"
-                  onClick={(e) => e.stopPropagation()}>
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Signed links expire, so get a fresh one on click
+                    try {
+                      const res = await api.get(`/api/shared/folder/${token}/`);
+                      const fresh = res.data.files.find((f) => f.id === file.id);
+                      window.location.href = fresh?.download_url || fresh?.url || file.download_url || file.url;
+                    } catch {
+                      window.location.href = file.download_url || file.url;
+                    }
+                  }}>
                   <Download size={13} /> Download
                 </a>
               </div>

@@ -178,6 +178,7 @@ class MessageListView(APIView):
                 "text": m.text,
                 "sender": m.sender_id,
                 "sender_username": m.sender.username,
+                "sender_email": m.sender.email,
                 # your UI expects timestamp
                 "timestamp": m.created_at.isoformat(),
                 # helps your UI align left/right
@@ -218,6 +219,7 @@ class SendMessageView(APIView):
             "text": m.text,
             "sender": m.sender_id,
             "sender_username": request.user.username,
+            "sender_email": request.user.email,
             "timestamp": m.created_at.isoformat(),
             "is_mine": True,
         }, status=status.HTTP_201_CREATED)

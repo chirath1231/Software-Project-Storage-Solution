@@ -19,6 +19,17 @@ from .glacier import upload_to_glacier
 logger = logging.getLogger(__name__)
 
 
+def _safe_file_url(request, file_obj):
+    """Return the absolute URL of a stored file, or None if it has no file."""
+    if not file_obj.file:
+        return None
+    try:
+        return request.build_absolute_uri(file_obj.file.url)
+    except Exception:
+        logger.exception("Could not build URL for file id=%s", file_obj.id)
+        return None
+
+
 # =========================================================
 # UPLOAD FILE
 # =========================================================
@@ -245,9 +256,7 @@ def list_files(request):
                 "name": file_obj.name,
                 "size": file_obj.size,
                 "uploaded_at": file_obj.uploaded_at,
-                "url": request.build_absolute_uri(
-                    file_obj.file.url
-                ),
+                "url": _safe_file_url(request, file_obj),
                 "folder_id": file_obj.folder_id,
                 "share_links": share_links,
             }
@@ -314,9 +323,7 @@ def list_trash(request):
             "size": file_obj.size,
             "uploaded_at": file_obj.uploaded_at,
             "deleted_at": file_obj.deleted_at,
-            "url": request.build_absolute_uri(
-                file_obj.file.url
-            ),
+            "url": _safe_file_url(request, file_obj),
             "folder_id": file_obj.folder_id,
         }
         for file_obj in files

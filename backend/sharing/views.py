@@ -9,6 +9,30 @@ from .serializers import FileShareSerializer, FileShareCollaboratorSerializer, F
 from storage.models import File as FileModel, Folder as FolderModel
 
 
+def _file_urls(request, file_obj):
+    """
+    Return (view_url, download_url) for a stored file.
+    download_url makes the storage send the file as an attachment, because
+    browsers ignore <a download> for cross-origin (Spaces) URLs.
+    Returns (None, None) if the record has no stored file (e.g. archived).
+    """
+    if not file_obj.file:
+        return None, None
+    view_url = request.build_absolute_uri(file_obj.file.url)
+    download_url = view_url
+    storage = file_obj.file.storage
+    try:
+        safe_name = file_obj.name.replace('"', "")
+        download_url = storage.url(
+            file_obj.file.name,
+            parameters={"ResponseContentDisposition": f'attachment; filename="{safe_name}"'},
+        )
+    except TypeError:
+        # Local FileSystemStorage doesn't accept parameters
+        pass
+    return view_url, download_url
+
+
 # ── File share endpoints ───────────────────────────────────────────────────────
 
 @api_view(["GET", "POST", "DELETE"])
@@ -85,10 +109,14 @@ def shared_file_view(request, token):
             allowed_emails = collaborators.values_list("email", flat=True)
             if request.user.email not in allowed_emails:
                 return Response({"error": "You don't have permission to access this file."}, status=403)
+    view_url, download_url = _file_urls(request, share.file)
+    if not view_url:
+        return Response({"error": "This file is no longer available."}, status=410)
     return Response({
         "file_id": share.file.id,
         "file_name": share.file.name,
-        "file_url": share.file.file.url,
+        "file_url": view_url,
+        "download_url": download_url,
         "file_size": share.file.size,
         "permission": share.link_permission,
     })
@@ -171,15 +199,22 @@ def shared_folder_view(request, token):
             if request.user.email not in allowed_emails:
                 return Response({"error": "You don't have permission to access this folder."}, status=403)
     files = share.folder.files.filter(is_deleted=False)
-    return Response({
-        "folder_id": share.folder.id,
-        "folder_name": share.folder.name,
-        "permission": share.link_permission,
-        "files": [{
+    file_list = []
+    for f in files:
+        view_url, download_url = _file_urls(request, f)
+        if not view_url:
+            continue  # skip records with no stored file
+        file_list.append({
             "id": f.id,
             "name": f.name,
             "size": f.size,
             "uploaded_at": f.uploaded_at,
-            "url": f.file.url,
-        } for f in files],
+            "url": view_url,
+            "download_url": download_url,
+        })
+    return Response({
+        "folder_id": share.folder.id,
+        "folder_name": share.folder.name,
+        "permission": share.link_permission,
+        "files": file_list,
     })
